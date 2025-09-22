@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Reddit-Web-Fix",
+  "version": "1.0",
+  "description": "Fixes post-vote tracking on Reddit. Upvotes and downvotes stay highlighted and vote count will be updated and persisted better.",
+  "permissions": ["scripting", "storage", "tabs"],
+  "host_permissions": ["https://www.reddit.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.reddit.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["browser-polyfill.min.js", "constants.js"],
+      "matches": ["https://www.reddit.com/*"]
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  }
+}
