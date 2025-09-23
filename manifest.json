@@ -3,7 +3,7 @@
   "name": "Reddit Web Fix",
   "version": "1.0.0",
   "description": "For posts on Reddit main/subreddit - upvote and downvote highlight behavior is improved and the post vote count is synced when visiting the post comments page.",
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage"],
   "host_permissions": ["https://www.reddit.com/*"],
   "content_scripts": [
     {
@@ -15,7 +15,7 @@
 
   "web_accessible_resources": [
     {
-      "resources": ["browser-polyfill.min.js", "constants.js"],
+      "resources": ["browser-polyfill.min.js", "constants.js", "storage.js"],
       "matches": ["https://www.reddit.com/*"]
     }
   ],
@@ -38,5 +38,8 @@
       "id": "@reddit-web-fix.Richard-Iannucelli",
       "strict_min_version": "42.0"
     }
+  },
+  "background": {
+    "service_worker": "serviceWorker.js"
   }
 }

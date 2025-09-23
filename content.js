@@ -7,25 +7,17 @@ let verbose = false;
 let btnClsUD, btnClsStd, spnClsUp, spnClsDwn;
 let svgUpFilledPathD, svgDwnFillPathD, svgUpHollowPathD, svgDwnHollowPathD;
 
-// load the polyfill for browser API support in Chrome
-// must be done this way to work in Manifest V3
-const polyfillURL = chrome.runtime.getURL('browser-polyfill.min.js');
-import(polyfillURL)
-  .then(() => {
-    // Retrieve the debug setting from browser storage
-    async function getDebug() {
-      const result = await browser.storage.sync.get('debug');
-      return result.debug ?? false;
-    }
+(() => {
+  let port;
+  // Initialize connection to background script
+  function initPort() {
+    if (port) return;
+    port = chrome.runtime.connect({ name: 'content' });
 
-    // get debug setting and set local variable verbose
-    (async () => {
-      const debug = await getDebug();
-      verbose = debug;
-      if (VS) VS.verbose = debug;
-    })();
+    // Let background know which tab we are (sender.tab.id is also available there)
+    port.postMessage({ type: 'hello' });
 
-    browser.runtime.onMessage.addListener(msg => {
+    port.onMessage.addListener(msg => {
       if (msg.type === 'SET_VERBOSE') {
         verbose = msg.value;
         if (VS) VS.verbose = msg.value;
@@ -33,20 +25,48 @@ import(polyfillURL)
       }
     });
 
-    // dynamically import constants module for manifest v3 content script
-    const constsURL = chrome.runtime.getURL('constants.js');
-    import(constsURL)
+    port.onDisconnect.addListener(() => {
+      port = null;
+      // Attempt to reconnect  
+      setTimeout(initPort, 1000);
+    });
+  }
+  initPort();
+
+  // dynamically import constants module for manifest v3 content script
+  const constsURL = chrome.runtime.getURL('constants.js');
+  import(constsURL)
+    .then(mod => {
+      btnClsUD = mod.btnClsUD;
+      btnClsStd = mod.btnClsStd;
+      spnClsUp = mod.spnClsUp;
+      spnClsDwn = mod.spnClsDwn;
+      svgUpFilledPathD = mod.svgUpFilledPathD;
+      svgDwnFillPathD = mod.svgDwnFillPathD;
+      svgUpHollowPathD = mod.svgUpHollowPathD;
+      svgDwnHollowPathD = mod.svgDwnHollowPathD;
+    })
+    .catch(err => console.error('Failed to load constants module:', err));
+})();
+
+// load the polyfill for browser API support in Chrome
+// must be done this way to work in Manifest V3
+const polyfillURL = chrome.runtime.getURL('browser-polyfill.min.js');
+import(polyfillURL)
+  .then(() => {
+    // dynamically import storage module to get getGetDebug function
+    const storage = chrome.runtime.getURL('storage.js');
+    import(storage)
       .then(mod => {
-        btnClsUD = mod.btnClsUD;
-        btnClsStd = mod.btnClsStd;
-        spnClsUp = mod.spnClsUp;
-        spnClsDwn = mod.spnClsDwn;
-        svgUpFilledPathD = mod.svgUpFilledPathD;
-        svgDwnFillPathD = mod.svgDwnFillPathD;
-        svgUpHollowPathD = mod.svgUpHollowPathD;
-        svgDwnHollowPathD = mod.svgDwnHollowPathD;
+        const getDebug = mod.getGetDebug(browser);
+        (async () => {
+          // get debug setting and set local variable verbose
+          const debug = await getDebug();
+          verbose = debug;
+          if (VS) VS.verbose = debug;
+        })();
       })
-      .catch(err => console.error('Failed to load constants module:', err));
+      .catch(err => console.error('Failed to load storage module:', err));
   })
   .catch(err => {
     console.error('Failed to load browser polyfill:', err);
@@ -128,10 +148,10 @@ class VoteSync {
     // check clicked element and three elements above allowing for Shadow DOM
     for (let i = 0; i < 4; i++) {
       const pathElem = e.composedPath()[i];
-      if (pathElem === undefined || pathElem.hasAttribute === undefined) continue;
+      if (pathElem === undefined || pathElem.hasAttribute === undefined)
+        continue;
       if (pathElem.hasAttribute('upvote')) return [true, 'upvote'];
-      else if (pathElem.hasAttribute('downvote'))
-        return [true, 'downvote'];
+      else if (pathElem.hasAttribute('downvote')) return [true, 'downvote'];
     }
     return [false, null];
   }
@@ -371,4 +391,3 @@ observer.observe(document.body, {
   subtree: true,
 });
 console.log('VoteSync activated.');
-
