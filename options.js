@@ -6,10 +6,14 @@ async function setDebug(value) {
 
 // Send verbose setting to content script
 async function updateVerboseSetting(value) {
-  const tabs = await browser.tabs.query({
-    url: '*://www.reddit.com/*',
-    frozen: false,
-  });
+  // Firefox's tabs.query rejects unknown properties like "frozen"
+  const isFirefox = navigator.userAgent.includes('Firefox');
+
+  const query = isFirefox
+    ? { url: '*://www.reddit.com/*', discarded: false }
+    : { url: '*://www.reddit.com/*', frozen: false };
+
+  const tabs = await browser.tabs.query(query);
 
   for (const tab of tabs) {
     try {
@@ -18,7 +22,7 @@ async function updateVerboseSetting(value) {
         value: value,
       });
     } catch (err) {
-      console.warn(`Could not send message to tab ${tab.id}:`, err);
+      console.log(`Could not send message to tab ${tab.id}:`, err);
     }
   }
 }

@@ -1,15 +1,24 @@
-<!DOCTYPE html version="1.0" viewport="width=device-width, initial-scale=1.0" title="Reddit Web Fix Options">
+<!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Options Page — Reddit Web Fix</title>
     <script src="browser-polyfill.min.js"></script>
     <script defer type="module" src="options.js"></script>
   </head>
   <body>
-    <h2 style="color: #4d4a4a;">Options</h2>
-    <p>Enable debug mode to log information to the console.</p>
+    <h2 style="color: #4d4a4a">Options</h2>
+    <p>Enable to log debug events to the console.</p>
     <label>
       <input type="checkbox" id="debugToggle" aria-label="debug" />
       Enable Debug Mode
     </label>
   </body>
+  <footer>
+    <p style="font-size: small; color: #4d4a4a">
+      <a href="privacy.html" target="_blank" rel="noopener noreferrer"
+        >Privacy Policy</a
+      >
+    </p>
 </html>
