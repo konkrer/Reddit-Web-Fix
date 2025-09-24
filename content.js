@@ -193,6 +193,9 @@ class VoteSync {
           vote: 'Clear',
           count: this.calcCount('Clear', prevVoteState, currCount),
         };
+        if (btnRestoredState === undefined) {
+          this.watchForClearVoteNotCleared(e.target, prevVoteState, currCount);
+        }
       } else {
         this.sessionStorage[targetId] = {
           vote: 'U',
@@ -218,6 +221,9 @@ class VoteSync {
           vote: 'Clear',
           count: this.calcCount('Clear', prevVoteState, currCount),
         };
+        if (btnRestoredState === undefined) {
+          this.watchForClearVoteNotCleared(e.target, prevVoteState, currCount);
+        }
       } else {
         this.sessionStorage[targetId] = {
           vote: 'D',
@@ -231,6 +237,34 @@ class VoteSync {
     }
     this.setCountInUI(e.target);
   };
+
+  watchForClearVoteNotCleared(sp, initialState, currCount) {
+    // watch for case of upvote in UI not clearing because of reddit desync.
+    // the desync is of an already seen post showing upvote in UI but does not clear when upvote clicked.
+    // behind the scenes reddit local vote state is clear but UI shows upvote.
+    // need to reset vote state to original voteType and count and show sync animation
+    setTimeout(() => {
+      const btnSpan = this.getButtonSpan(sp);
+      if (btnSpan === null) return;
+      const currUIState = btnSpan.classList.contains('bg-action-upvote')
+        ? 'U'
+        : btnSpan.classList.contains('bg-action-downvote')
+        ? 'D'
+        : 'Clear';
+      // if state is still upvote or downvote after clicking upvote/downvote to clear vote
+      // reset state to upvote and count to match UI and show sync animation
+      if (currUIState === initialState) {
+        if (this.verbose)
+          console.log('Upvote not cleared, syncing state.', sp.id);
+        this.sessionStorage[sp.id] = {
+          vote: initialState,
+          count: currCount,
+        };
+        clickIgnoredAnimation(btnSpan);
+        this.setCountInUI(sp);
+      }
+    }, 0);
+  }
 
   getCountFromUI(sp) {
     return sp.shadowRoot
