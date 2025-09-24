@@ -1,5 +1,8 @@
 .vscode/
 manifest copy.json
-notes.txt
+*.txt
 notes.*
-reddit-web-fix.zip
+*.zip
+icons/*
+store description.md
+.DS_Store

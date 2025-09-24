@@ -6,6 +6,7 @@ let verbose = false;
 // placeholders for constants imported from constants.js
 let btnClsUD, btnClsStd, spnClsUp, spnClsDwn;
 let svgUpFilledPathD, svgDwnFillPathD, svgUpHollowPathD, svgDwnHollowPathD;
+let clickIgnoredAnimation;
 
 (() => {
   let port;
@@ -27,7 +28,7 @@ let svgUpFilledPathD, svgDwnFillPathD, svgUpHollowPathD, svgDwnHollowPathD;
 
     port.onDisconnect.addListener(() => {
       port = null;
-      // Attempt to reconnect  
+      // Attempt to reconnect
       setTimeout(initPort, 1000);
     });
   }
@@ -47,10 +48,16 @@ let svgUpFilledPathD, svgDwnFillPathD, svgUpHollowPathD, svgDwnHollowPathD;
       svgDwnHollowPathD = mod.svgDwnHollowPathD;
     })
     .catch(err => console.error('Failed to load constants module:', err));
+
+  const animURL = chrome.runtime.getURL('animation.js');
+  import(animURL)
+    .then(mod => {
+      clickIgnoredAnimation = mod.clickIgnoredAnimation;
+    })
+    .catch(err => console.error('Failed to load animation module:', err));
 })();
 
-// load the polyfill for browser API support in Chrome
-// must be done this way to work in Manifest V3
+// Load the browser polyfill for async compatibility
 const polyfillURL = chrome.runtime.getURL('browser-polyfill.min.js');
 import(polyfillURL)
   .then(() => {
@@ -60,7 +67,7 @@ import(polyfillURL)
       .then(mod => {
         const getDebug = mod.getGetDebug(browser);
         (async () => {
-          // get debug setting and set local variable verbose
+          // get debug setting from storage and set local variable verbose
           const debug = await getDebug();
           verbose = debug;
           if (VS) VS.verbose = debug;
@@ -150,16 +157,17 @@ class VoteSync {
       const pathElem = e.composedPath()[i];
       if (pathElem === undefined || pathElem.hasAttribute === undefined)
         continue;
-      if (pathElem.hasAttribute('upvote')) return [true, 'upvote'];
-      else if (pathElem.hasAttribute('downvote')) return [true, 'downvote'];
+      if (pathElem.hasAttribute('upvote')) return [true, 'upvote', pathElem];
+      else if (pathElem.hasAttribute('downvote'))
+        return [true, 'downvote', pathElem];
     }
-    return [false, null];
+    return [false, null, null];
   }
 
   handleVotes = e => {
     const targetId = e.target.id;
     if (!targetId || e.target.tagName.toLowerCase() !== 'shreddit-post') return;
-    const [voteClick, voteType] = this.findVoteClickEventInSD(e);
+    const [voteClick, voteType, btnElem] = this.findVoteClickEventInSD(e);
     if (voteClick === false) return;
 
     const btnRestoredState = this.btnStateRestored[targetId];
@@ -175,6 +183,7 @@ class VoteSync {
       // from upvote ignore click - UI is catching up to state currently showing
       if (btnRestoredState == 'U' || btnRestoredState == 'Clear: U') {
         this.setCountInUI(e.target);
+        if (clickIgnoredAnimation) clickIgnoredAnimation(btnElem);
         return;
       }
       if (this.verbose) console.log('up click', targetId);
@@ -199,6 +208,7 @@ class VoteSync {
       // from downvote ignore click - UI is catching up to state currently showing
       if (btnRestoredState == 'D' || btnRestoredState == 'Clear: D') {
         this.setCountInUI(e.target);
+        if (clickIgnoredAnimation) clickIgnoredAnimation(btnElem);
         return;
       }
       if (this.verbose) console.log('down click', targetId);

@@ -1,3 +1,7 @@
+"use strict";
+
+// Options page script to manage debug setting
+
 let getDebug, setDebug;
 
 const storage = chrome.runtime.getURL('storage.js');

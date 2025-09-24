@@ -1,3 +1,7 @@
+"use strict";
+
+// Service Worker script to manage communication between options and content scripts
+
 // Maintain a map: tabId -> Port
 const portsByTab = new Map();
 
