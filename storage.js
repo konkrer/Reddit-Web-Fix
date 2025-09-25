@@ -9,6 +9,6 @@ export function getGetDebug(browser) {
 export function getSetDebug(browser) {
   return async function setDebug(value) {
     await browser.storage.local.set({ debug: value });
-    console.log('Debug setting saved:', value);
+    console.debug('Debug setting saved:', value);
   };
 }

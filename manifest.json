@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "description": "Fixes posts upvote and downvote highlight behavior and syncs the post vote count when visiting the post comments page.",
   "permissions": ["storage"],
-  "host_permissions": ["https://www.reddit.com/*"],
   "content_scripts": [
     {
       "matches": ["https://www.reddit.com/*"],
@@ -15,7 +14,14 @@
 
   "web_accessible_resources": [
     {
-      "resources": ["browser-polyfill.min.js", "constants.js", "storage.js", "icons/goldenSyncIcon_custom.png", "animation.js"],
+      "resources": [
+        "browser-polyfill.min.js",
+        "constants.js",
+        "storage.js",
+        "icons/goldenSyncIcon.png",
+        "animation.js",
+        "VoteSync.js"
+      ],
       "matches": ["https://www.reddit.com/*"]
     }
   ],

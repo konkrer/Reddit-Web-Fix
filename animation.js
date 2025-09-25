@@ -1,5 +1,6 @@
 'use strict';
 
+
 // Creates and runs a brief animation on the given button element
 
 export function clickIgnoredAnimation(btnElem) {
@@ -11,7 +12,7 @@ export function clickIgnoredAnimation(btnElem) {
 
   const animImg = document.createElement('img');
   animImg.setAttribute('data-sync-anim', '1');
-  animImg.src = chrome.runtime.getURL('icons/goldenSyncIcon_custom.png');
+  animImg.src = chrome.runtime.getURL('icons/goldenSyncIcon.png');
   Object.assign(animImg.style, {
     width: '26px',
     height: '26px',
@@ -27,7 +28,7 @@ export function clickIgnoredAnimation(btnElem) {
     willChange: 'transform, opacity',
     userSelect: 'none',
     MozUserSelect: 'none',
-    border: '2px solid limegreen',
+    // border: '2px solid limegreen',
     borderRadius: '50%',
     backgroundColor: 'rgba(0,0,0,1.0)',
   });

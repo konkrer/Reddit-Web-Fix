@@ -4,5 +4,5 @@ manifest copy.json
 notes.*
 *.zip
 icons/*
-store description.md
+store-description.md
 .DS_Store

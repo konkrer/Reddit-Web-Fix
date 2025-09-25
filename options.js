@@ -24,7 +24,7 @@ async function updateVerboseSetting(value) {
       value: value,
     });
   } catch (err) {
-    console.log('Could not send message', err);
+    console.debug('Could not send message', err);
   }
 }
 
