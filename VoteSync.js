@@ -6,7 +6,7 @@ let btnClsUD, btnClsStd, spnClsUp, spnClsDwn;
 let svgUpFilledPathD, svgDwnFillPathD, svgUpHollowPathD, svgDwnHollowPathD;
 let clickIgnoredAnimation;
 
-// Dynamic import of helper modules
+// Dynamic import of constants and animation modules
 (() => {
   const constantsURL = chrome.runtime.getURL('constants.js');
   import(constantsURL)
@@ -23,6 +23,7 @@ let clickIgnoredAnimation;
     .catch(err => {
       console.error('Could not load constants module', err);
     });
+
   const clickAnimURL = chrome.runtime.getURL('animation.js');
   import(clickAnimURL)
     .then(mod => {
@@ -126,10 +127,12 @@ export default class VoteSync {
   }
 
   handleVotes = e => {
+    // function to handle vote button clicks and update state as appropriate
+    // also trigger ignored click animation if needed
     const targetId = e.target.id;
     if (!targetId || e.target.tagName.toLowerCase() !== 'shreddit-post') return;
     const [voteClick, voteType, btnElem] = this.findVoteClickEventInSD(e);
-    if (voteClick === false) return;
+    if (!voteClick) return;
 
     const btnRestoredState = this.btnStateRestored[targetId];
     delete this.btnStateRestored[targetId];
@@ -138,85 +141,76 @@ export default class VoteSync {
     let currCount =
       this.sessionStorage[targetId]?.count || this.getCountFromUI(e.target);
 
-    // if upvote button clicked
+    const handleClearVote = () => {
+      this.sessionStorage[targetId] = {
+        vote: 'Clear',
+        count: this.calcCount('Clear', prevVoteState, currCount),
+      };
+      if (btnRestoredState === undefined) {
+        this.watchForVoteNotCleared(e.target, prevVoteState, currCount);
+      }
+    };
+
+    const handleSetVote = vote => {
+      this.sessionStorage[targetId] = {
+        vote,
+        count: this.calcCount(voteType, prevVoteState, currCount),
+      };
+      if (
+        (vote === 'U' && prevVoteState === 'D' && btnRestoredState === 'D') ||
+        (vote === 'D' && prevVoteState === 'U' && btnRestoredState === 'U')
+      ) {
+        const syncFn =
+          vote === 'U'
+            ? this.syncUpvoteAppearance
+            : this.syncDownvoteAppearance;
+        syncFn.call(this, this.getButtonSpan(e.target));
+      }
+    };
+
+    const handleIgnoredClick = () => {
+      this.setCountInUI(e.target);
+      if (clickIgnoredAnimation) clickIgnoredAnimation(btnElem);
+    };
+
     if (voteType === 'upvote') {
-      // if button was restored to upvote or restored to clear
-      // from upvote ignore click - UI is catching up to state currently showing
       if (btnRestoredState == 'U' || btnRestoredState == 'Clear: U') {
-        this.setCountInUI(e.target);
-        if (clickIgnoredAnimation) clickIgnoredAnimation(btnElem);
+        handleIgnoredClick();
         return;
       }
       if (this.verbose) console.debug('up click', targetId);
-
       if (prevVoteState === 'U') {
-        this.sessionStorage[targetId] = {
-          vote: 'Clear',
-          count: this.calcCount('Clear', prevVoteState, currCount),
-        };
-        if (btnRestoredState === undefined) {
-          this.watchForClearVoteNotCleared(e.target, prevVoteState, currCount);
-        }
+        handleClearVote();
       } else {
-        this.sessionStorage[targetId] = {
-          vote: 'U',
-          count: this.calcCount(voteType, prevVoteState, currCount),
-        };
-        // if going from down to up and down was restored need to remove solid down arrow
-        if (prevVoteState === 'D' && btnRestoredState === 'D') {
-          this.syncUpvoteAppearance(this.getButtonSpan(e.target));
-        }
+        handleSetVote('U');
       }
     } else if (voteType === 'downvote') {
-      // if button was restored to downvote or restored to clear
-      // from downvote ignore click - UI is catching up to state currently showing
       if (btnRestoredState == 'D' || btnRestoredState == 'Clear: D') {
-        this.setCountInUI(e.target);
-        if (clickIgnoredAnimation) clickIgnoredAnimation(btnElem);
+        handleIgnoredClick();
         return;
       }
       if (this.verbose) console.debug('down click', targetId);
-
       if (prevVoteState === 'D') {
-        this.sessionStorage[targetId] = {
-          vote: 'Clear',
-          count: this.calcCount('Clear', prevVoteState, currCount),
-        };
-        if (btnRestoredState === undefined) {
-          this.watchForClearVoteNotCleared(e.target, prevVoteState, currCount);
-        }
+        handleClearVote();
       } else {
-        this.sessionStorage[targetId] = {
-          vote: 'D',
-          count: this.calcCount(voteType, prevVoteState, currCount),
-        };
-        // if going from up to down and up was restored need to remove solid up arrow
-        if (prevVoteState === 'U' && btnRestoredState === 'U') {
-          this.syncDownvoteAppearance(this.getButtonSpan(e.target));
-        }
+        handleSetVote('D');
       }
     }
     this.setCountInUI(e.target);
   };
 
-  watchForClearVoteNotCleared(sp, initialState, currCount) {
-    // watch for case of upvote in UI not clearing because of reddit desync.
-    // the desync is of an already seen post showing upvote in UI but does not clear when upvote clicked.
-    // behind the scenes reddit local vote state is clear but UI shows upvote.
+  watchForVoteNotCleared(sp, initialState, currCount) {
+    // watch for case when action that should clear vote does not clear the UI state
     // need to reset vote state to original voteType and count and show sync animation
     setTimeout(() => {
       const btnSpan = this.getButtonSpan(sp);
       if (btnSpan === null) return;
-      const currUIState = btnSpan.classList.contains('bg-action-upvote')
-        ? 'U'
-        : btnSpan.classList.contains('bg-action-downvote')
-        ? 'D'
-        : 'Clear';
+      const currUIState = this.getVoteStateFromUI(btnSpan);
       // if state is still upvote or downvote after clicking upvote/downvote to clear vote
-      // reset state to upvote and count to match UI and show sync animation
       if (currUIState === initialState) {
         if (this.verbose)
           console.debug('Upvote not cleared, syncing state.', sp.id);
+        // reset vote state and count to match UI and show sync animation
         this.sessionStorage[sp.id] = {
           vote: initialState,
           count: currCount,
@@ -227,8 +221,16 @@ export default class VoteSync {
     }, 0);
   }
 
+  getVoteStateFromUI(btnSpan) {
+    return btnSpan.classList.contains('bg-action-upvote')
+      ? 'U'
+      : btnSpan.classList.contains('bg-action-downvote')
+      ? 'D'
+      : 'Clear';
+  }
+
   getCountFromUI(sp) {
-    return sp.shadowRoot
+    return +sp.shadowRoot
       .querySelector('faceplate-number')
       .getAttribute('number');
   }
@@ -240,14 +242,26 @@ export default class VoteSync {
   };
 
   calcCount(voteType, prevVoteState, count) {
-    if (prevVoteState === undefined) return count;
+    // calculate new count based on previous state and vote action
+    // if prevVoteState undefined return current count
+    if (prevVoteState === undefined) return +count;
+
+    // if upvote clicked
     if (voteType === 'upvote') {
+      // if previous state was clear, increment by 1
+      // if previous state was downvote, increment by 2
       if (prevVoteState == 'Clear') return +count + 1;
       else if (prevVoteState === 'D') return +count + 2;
+      // if downvote clicked
     } else if (voteType === 'downvote') {
+      // if previous state was clear, decrement by 1
+      // if previous state was upvote, decrement by 2
       if (prevVoteState == 'Clear') return +count - 1;
       else if (prevVoteState == 'U') return +count - 2;
+      // if clear vote clicked
     } else if (voteType === 'Clear') {
+      // if previous state was upvote, decrement by 1
+      // if previous state was downvote, increment by 1
       if (prevVoteState === 'U') return +count - 1;
       else if (prevVoteState === 'D') return +count + 1;
     }
@@ -258,6 +272,8 @@ export default class VoteSync {
   }
 
   syncLikes(key) {
+    // sync UI state with stored state
+    // if detail page do not sync
     if (this.detail) return;
 
     const updateAppearance = k => {
@@ -269,11 +285,9 @@ export default class VoteSync {
 
       const dir = this.sessionStorage[k].vote;
       const btnSpan = this.getButtonSpan(sp);
-      const initState = btnSpan.classList.contains('bg-action-upvote')
-        ? 'U'
-        : btnSpan.classList.contains('bg-action-downvote')
-        ? 'D'
-        : 'Clear';
+      const initState = this.getVoteStateFromUI(btnSpan);
+      if (btnSpan === null || dir === undefined || initState === undefined)
+        return;
 
       if (dir === 'U' && !(initState === 'U')) {
         this.syncUpvoteAppearance(btnSpan);
