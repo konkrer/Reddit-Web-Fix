@@ -86,11 +86,12 @@ export default class VoteSync {
 
   copyPostVoteState(sp) {
     const btnSpan = this.getButtonSpan(sp);
-    if (btnSpan === null) return;
+    if (!btnSpan) return;
     if (!this.detail && sp.hasAttribute('post-seen')) {
       return;
     }
     const count = this.getCountFromUI(sp);
+    if (isNaN(count)) return;
     // if classes present for up/down condition set state
     if (btnSpan.classList.contains('bg-action-upvote')) {
       this.sessionStorage[sp.id] = { vote: 'U', count };
@@ -140,7 +141,9 @@ export default class VoteSync {
     const prevVoteState = this.sessionStorage[targetId]?.vote;
     let currCount =
       this.sessionStorage[targetId]?.count || this.getCountFromUI(e.target);
+    if (isNaN(currCount)) return;
 
+    // clear vote handler
     const handleClearVote = () => {
       this.sessionStorage[targetId] = {
         vote: 'Clear',
@@ -150,7 +153,7 @@ export default class VoteSync {
         this.watchForVoteNotCleared(e.target, prevVoteState, currCount);
       }
     };
-
+    // set vote handler
     const handleSetVote = vote => {
       this.sessionStorage[targetId] = {
         vote,
@@ -168,11 +171,13 @@ export default class VoteSync {
       }
     };
 
+    // ignored click handler
     const handleIgnoredClick = () => {
       this.setCountInUI(e.target);
       if (clickIgnoredAnimation) clickIgnoredAnimation(btnElem);
     };
 
+    // logic to handle vote click based on type and previous state
     if (voteType === 'upvote') {
       if (btnRestoredState == 'U' || btnRestoredState == 'Clear: U') {
         handleIgnoredClick();
@@ -204,7 +209,7 @@ export default class VoteSync {
     // need to reset vote state to original voteType and count and show sync animation
     setTimeout(() => {
       const btnSpan = this.getButtonSpan(sp);
-      if (btnSpan === null) return;
+      if (!btnSpan) return;
       const currUIState = this.getVoteStateFromUI(btnSpan);
       // if state is still upvote or downvote after clicking upvote/downvote to clear vote
       if (currUIState === initialState) {
@@ -283,7 +288,7 @@ export default class VoteSync {
       const dir = this.sessionStorage[k].vote;
       const btnSpan = this.getButtonSpan(sp);
       const initState = this.getVoteStateFromUI(btnSpan);
-      if (btnSpan === null || dir === undefined || initState === undefined)
+      if (!btnSpan || dir === undefined || initState === undefined)
         return;
 
       if (dir === 'U' && !(initState === 'U')) {
@@ -313,7 +318,7 @@ export default class VoteSync {
   }
 
   syncUpvoteAppearance(btnSpan) {
-    if (btnSpan === null ||spnClsUp === undefined) return;
+    if (!btnSpan || spnClsUp === undefined) return;
     const [buttonUp, buttonDn, pathUp, pathDn] =
       this.getButtonsSvgPaths(btnSpan);
 
@@ -330,7 +335,7 @@ export default class VoteSync {
   }
 
   syncDownvoteAppearance(btnSpan) {
-    if (btnSpan === null || spnClsUp === undefined) return;
+    if (!btnSpan || spnClsUp === undefined) return;
     const [buttonUp, buttonDn, pathUp, pathDn] =
       this.getButtonsSvgPaths(btnSpan);
 
@@ -347,7 +352,7 @@ export default class VoteSync {
   }
 
   syncClearAppearance(btnSpan) {
-    if (btnSpan === null || spnClsUp === undefined) return;
+    if (!btnSpan || spnClsUp === undefined) return;
     const [buttonUp, buttonDn, pathUp, pathDn] =
       this.getButtonsSvgPaths(btnSpan);
 
