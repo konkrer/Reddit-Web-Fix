@@ -8,7 +8,7 @@ let clickIgnoredAnimation;
 
 // Dynamic import of constants and animation modules
 (() => {
-  const constantsURL = chrome.runtime.getURL('constants.js');
+  const constantsURL = chrome.runtime.getURL('src/content/constants.js');
   import(constantsURL)
     .then(mod => {
       btnClsUD = mod.btnClsUD;
@@ -24,7 +24,7 @@ let clickIgnoredAnimation;
       console.error('Could not load constants module', err);
     });
 
-  const clickAnimURL = chrome.runtime.getURL('animation.js');
+  const clickAnimURL = chrome.runtime.getURL('src/content/animation.js');
   import(clickAnimURL)
     .then(mod => {
       clickIgnoredAnimation = mod.clickIgnoredAnimation;
@@ -230,14 +230,11 @@ export default class VoteSync {
   }
 
   getCountFromUI(sp) {
-    return +sp.shadowRoot
-      .querySelector('faceplate-number')
-      .getAttribute('number');
+    return +sp.shadowRoot?.querySelector('faceplate-number')?.getAttribute('number');
   }
 
   setCountInUI = sp => {
-    sp.shadowRoot
-      .querySelector('faceplate-number')
+    sp.shadowRoot?.querySelector('faceplate-number')
       .setAttribute('number', this.sessionStorage[sp.id].count.toString());
   };
 
@@ -268,7 +265,7 @@ export default class VoteSync {
   }
 
   getButtonSpan(sp) {
-    return sp.shadowRoot.querySelector('[data-post-click-location="vote"]');
+    return sp.shadowRoot?.querySelector('[data-post-click-location="vote"]');
   }
 
   syncLikes(key) {
@@ -316,7 +313,7 @@ export default class VoteSync {
   }
 
   syncUpvoteAppearance(btnSpan) {
-    if (spnClsDwn === undefined) return;
+    if (btnSpan === null ||spnClsUp === undefined) return;
     const [buttonUp, buttonDn, pathUp, pathDn] =
       this.getButtonsSvgPaths(btnSpan);
 
@@ -333,7 +330,7 @@ export default class VoteSync {
   }
 
   syncDownvoteAppearance(btnSpan) {
-    if (spnClsDwn === undefined) return;
+    if (btnSpan === null || spnClsUp === undefined) return;
     const [buttonUp, buttonDn, pathUp, pathDn] =
       this.getButtonsSvgPaths(btnSpan);
 
@@ -350,7 +347,7 @@ export default class VoteSync {
   }
 
   syncClearAppearance(btnSpan) {
-    if (spnClsDwn === undefined) return;
+    if (btnSpan === null || spnClsUp === undefined) return;
     const [buttonUp, buttonDn, pathUp, pathDn] =
       this.getButtonsSvgPaths(btnSpan);
 

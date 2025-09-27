@@ -4,7 +4,7 @@
 
 let getDebug, setDebug;
 
-const storage = chrome.runtime.getURL('storage.js');
+const storage = chrome.runtime.getURL('src/utils/storage.js');
 import(storage).then(mod => {
   getDebug = mod.getGetDebug(browser);
   setDebug = mod.getSetDebug(browser);

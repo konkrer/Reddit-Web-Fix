@@ -42,11 +42,11 @@ let VERBOSE = false;
 })();
 
 // Load the browser polyfill for async compatibility
-const polyfillURL = chrome.runtime.getURL('browser-polyfill.min.js');
+const polyfillURL = chrome.runtime.getURL('src/polyfill/browser-polyfill.min.js');
 import(polyfillURL)
   .then(() => {
     // dynamically import storage module to get getGetDebug function
-    const storage = chrome.runtime.getURL('storage.js');
+    const storage = chrome.runtime.getURL('src/utils/storage.js');
     import(storage)
       .then(mod => {
         const getDebug = mod.getGetDebug(browser);
@@ -101,7 +101,7 @@ function startMainObserver() {
   }
 }
 
-function stopMainObserver() {
+function stopMainObserver() { 
   if (!mainObserver) return;
   try {
     mainObserver.disconnect();
@@ -143,7 +143,7 @@ function stopHrefPoller() {
 
 (async function loadAndInit() {
   try {
-    const voteSyncURL = chrome.runtime.getURL('VoteSync.js');
+    const voteSyncURL = chrome.runtime.getURL('src/content/VoteSync.js');
     const mod = await import(voteSyncURL);
     if (mod) {
       VoteSync = mod.default;

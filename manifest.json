@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Reddit Web Fix",
-  "version": "1.0.0",
-  "description": "Fixes posts upvote and downvote highlight behavior and syncs the post vote count when visiting the post comments page.",
+  "version": "0.0.0.1",
+  "description": "Fixes posts upvote and downvote highlight behavior and syncs posts vote count sensibly.",
   "permissions": ["storage"],
   "content_scripts": [
     {
       "matches": ["https://www.reddit.com/*"],
-      "js": ["content.js"],
+      "js": ["src/content/content.js"],
       "run_at": "document_idle"
     }
   ],
@@ -15,18 +15,18 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "browser-polyfill.min.js",
-        "constants.js",
-        "storage.js",
+        "src/polyfill/browser-polyfill.min.js",
+        "src/content/constants.js",
+        "src/utils/storage.js",
         "icons/goldenSyncIcon.png",
-        "animation.js",
-        "VoteSync.js"
+        "src/content/animation.js",
+        "src/content/VoteSync.js"
       ],
       "matches": ["https://www.reddit.com/*"]
     }
   ],
   "options_ui": {
-    "page": "options.html",
+    "page": "src/options/options.html",
     "open_in_tab": false
   },
   "content_security_policy": {
@@ -46,6 +46,7 @@
     }
   },
   "background": {
-    "service_worker": "serviceWorker.js"
+    "service_worker": "src/background/serviceWorker.js",
+    "scripts": ["src/background/serviceWorker.js"]
   }
 }

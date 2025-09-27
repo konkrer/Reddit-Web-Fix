@@ -21,7 +21,8 @@ Small browser extension that improves Reddit's post-vote UI by keeping up/down h
 
 - manifest-both.json — extension manifest - make changes here (MV3)
 - manifest.json — last browser specific manifest created (Firefox needs "scripting" field in manifest)
-- content.js — main content script (VoteSync class)
+- content.js — main content script
+- VoteSync.js — VoteSync class, holds state and logic for post vote and count syncing.
 - constants.js — UI class names and SVG path constants
 - browser-polyfill.min.js — web extension polyfill
 - options.html / options.js — options page for debug setting
