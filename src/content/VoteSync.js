@@ -1,10 +1,24 @@
 'use strict';
 
 // placeholders for imported modules and constants
-const addHandlersDelay = 0;
 let btnClsUD, btnClsStd, spnClsUp, spnClsDwn;
 let svgUpFilledPathD, svgDwnFillPathD, svgUpHollowPathD, svgDwnHollowPathD;
 let clickIgnoredAnimation;
+
+// VoteSync settings
+const ADD_HANDLERS_DELAY = 0;
+// The reddit named html element with post data that is a shadow host.
+const REDDIT_POST_HOST = 'shreddit-post';
+// The reddit named html element with the changeable post count as an attribute.
+const REDDIT_COUNT_EL = 'faceplate-number';
+// The html element that holds the vote buttons identifiable by attribute.
+const REDDIT_BTN_CONTAINER = '[data-post-click-location="vote"]';
+// These classes present on REDDIT_BTN_CONTAINER indicate vote state.
+const UPVOTE_INDICATOR_CLASS = 'bg-action-upvote';
+const DOWNVOTE_INDICATOR_CLASS = 'bg-action-downvote';
+// Upvote and downvote button indicator attributes.
+const BTN_UPVOTE_INDICATOR = 'upvote';
+const BTN_DOWNVOTE_INDICATOR = 'downvote';
 
 // Dynamic import of constants and animation modules
 (() => {
@@ -39,14 +53,14 @@ export default class VoteSync {
   constructor(verbose = true, isBlockedPath, HO) {
     this.verbose = verbose;
     this.isBlockedPath = isBlockedPath;
-    this.HO = HO;
-    this.PO = undefined;
+    this.HO = HO; // Href Observer
+    this.PO = undefined; // Post Observer
     this.sessionStorage = {};
     this.stateCopied = new Set();
     this.btnStateRestored = {};
     this.currentPage = undefined;
     this.detail = undefined;
-    
+
     this.testForPageChange(1000);
     if (this.verbose) console.debug('VoteSync initialized.');
   }
@@ -71,12 +85,12 @@ export default class VoteSync {
       }
       this.testForDetailPage();
       this.stateCopied.clear();
-      setTimeout(this.addCopySync, delay || addHandlersDelay);
+      setTimeout(this.addCopySync, delay || ADD_HANDLERS_DELAY);
     }
   }
 
   getShredditPosts() {
-    const sPosts = document.querySelectorAll('shreddit-post');
+    const sPosts = document.querySelectorAll(REDDIT_POST_HOST);
     return sPosts;
   }
 
@@ -97,10 +111,10 @@ export default class VoteSync {
     const count = this.getCountFromUI(sp);
     if (isNaN(count)) return;
     // if classes present for up/down condition set state
-    if (btnSpan.classList.contains('bg-action-upvote')) {
+    if (btnSpan.classList.contains(UPVOTE_INDICATOR_CLASS)) {
       this.sessionStorage[sp.id] = { vote: 'U', count };
       this.stateCopied.add(sp.id);
-    } else if (btnSpan.classList.contains('bg-action-downvote')) {
+    } else if (btnSpan.classList.contains(DOWNVOTE_INDICATOR_CLASS)) {
       this.sessionStorage[sp.id] = { vote: 'D', count };
       this.stateCopied.add(sp.id);
     } else if (this.detail) {
@@ -124,9 +138,10 @@ export default class VoteSync {
       const pathElem = e.composedPath()[i];
       if (pathElem === undefined || pathElem.hasAttribute === undefined)
         continue;
-      if (pathElem.hasAttribute('upvote')) return [true, 'upvote', pathElem];
-      else if (pathElem.hasAttribute('downvote'))
-        return [true, 'downvote', pathElem];
+      if (pathElem.hasAttribute(BTN_UPVOTE_INDICATOR))
+        return [true, BTN_UPVOTE_INDICATOR, pathElem];
+      else if (pathElem.hasAttribute(BTN_DOWNVOTE_INDICATOR))
+        return [true, BTN_DOWNVOTE_INDICATOR, pathElem];
     }
     return [false, null, null];
   }
@@ -135,7 +150,8 @@ export default class VoteSync {
     // function to handle vote button clicks and update state as appropriate
     // also trigger ignored click animation if needed
     const targetId = e.target.id;
-    if (!targetId || e.target.tagName.toLowerCase() !== 'shreddit-post') return;
+    if (!targetId || e.target.tagName.toLowerCase() !== REDDIT_POST_HOST)
+      return;
     const [voteClick, voteType, btnElem] = this.findVoteClickEventInSD(e);
     if (!voteClick) return;
 
@@ -157,6 +173,7 @@ export default class VoteSync {
         this.watchForVoteNotCleared(e.target, prevVoteState, currCount);
       }
     };
+
     // set vote handler
     const handleSetVote = vote => {
       this.sessionStorage[targetId] = {
@@ -164,13 +181,15 @@ export default class VoteSync {
         count: this.calcCount(voteType, prevVoteState, currCount),
       };
       if (
+        // if going from restored down to up, or restored up to down
         (vote === 'U' && prevVoteState === 'D' && btnRestoredState === 'D') ||
         (vote === 'D' && prevVoteState === 'U' && btnRestoredState === 'U')
       ) {
+        // force UI reset to show proper vote state, remove contraindicating svg arrows
         const syncFn =
           vote === 'U'
-            ? this.syncUpvoteAppearance
-            : this.syncDownvoteAppearance;
+            ? syncUpvoteAppearance
+            : syncDownvoteAppearance;
         syncFn.call(this, this.getButtonSpan(e.target));
       }
     };
@@ -182,7 +201,7 @@ export default class VoteSync {
     };
 
     // logic to handle vote click based on type and previous state
-    if (voteType === 'upvote') {
+    if (voteType === BTN_UPVOTE_INDICATOR) {
       if (btnRestoredState == 'U' || btnRestoredState == 'Clear: U') {
         handleIgnoredClick();
         return;
@@ -193,7 +212,7 @@ export default class VoteSync {
       } else {
         handleSetVote('U');
       }
-    } else if (voteType === 'downvote') {
+    } else if (voteType === BTN_DOWNVOTE_INDICATOR) {
       if (btnRestoredState == 'D' || btnRestoredState == 'Clear: D') {
         handleIgnoredClick();
         return;
@@ -231,22 +250,22 @@ export default class VoteSync {
   }
 
   getVoteStateFromUI(btnSpan) {
-    return btnSpan.classList.contains('bg-action-upvote')
+    return btnSpan.classList.contains(UPVOTE_INDICATOR_CLASS)
       ? 'U'
-      : btnSpan.classList.contains('bg-action-downvote')
+      : btnSpan.classList.contains(DOWNVOTE_INDICATOR_CLASS)
       ? 'D'
       : 'Clear';
   }
 
   getCountFromUI(sp) {
     return +sp.shadowRoot
-      ?.querySelector('faceplate-number')
+      ?.querySelector(REDDIT_COUNT_EL)
       ?.getAttribute('number');
   }
 
   setCountInUI = sp => {
     sp.shadowRoot
-      ?.querySelector('faceplate-number')
+      ?.querySelector(REDDIT_COUNT_EL)
       .setAttribute('number', this.sessionStorage[sp.id].count.toString());
   };
 
@@ -256,13 +275,13 @@ export default class VoteSync {
     if (prevVoteState === undefined) return +count;
 
     // if upvote clicked
-    if (voteType === 'upvote') {
+    if (voteType === BTN_UPVOTE_INDICATOR) {
       // if previous state was clear, increment by 1
       // if previous state was downvote, increment by 2
       if (prevVoteState == 'Clear') return +count + 1;
       else if (prevVoteState === 'D') return +count + 2;
       // if downvote clicked
-    } else if (voteType === 'downvote') {
+    } else if (voteType === BTN_DOWNVOTE_INDICATOR) {
       // if previous state was clear, decrement by 1
       // if previous state was upvote, decrement by 2
       if (prevVoteState == 'Clear') return +count - 1;
@@ -277,7 +296,7 @@ export default class VoteSync {
   }
 
   getButtonSpan(sp) {
-    return sp.shadowRoot?.querySelector('[data-post-click-location="vote"]');
+    return sp.shadowRoot?.querySelector(REDDIT_BTN_CONTAINER);
   }
 
   syncLikes(key) {
@@ -298,80 +317,20 @@ export default class VoteSync {
       if (!btnSpan || dir === undefined || initState === undefined) return;
 
       if (dir === 'U' && !(initState === 'U')) {
-        this.syncUpvoteAppearance(btnSpan);
+        syncUpvoteAppearance(btnSpan);
         this.btnStateRestored[k] = dir;
       } else if (dir === 'D' && !(initState === 'D')) {
-        this.syncDownvoteAppearance(btnSpan);
+        syncDownvoteAppearance(btnSpan);
         this.btnStateRestored[k] = dir;
       } else if (dir === 'Clear' && !(initState === 'Clear')) {
-        this.syncClearAppearance(btnSpan);
+        syncClearAppearance(btnSpan);
         this.btnStateRestored[k] = `Clear: ${initState}`;
       }
       this.setCountInUI(sp);
     };
 
-    if (key) setTimeout(() => updateAppearance(key), addHandlersDelay);
+    if (key) setTimeout(() => updateAppearance(key), ADD_HANDLERS_DELAY);
     else Object.keys(this.sessionStorage).forEach(updateAppearance);
-  }
-
-  getButtonsSvgPaths(btnSpan) {
-    const buttonUp = btnSpan.querySelector('[upvote]');
-    const buttonDn = btnSpan.querySelector('[downvote]');
-    const pathUp = buttonUp.querySelector('path');
-    const pathDn = buttonDn.querySelector('path');
-
-    return [buttonUp, buttonDn, pathUp, pathDn];
-  }
-
-  syncUpvoteAppearance(btnSpan) {
-    if (!btnSpan || spnClsUp === undefined) return;
-    const [buttonUp, buttonDn, pathUp, pathDn] =
-      this.getButtonsSvgPaths(btnSpan);
-
-    btnSpan.classList.remove(...spnClsDwn.split(' '));
-    btnSpan.classList.add(...spnClsUp.split(' '));
-    buttonUp.classList.remove(...btnClsStd.split(' '));
-    buttonUp.classList.add(...btnClsUD.split(' '));
-    buttonUp.setAttribute('aria-pressed', 'true');
-    buttonDn.classList.remove(...btnClsUD.split(' '));
-    buttonDn.classList.add(...btnClsStd.split(' '));
-    buttonDn.setAttribute('aria-pressed', 'false');
-    pathDn.setAttribute('d', svgDwnHollowPathD);
-    pathUp.setAttribute('d', svgUpFilledPathD);
-  }
-
-  syncDownvoteAppearance(btnSpan) {
-    if (!btnSpan || spnClsUp === undefined) return;
-    const [buttonUp, buttonDn, pathUp, pathDn] =
-      this.getButtonsSvgPaths(btnSpan);
-
-    btnSpan.classList.remove(...spnClsUp.split(' '));
-    btnSpan.classList.add(...spnClsDwn.split(' '));
-    buttonUp.classList.remove(...btnClsUD.split(' '));
-    buttonUp.classList.add(...btnClsStd.split(' '));
-    buttonUp.setAttribute('aria-pressed', 'false');
-    buttonDn.classList.remove(...btnClsStd.split(' '));
-    buttonDn.classList.add(...btnClsUD.split(' '));
-    buttonDn.setAttribute('aria-pressed', 'true');
-    pathDn.setAttribute('d', svgDwnFillPathD);
-    pathUp.setAttribute('d', svgUpHollowPathD);
-  }
-
-  syncClearAppearance(btnSpan) {
-    if (!btnSpan || spnClsUp === undefined) return;
-    const [buttonUp, buttonDn, pathUp, pathDn] =
-      this.getButtonsSvgPaths(btnSpan);
-
-    btnSpan.classList.remove(...spnClsDwn.split(' '));
-    btnSpan.classList.remove(...spnClsUp.split(' '));
-    buttonUp.classList.remove(...btnClsUD.split(' '));
-    buttonUp.classList.add(...btnClsStd.split(' '));
-    buttonUp.setAttribute('aria-pressed', 'false');
-    buttonDn.classList.remove(...btnClsUD.split(' '));
-    buttonDn.classList.add(...btnClsStd.split(' '));
-    buttonDn.setAttribute('aria-pressed', 'false');
-    pathDn.setAttribute('d', svgDwnHollowPathD);
-    pathUp.setAttribute('d', svgUpHollowPathD);
   }
 
   testForDetailPage() {
@@ -379,4 +338,63 @@ export default class VoteSync {
       window.location.href
     );
   }
+}
+
+// UI VOTE STATE MANIPULATION FUNCTIONS //
+
+function getButtonsSvgPaths(btnSpan) {
+  const buttonUp = btnSpan.querySelector(`[${BTN_UPVOTE_INDICATOR}]`);
+  const buttonDn = btnSpan.querySelector(`[${BTN_DOWNVOTE_INDICATOR}]`);
+  const pathUp = buttonUp.querySelector('path');
+  const pathDn = buttonDn.querySelector('path');
+
+  return [buttonUp, buttonDn, pathUp, pathDn];
+}
+
+function syncUpvoteAppearance(btnSpan) {
+  if (!btnSpan || spnClsUp === undefined) return;
+  const [buttonUp, buttonDn, pathUp, pathDn] = getButtonsSvgPaths(btnSpan);
+
+  btnSpan.classList.remove(...spnClsDwn.split(' '));
+  btnSpan.classList.add(...spnClsUp.split(' '));
+  buttonUp.classList.remove(...btnClsStd.split(' '));
+  buttonUp.classList.add(...btnClsUD.split(' '));
+  buttonUp.setAttribute('aria-pressed', 'true');
+  buttonDn.classList.remove(...btnClsUD.split(' '));
+  buttonDn.classList.add(...btnClsStd.split(' '));
+  buttonDn.setAttribute('aria-pressed', 'false');
+  pathDn.setAttribute('d', svgDwnHollowPathD);
+  pathUp.setAttribute('d', svgUpFilledPathD);
+}
+
+function syncDownvoteAppearance(btnSpan) {
+  if (!btnSpan || spnClsUp === undefined) return;
+  const [buttonUp, buttonDn, pathUp, pathDn] = getButtonsSvgPaths(btnSpan);
+
+  btnSpan.classList.remove(...spnClsUp.split(' '));
+  btnSpan.classList.add(...spnClsDwn.split(' '));
+  buttonUp.classList.remove(...btnClsUD.split(' '));
+  buttonUp.classList.add(...btnClsStd.split(' '));
+  buttonUp.setAttribute('aria-pressed', 'false');
+  buttonDn.classList.remove(...btnClsStd.split(' '));
+  buttonDn.classList.add(...btnClsUD.split(' '));
+  buttonDn.setAttribute('aria-pressed', 'true');
+  pathDn.setAttribute('d', svgDwnFillPathD);
+  pathUp.setAttribute('d', svgUpHollowPathD);
+}
+
+function syncClearAppearance(btnSpan) {
+  if (!btnSpan || spnClsUp === undefined) return;
+  const [buttonUp, buttonDn, pathUp, pathDn] = getButtonsSvgPaths(btnSpan);
+
+  btnSpan.classList.remove(...spnClsDwn.split(' '));
+  btnSpan.classList.remove(...spnClsUp.split(' '));
+  buttonUp.classList.remove(...btnClsUD.split(' '));
+  buttonUp.classList.add(...btnClsStd.split(' '));
+  buttonUp.setAttribute('aria-pressed', 'false');
+  buttonDn.classList.remove(...btnClsUD.split(' '));
+  buttonDn.classList.add(...btnClsStd.split(' '));
+  buttonDn.setAttribute('aria-pressed', 'false');
+  pathDn.setAttribute('d', svgDwnHollowPathD);
+  pathUp.setAttribute('d', svgUpHollowPathD);
 }
