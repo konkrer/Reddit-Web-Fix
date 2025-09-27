@@ -1,46 +1,60 @@
 # Reddit Web Fix
 
-Small browser extension that improves Reddit's post-vote UI by keeping up/down highlights and updating the displayed vote count consistently while you browse.
+Small browser extension that improves Reddit's post-vote UI by preserving up/down highlights and updating the displayed vote count consistently while you browse.
 
 ## Features
 
+- Works with Chrome, Edge, and Firefox
 - Preserve upvote/downvote highlights across navigation
 - Keep displayed vote counts in sync with local interactions
+- No network calls, uses zero data. Simply uses information already seen for better user experience.
 - Lightweight modern extension (Manifest V3)
 - Options page to enable verbose/debug logging
 
 ## Quick install (developer)
 
-1. Open Chrome / Edge: chrome://extensions/ — Firefox: about:debugging#/runtime/this-firefox
-2. Enable "Developer mode" (Chrome/Edge) or click "Load Temporary Add-on" (Firefox).
-3. Click "Load unpacked" and select the repository folder for Chrome/Edge,
-   or for Firefox click "Load Temporary Add-on" and select the manifest.json file.
-4. Visit https://www.reddit.com and verify the extension is active (check the console for "VoteSync activated.").
+### Load Unpacked
+**Note**: `Run buildZip.sh` (see below) to create the proper `manifest.json` for browser type first.
+1. Open Chrome / Edge: chrome(edge)://extensions/ — Firefox: about:debugging#/runtime/this-firefox
+2. Enable "Developer mode" (Chrome/Edge).
+3. Chrome/Edge: Click "Load unpacked" and select the repository folder —
+   Firefox: Click "Load Temporary Add-on" and select the manifest.json file.
+4. Visit https://www.reddit.com and verify the extension is active (check the console for "Reddit Web Fix: activated.").
+
+### Load Zipped
+1. `Run buildZip.sh` (see below) to create the proper zip file for browser type.
+2. Open Chrome / Edge: chrome(edge)://extensions/ — Firefox: about:debugging#/runtime/this-firefox
+3. Enable "Developer mode" (Chrome/Edge).
+4. Chrome/Edge — Drag zip file onto extension page — Firefox: Click "Load Temporary Add-on" and select the zip file.
+5. Visit https://www.reddit.com and verify the extension is active (check the console for "Reddit Web Fix: activated.").
 
 ## Files of interest
 
 - manifest-both.json — extension manifest - make changes here (MV3)
 - manifest.json — last browser specific manifest created (Firefox needs "scripting" field in manifest)
 - content.js — main content script
-- VoteSync.js — VoteSync class, holds state and logic for post vote and count syncing.
+- VoteSync.js — VoteSync class, holds state and logic for post vote and count syncing
+- observers.js — Mutation observer class to keep track of posts and page changes
 - constants.js — UI class names and SVG path constants
 - browser-polyfill.min.js — web extension polyfill
 - options.html / options.js — options page for debug setting
-- icons/\* — extension icons used in manifest
-- serviceWorker.js — background communication for extension option updating.
-- buildZip.sh — simple zip file build script.
-- storage.js — browser-storage access factory functions.
+- serviceWorker.js — background communication for extension option updating
+- storage.js — browser-storage access factory functions
 - privacy.html — privacy page
-- animation.js — animation function for sync animation.
+- animation.js — animation function for sync animation
+- buildZip.sh — simple zip file build script
+- icons/\* — extension icons used in manifest
 
 ## Development notes
 
 - Default verbose/debug is disabled; enable via the Options page to get more console output when fixing for UI changes.
 - Changes to the manifest currently should made to manifest-both.json, then use buildZip.sh script which creates tailored
   manifest.json files for Chrome/Edge or Firefox when zipping up the extension. manifest-both.json to be removed
-  when Firefox manifest V3 no longer requires "scripts" field.
+  when Firefox manifest V3 no longer requires "scripts" field in the "background" section.
 
 ## buildZip.sh usage
+
+Build script `buildZip.sh` packages all file necessary into a zip file. Use `chrome` argument for Chrome or Edge browsers and `Firefox` for Firefox. 
 
 `./buildZip.sh chrome` or `./buildZip.sh firefox` from root directory.
 
