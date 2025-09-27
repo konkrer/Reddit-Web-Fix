@@ -36,13 +36,17 @@ let clickIgnoredAnimation;
 
 // VoteSync class to handle vote state tracking and syncing
 export default class VoteSync {
-  constructor(verbose = true) {
+  constructor(verbose = true, isBlockedPath, HO) {
     this.verbose = verbose;
+    this.isBlockedPath = isBlockedPath;
+    this.HO = HO;
+    this.PO = undefined;
     this.sessionStorage = {};
     this.stateCopied = new Set();
     this.btnStateRestored = {};
     this.currentPage = undefined;
     this.detail = undefined;
+    
     this.testForPageChange(1000);
     if (this.verbose) console.debug('VoteSync initialized.');
   }
@@ -59,10 +63,10 @@ export default class VoteSync {
     if (this.currentPage !== window.location.href) {
       if (this.verbose) console.debug('Page change detected.');
       this.currentPage = window.location.href;
-      if (isBlockedPath()) {
+      if (this.isBlockedPath()) {
         if (this.verbose) console.debug('Blocked page.');
-        stopMainObserver();
-        startHrefPoller();
+        this.PO.stopMainObserver();
+        this.HO.startHrefPoller();
         return;
       }
       this.testForDetailPage();
@@ -235,11 +239,14 @@ export default class VoteSync {
   }
 
   getCountFromUI(sp) {
-    return +sp.shadowRoot?.querySelector('faceplate-number')?.getAttribute('number');
+    return +sp.shadowRoot
+      ?.querySelector('faceplate-number')
+      ?.getAttribute('number');
   }
 
   setCountInUI = sp => {
-    sp.shadowRoot?.querySelector('faceplate-number')
+    sp.shadowRoot
+      ?.querySelector('faceplate-number')
       .setAttribute('number', this.sessionStorage[sp.id].count.toString());
   };
 
@@ -288,8 +295,7 @@ export default class VoteSync {
       const dir = this.sessionStorage[k].vote;
       const btnSpan = this.getButtonSpan(sp);
       const initState = this.getVoteStateFromUI(btnSpan);
-      if (!btnSpan || dir === undefined || initState === undefined)
-        return;
+      if (!btnSpan || dir === undefined || initState === undefined) return;
 
       if (dir === 'U' && !(initState === 'U')) {
         this.syncUpvoteAppearance(btnSpan);

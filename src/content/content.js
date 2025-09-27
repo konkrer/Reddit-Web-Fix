@@ -2,16 +2,16 @@
 
 // Content script to manage vote state syncing on www.reddit.com
 
+// placeholders for imports
+let VoteSync, PostObserver, HrefObserver; // classes
+let VS, PO, HO; // instances
+let VERBOSE = false;
+
 // List of URL path prefixes where the extension should be inactive
 const BLOCKED_PREFIXES = ['/settings', '/drafts', '/premium', '/reddit-pro'];
 function isBlockedPath() {
   return BLOCKED_PREFIXES.some(p => location.pathname.startsWith(p));
 }
-
-// placeholders for imported modules and constants
-let VoteSync;
-let VS;
-let VERBOSE = false;
 
 // set up communication port
 (() => {
@@ -27,11 +27,17 @@ let VERBOSE = false;
     port.onMessage.addListener(msg => {
       if (msg.type === 'SET_VERBOSE') {
         VERBOSE = msg.value;
-        if (VS) VS.verbose = msg.value;
-        console.debug('Verbose mode updated:', msg.value);
+        if (VS) {
+          VS.verbose = msg.value;
+          console.debug('Verbose mode updated:', msg.value);
+        } else {
+          console.debug(
+            'Verbose mode set, but VoteSync not initialized yet:',
+            msg.value
+          );
+        }
       }
     });
-
     port.onDisconnect.addListener(() => {
       port = null;
       // Attempt to reconnect
@@ -42,7 +48,9 @@ let VERBOSE = false;
 })();
 
 // Load the browser polyfill for async compatibility
-const polyfillURL = chrome.runtime.getURL('src/polyfill/browser-polyfill.min.js');
+const polyfillURL = chrome.runtime.getURL(
+  'src/polyfill/browser-polyfill.min.js'
+);
 import(polyfillURL)
   .then(() => {
     // dynamically import storage module to get getGetDebug function
@@ -63,101 +71,47 @@ import(polyfillURL)
     console.error('Failed to load browser polyfill:', err);
   });
 
-// Observe DOM changes to detect new posts loaded dynamically
-// and add event handlers to them and sync their state.
-// Also test for page changes.
-let mainObserver = null;
-function startMainObserver() {
-  if (mainObserver) return;
-  mainObserver = new MutationObserver(mutationsList => {
-    for (const mutation of mutationsList) {
-      if (mutation.type === 'childList') {
-        VS.testForPageChange();
-        mutation.addedNodes.forEach(node => {
-          if (
-            node.nodeType === Node.ELEMENT_NODE &&
-            (node.tagName.toLowerCase() === 'article' ||
-              node.tagName.toLowerCase() === 'faceplate-batch')
-          ) {
-            const sp = node.querySelectorAll?.('shreddit-post');
-            sp?.forEach(p => {
-              setTimeout(() => {
-                VS.addHandlersToShredditPosts([p]);
-                if (VS.sessionStorage[p.id]) VS.syncLikes(p.id);
-              }, 0);
-            });
-            if (VS.verbose)
-              console.debug('New article/ faceplate-batch processed.');
-          }
-        });
-      }
-    }
-  });
-  try {
-    mainObserver.observe(document.body, { childList: true, subtree: true });
-    if (VERBOSE) console.debug('Reddit Web Fix: main observer started.');
-  } catch (e) {
-    console.error('Reddit Web Fix: failed to start observer', e);
-  }
+// Function to initialize VoteSync, PostObserver, share methods,
+// and start observing DOM changes.
+function startup(HO) {
+  VS = new VoteSync(VERBOSE, isBlockedPath, HO);
+  PO = new PostObserver(VS);
+  VS.PO = PO;
+  HO.PO = PO
+  HO.VS = VS;
+  PO.startMainObserver();
 }
 
-function stopMainObserver() { 
-  if (!mainObserver) return;
-  try {
-    mainObserver.disconnect();
-  } catch (e) {
-    /* ignore */
-  }
-  mainObserver = null;
-  if (VERBOSE) console.debug('Reddit Web Fix: main observer stopped.');
-}
-
-let pollerId = null;
-function startHrefPoller(interval = 500) {
-  if (pollerId) return;
-  let lastHref = location.href;
-  pollerId = setInterval(() => {
-    if (location.href !== lastHref) {
-      lastHref = location.href;
-      // only restart DOM work once we've left a blocked path
-      if (!isBlockedPath()) {
-        stopHrefPoller();
-        // small delay to let the new page render
-        setTimeout(() => {
-          if (VS) VS.testForPageChange(100);
-          else VS = new VoteSync();
-          startMainObserver();
-        }, 100);
-      }
-    }
-  }, interval);
-  if (VERBOSE) console.debug('Reddit Web Fix: href poller started.');
-}
-
-function stopHrefPoller() {
-  if (!pollerId) return;
-  clearInterval(pollerId);
-  pollerId = null;
-  if (VERBOSE) console.debug('Reddit Web Fix: href poller stopped.');
-}
-
+// Initial load and initialization
 (async function loadAndInit() {
+    // Dynamically import VoteSync and Observer modules
   try {
-    const voteSyncURL = chrome.runtime.getURL('src/content/VoteSync.js');
-    const mod = await import(voteSyncURL);
+    const voteSyncProm = import(
+      chrome.runtime.getURL('src/content/VoteSync.js')
+    );
+    const observerProm = import(
+      chrome.runtime.getURL('src/content/observers.js')
+    );
+    const [observerMod, voteSyncMod] = await Promise.all([
+      observerProm,
+      voteSyncProm,
+    ]);
+    const mod = voteSyncMod && observerMod;
     if (mod) {
-      VoteSync = mod.default;
+      VoteSync = voteSyncMod.default;
+      ({ PostObserver, HrefObserver } = observerMod);
     } else {
-      throw new Error('Failed to load VoteSync module');
+      throw new Error('Failed to load VoteSync or PostObserver modules');
     }
 
     // Initial startup
+    HO = new HrefObserver(isBlockedPath, VERBOSE, startup);
+
     if (isBlockedPath()) {
-      startHrefPoller(500);
+      HO.startHrefPoller(500);
     } else {
       // normal operation
-      VS = new VoteSync(VERBOSE);
-      startMainObserver();
+      startup(HO);
     }
     console.log('Reddit Web Fix: activated.');
   } catch (err) {

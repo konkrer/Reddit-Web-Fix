@@ -20,7 +20,8 @@
         "src/utils/storage.js",
         "icons/goldenSyncIcon.png",
         "src/content/animation.js",
-        "src/content/VoteSync.js"
+        "src/content/VoteSync.js",
+        "src/content/observers.js"
       ],
       "matches": ["https://www.reddit.com/*"]
     }
@@ -46,7 +47,6 @@
     }
   },
   "background": {
-    "service_worker": "src/background/serviceWorker.js",
-    "scripts": ["src/background/serviceWorker.js"]
+    "service_worker": "src/background/serviceWorker.js"
   }
 }

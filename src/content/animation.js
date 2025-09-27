@@ -1,6 +1,5 @@
 'use strict';
 
-
 // Creates and runs a brief animation on the given button element
 
 export function clickIgnoredAnimation(btnElem) {
