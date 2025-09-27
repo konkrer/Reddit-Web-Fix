@@ -30,4 +30,4 @@ fi
 
 zip -r "$OUTPUT_FILE" . -x "*.git*" -x "*.vscode*" -x "*node_modules*" -x "*.DS_Store" -x "*.zip"\
   -x "buildZip.sh" -x "manifest-both.json" -x "*.log" -x "manifest copy.json" -x "notes.*" -x "*.old"\
-    -x "store-description.md"
+    -x "store-description.md" -x "README.md"

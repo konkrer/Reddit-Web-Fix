@@ -26,8 +26,6 @@ export function clickIgnoredAnimation(btnElem) {
     zIndex: '2147483647',
     transition: 'none',
     willChange: 'transform, opacity',
-    userSelect: 'none',
-    MozUserSelect: 'none',
     // border: '2px solid limegreen',
     borderRadius: '50%',
     backgroundColor: 'rgba(0,0,0,1.0)',
