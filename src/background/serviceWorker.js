@@ -1,10 +1,11 @@
-"use strict";
+'use strict';
 
 // Service Worker script to manage communication between options and content scripts
 
 // Maintain a map: tabId -> Port
 const portsByTab = new Map();
 
+// Listen for connection from content script
 chrome.runtime.onConnect.addListener(port => {
   if (port.name !== 'content') return;
 
@@ -13,17 +14,18 @@ chrome.runtime.onConnect.addListener(port => {
   if (tabId == null) {
     return;
   }
-
+  // Save port by tabId
   portsByTab.set(tabId, port);
 
+  // Clean up when the content page navigates/closes or SW reloads
   port.onDisconnect.addListener(() => {
-    // Clean up when the content page navigates/closes or SW reloads
     if (portsByTab.get(tabId) === port) {
       portsByTab.delete(tabId);
     }
   });
 });
 
+// Send message to a particular tab
 function sendToTab(tabId, message) {
   const port = portsByTab.get(tabId);
   if (port) {
@@ -38,6 +40,7 @@ function sendToTab(tabId, message) {
   return false;
 }
 
+// Send message to all ports (all tabs running extension)
 function broadcast(message) {
   for (const [tabId, port] of portsByTab.entries()) {
     try {
@@ -51,11 +54,25 @@ function broadcast(message) {
 // Listen for messages from options pages
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.type === 'SET_VERBOSE') {
-    if (typeof msg.tabId === 'number') {
-      sendToTab(msg.tabId, msg);
-    } else {
-      broadcast(msg);
+    try {
+      if (typeof msg.tabId === 'number') {
+        sendToTab(msg.tabId, msg);
+      } else {
+        broadcast(msg);
+      }
+      sendResponse({ ok: true });
+    } catch (err) {
+      sendResponse({ ok: false, error: err });
     }
-    sendResponse({ ok: true });
   }
+});
+
+// Listen for onSuspend event and shutdown observers, etc.
+// onSuspend doesn't fire before shutdown but still implemented.
+chrome.runtime.onSuspend.addListener(() => {
+  broadcast({
+    type: 'CLEANUP',
+  });
+
+  portsByTab.clear();
 });

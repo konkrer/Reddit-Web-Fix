@@ -13,36 +13,57 @@ function isBlockedPath() {
   return BLOCKED_PREFIXES.some(p => location.pathname.startsWith(p));
 }
 
+// Cleanup function for extension unloading.
+function cleanup() {
+  if (PO) PO.stopMainObserver();
+  if (HO) HO.stopHrefPoller();
+  if (VS) VS.removeHandlersShredditPosts();
+  console.debug('Reddit Web Fix: cleaned up.');
+}
+
 // set up communication port
 (() => {
-  let port;
+  let PORT;
   // Initialize connection to background script
   function initPort() {
-    if (port) return;
-    port = chrome.runtime.connect({ name: 'content' });
+    if (PORT) return;
+    try {
+      PORT = chrome.runtime.connect({ name: 'content' });
 
-    // Let background know which tab we are (sender.tab.id is also available there)
-    port.postMessage({ type: 'hello' });
+      // Let background know which tab we are (sender.tab.id is also available there)
+      PORT.postMessage({ type: 'hello' });
 
-    port.onMessage.addListener(msg => {
-      if (msg.type === 'SET_VERBOSE') {
-        VERBOSE = msg.value;
-        if (VS) {
-          VS.verbose = msg.value;
-          console.debug('Verbose mode updated:', msg.value);
-        } else {
-          console.debug(
-            'Verbose mode set, but VoteSync not initialized yet:',
-            msg.value
-          );
+      // Parse messages over PORT
+      PORT.onMessage.addListener(msg => {
+        if (msg.type === 'SET_VERBOSE') {
+          VERBOSE = msg.value;
+          if (VS) {
+            VS.verbose = msg.value;
+            console.debug('Verbose mode updated:', msg.value);
+          } else {
+            console.debug(
+              'Verbose mode set, but VoteSync not initialized yet:',
+              msg.value
+            );
+          }
+        } else if (msg.type === 'CLEANUP') {
+          cleanup();
         }
-      }
-    });
-    port.onDisconnect.addListener(() => {
-      port = null;
-      // Attempt to reconnect
-      setTimeout(initPort, 1000);
-    });
+      });
+
+      PORT.onDisconnect.addListener(() => {
+        PORT = null;
+        setTimeout(() => {
+          // if no runtime context cleanup
+          if (!chrome.runtime?.id) cleanup();
+          // otherwise attempt to reconnect
+          else initPort();
+        }, 1000);
+      });
+    } catch (err) {
+      console.debug('Port setup failed:', err.message);
+      cleanup();
+    }
   }
   initPort();
 })();
@@ -77,14 +98,14 @@ function startup(HO) {
   VS = new VoteSync(VERBOSE, isBlockedPath, HO);
   PO = new PostObserver(VS);
   VS.PO = PO;
-  HO.PO = PO
+  HO.PO = PO;
   HO.VS = VS;
   PO.startMainObserver();
 }
 
 // Initial load and initialization
 (async function loadAndInit() {
-    // Dynamically import VoteSync and Observer modules
+  // Dynamically import VoteSync and Observer modules
   try {
     const voteSyncProm = import(
       chrome.runtime.getURL('src/content/VoteSync.js')

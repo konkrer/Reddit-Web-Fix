@@ -18,10 +18,13 @@ import(storage).then(mod => {
 
 // Send verbose setting to content script
 async function updateVerboseSetting(value) {
+  const msg = {
+    type: 'SET_VERBOSE',
+    value: value,
+  };
   try {
-    await chrome.runtime.sendMessage({
-      type: 'SET_VERBOSE',
-      value: value,
+    await chrome.runtime.sendMessage(msg, res => {
+      if (!res.ok) console.debug('SET_VERBOSE failed', res.error);
     });
   } catch (err) {
     console.debug('Could not send message', err);

@@ -187,9 +187,7 @@ export default class VoteSync {
       ) {
         // force UI reset to show proper vote state, remove contraindicating svg arrows
         const syncFn =
-          vote === 'U'
-            ? syncUpvoteAppearance
-            : syncDownvoteAppearance;
+          vote === 'U' ? syncUpvoteAppearance : syncDownvoteAppearance;
         syncFn.call(this, this.getButtonSpan(e.target));
       }
     };
