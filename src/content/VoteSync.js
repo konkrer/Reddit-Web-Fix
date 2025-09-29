@@ -16,9 +16,21 @@ const REDDIT_BTN_CONTAINER = '[data-post-click-location="vote"]';
 // These classes present on REDDIT_BTN_CONTAINER indicate vote state.
 const UPVOTE_INDICATOR_CLASS = 'bg-action-upvote';
 const DOWNVOTE_INDICATOR_CLASS = 'bg-action-downvote';
-// Upvote and downvote button indicator attributes.
+// Upvote and downvote button indicator attributes (attributes found on buttons).
 const BTN_UPVOTE_INDICATOR = 'upvote';
 const BTN_DOWNVOTE_INDICATOR = 'downvote';
+// Clear (no vote) indicator.
+const CLEAR_VOTE_INDICATOR = 'clear';
+
+// Vote record for vote state storage.
+const voteRecord = {
+  [BTN_UPVOTE_INDICATOR]: 'U',
+  [BTN_DOWNVOTE_INDICATOR]: 'D',
+  [CLEAR_VOTE_INDICATOR]: 'Clear',
+};
+// Make vote cleared record for button restored state value.
+const makeRestoredClearRecord = voteType =>
+  `${voteRecord[CLEAR_VOTE_INDICATOR]}: ${voteRecord[voteType]}`;
 
 // Dynamic import of constants and animation modules
 (() => {
@@ -65,14 +77,6 @@ export default class VoteSync {
     if (this.verbose) console.debug('VoteSync initialized.');
   }
 
-  addCopySync = () => {
-    this.addHandlersToShredditPosts();
-    this.btnStateRestored = {};
-    this.syncLikes();
-    if (this.verbose)
-      console.debug('Added handlers, Copied State, Synced Button State');
-  };
-
   testForPageChange(delay) {
     if (this.currentPage !== window.location.href) {
       if (this.verbose) console.debug('Page change detected.');
@@ -89,51 +93,79 @@ export default class VoteSync {
     }
   }
 
-  getShredditPosts() {
-    const sPosts = document.querySelectorAll(REDDIT_POST_HOST);
-    return sPosts;
+  addCopySync = () => {
+    this.addHandlersToPosts();
+    this.btnStateRestored = {};
+    this.syncLikes();
+    if (this.verbose)
+      console.debug('Added handlers, Copied State, Synced Button State');
+  };
+
+  getPosts() {
+    const posts = document.querySelectorAll(REDDIT_POST_HOST);
+    return posts;
   }
 
-  addHandlersToShredditPosts(sp) {
-    const sPosts = sp || this.getShredditPosts();
-    sPosts.forEach(sp => {
-      this.copyPostVoteState(sp);
-      sp.addEventListener('click', this.handleVotes);
+  getButtonSpan(post) {
+    return post.shadowRoot?.querySelector(REDDIT_BTN_CONTAINER);
+  }
+
+  addHandlersToPosts(postsIn) {
+    const posts = postsIn || this.getPosts();
+    posts.forEach(post => {
+      this.copyPostVoteState(post);
+      post.addEventListener('click', this.handleVotes);
     });
   }
 
-  copyPostVoteState(sp) {
-    const btnSpan = this.getButtonSpan(sp);
+  removeHandlersFromPosts() {
+    const posts = this.getPosts();
+    posts.forEach(post => {
+      post.removeEventListener('click', this.handleVotes);
+    });
+  }
+
+  copyPostVoteState(post) {
+    const btnSpan = this.getButtonSpan(post);
     if (!btnSpan) return;
-    if (!this.detail && sp.hasAttribute('post-seen')) {
+    if (!this.detail && post.hasAttribute('post-seen')) {
       return;
     }
-    const count = this.getCountFromUI(sp);
+    const count = this.getCountFromUI(post);
     if (isNaN(count)) return;
-    // if classes present for up/down condition set state
-    if (btnSpan.classList.contains(UPVOTE_INDICATOR_CLASS)) {
-      this.sessionStorage[sp.id] = { vote: 'U', count };
-      this.stateCopied.add(sp.id);
-    } else if (btnSpan.classList.contains(DOWNVOTE_INDICATOR_CLASS)) {
-      this.sessionStorage[sp.id] = { vote: 'D', count };
-      this.stateCopied.add(sp.id);
-    } else if (this.detail) {
-      // copy clear state on detail page
-      this.sessionStorage[sp.id] = { vote: 'Clear', count };
-      this.stateCopied.add(sp.id);
-    }
-    sp.setAttribute('post-seen', 'true');
-  }
 
-  removeHandlersShredditPosts() {
-    const sPosts = this.getShredditPosts();
-    sPosts.forEach(sp => {
-      sp.removeEventListener('click', this.handleVotes);
-    });
+    // if upvote state seen record state
+    if (btnSpan.classList.contains(UPVOTE_INDICATOR_CLASS)) {
+      this.sessionStorage[post.id] = {
+        vote: voteRecord[BTN_UPVOTE_INDICATOR],
+        count,
+      };
+      this.stateCopied.add(post.id);
+    } else if (
+      // if downvote state seen record state
+      btnSpan.classList.contains(DOWNVOTE_INDICATOR_CLASS)
+    ) {
+      this.sessionStorage[post.id] = {
+        vote: voteRecord[BTN_DOWNVOTE_INDICATOR],
+        count,
+      };
+      this.stateCopied.add(post.id);
+    } else if (
+      // if on detail page record clear state
+      this.detail
+    ) {
+      this.sessionStorage[post.id] = {
+        vote: voteRecord[CLEAR_VOTE_INDICATOR],
+        count,
+      };
+      this.stateCopied.add(post.id);
+    }
+    post.setAttribute('post-seen', 'true');
   }
 
   findVoteClickEventInSD(e) {
-    // check clicked element and three elements above allowing for Shadow DOM
+    // Find vote click event in Shadow DOM.
+    // Check clicked element and three elements above.
     for (let i = 0; i < 4; i++) {
       const pathElem = e.composedPath()[i];
       if (pathElem === undefined || pathElem.hasAttribute === undefined)
@@ -147,124 +179,134 @@ export default class VoteSync {
   }
 
   handleVotes = e => {
-    // function to handle vote button clicks and update state as appropriate
-    // also trigger ignored click animation if needed
+    /* Function to handle vote button clicks and update state as appropriate.
+    Also trigger ignored click animation as needed. */
+
+    // If not vote button clicked return.
     const targetId = e.target.id;
     if (!targetId || e.target.tagName.toLowerCase() !== REDDIT_POST_HOST)
       return;
     const [voteClick, voteType, btnElem] = this.findVoteClickEventInSD(e);
     if (!voteClick) return;
 
+    // Get button restored state.
     const btnRestoredState = this.btnStateRestored[targetId];
     delete this.btnStateRestored[targetId];
 
+    // Get previous vote state and current vote count.
     const prevVoteState = this.sessionStorage[targetId]?.vote;
     let currCount =
       this.sessionStorage[targetId]?.count || this.getCountFromUI(e.target);
     if (isNaN(currCount)) return;
 
-    // clear vote handler
+    // --- Clear vote handler ---
     const handleClearVote = () => {
       this.sessionStorage[targetId] = {
-        vote: 'Clear',
-        count: this.calcCount('Clear', prevVoteState, currCount),
+        vote: voteRecord[CLEAR_VOTE_INDICATOR],
+        count: this.calcCount(CLEAR_VOTE_INDICATOR, prevVoteState, currCount),
       };
       if (btnRestoredState === undefined) {
         this.watchForVoteNotCleared(e.target, prevVoteState, currCount);
       }
     };
 
-    // set vote handler
-    const handleSetVote = vote => {
+    // --- Set vote handler ---
+    const handleSetVote = voteType => {
+      // set vote record in state storage
       this.sessionStorage[targetId] = {
-        vote,
+        vote: voteRecord[voteType],
         count: this.calcCount(voteType, prevVoteState, currCount),
       };
+      // if going from restored down to up, or from restored up to down
       if (
-        // if going from restored down to up, or restored up to down
-        (vote === 'U' && prevVoteState === 'D' && btnRestoredState === 'D') ||
-        (vote === 'D' && prevVoteState === 'U' && btnRestoredState === 'U')
+        (voteType === BTN_UPVOTE_INDICATOR &&
+          btnRestoredState === voteRecord[BTN_DOWNVOTE_INDICATOR]) ||
+        (voteType === BTN_DOWNVOTE_INDICATOR &&
+          btnRestoredState === voteRecord[BTN_UPVOTE_INDICATOR])
       ) {
-        // force UI reset to show proper vote state, remove contraindicating svg arrows
+        // force UI reset to show proper vote state, remove contraindicating svg arrows.
         const syncFn =
-          vote === 'U' ? syncUpvoteAppearance : syncDownvoteAppearance;
+          voteType === BTN_UPVOTE_INDICATOR
+            ? syncUpvoteAppearance
+            : syncDownvoteAppearance;
         syncFn.call(this, this.getButtonSpan(e.target));
       }
     };
 
-    // ignored click handler
-    const handleIgnoredClick = () => {
+    // --- Ignore click handler ---
+    const handleIgnoreClick = () => {
       this.setCountInUI(e.target);
       if (clickIgnoredAnimation) clickIgnoredAnimation(btnElem);
     };
 
-    // logic to handle vote click based on type and previous state
-    if (voteType === BTN_UPVOTE_INDICATOR) {
-      if (btnRestoredState == 'U' || btnRestoredState == 'Clear: U') {
-        handleIgnoredClick();
-        return;
-      }
-      if (this.verbose) console.debug('up click', targetId);
-      if (prevVoteState === 'U') {
-        handleClearVote();
-      } else {
-        handleSetVote('U');
-      }
-    } else if (voteType === BTN_DOWNVOTE_INDICATOR) {
-      if (btnRestoredState == 'D' || btnRestoredState == 'Clear: D') {
-        handleIgnoredClick();
-        return;
-      }
-      if (this.verbose) console.debug('down click', targetId);
-      if (prevVoteState === 'D') {
-        handleClearVote();
-      } else {
-        handleSetVote('D');
-      }
+    // --- Main Logic ---
+    // Handle vote click based on vote type,
+    // button restored state, and previous state.
+    if (
+      // if voting the same way that the button was restored to
+      btnRestoredState == voteRecord[voteType] ||
+      btnRestoredState == makeRestoredClearRecord(voteType)
+    ) {
+      handleIgnoreClick();
+      return;
+    }
+    // if verbose is set true - log click event to console for debugging.
+    if (this.verbose)
+      console.debug(
+        voteType === BTN_UPVOTE_INDICATOR ? 'up click' : 'down click:',
+        targetId
+      );
+
+    // if voting the same way already voted - clear vote
+    if (prevVoteState === voteRecord[voteType]) {
+      handleClearVote();
+    } else {
+      // standard vote
+      handleSetVote(voteType);
     }
     this.setCountInUI(e.target);
   };
 
-  watchForVoteNotCleared(sp, initialState, currCount) {
-    // watch for case when action that should clear vote does not clear the UI state
-    // need to reset vote state to original voteType and count and show sync animation
+  watchForVoteNotCleared(post, initialState, currCount) {
+    // Watch for case when action that should clear vote does not clear the UI state.
+    // If so we need to reset vote state to original voteType and count and show sync animation.
     setTimeout(() => {
-      const btnSpan = this.getButtonSpan(sp);
+      const btnSpan = this.getButtonSpan(post);
       if (!btnSpan) return;
       const currUIState = this.getVoteStateFromUI(btnSpan);
       // if state is still upvote or downvote after clicking upvote/downvote to clear vote
-      if (currUIState === initialState) {
+      if (voteRecord[currUIState] === initialState) {
         if (this.verbose)
-          console.debug('Upvote not cleared, syncing state.', sp.id);
+          console.debug('Upvote not cleared, syncing state.', post.id);
         // reset vote state and count to match UI and show sync animation
-        this.sessionStorage[sp.id] = {
+        this.sessionStorage[post.id] = {
           vote: initialState,
           count: currCount,
         };
         clickIgnoredAnimation(btnSpan);
-        this.setCountInUI(sp);
+        this.setCountInUI(post);
       }
-    }, 0);
+    }, ADD_HANDLERS_DELAY);
   }
 
   getVoteStateFromUI(btnSpan) {
     return btnSpan.classList.contains(UPVOTE_INDICATOR_CLASS)
-      ? 'U'
+      ? BTN_UPVOTE_INDICATOR
       : btnSpan.classList.contains(DOWNVOTE_INDICATOR_CLASS)
-      ? 'D'
-      : 'Clear';
+      ? BTN_DOWNVOTE_INDICATOR
+      : CLEAR_VOTE_INDICATOR;
   }
 
-  getCountFromUI(sp) {
-    return +sp.shadowRoot
+  getCountFromUI(post) {
+    return +post.shadowRoot
       ?.querySelector(REDDIT_COUNT_EL)
       ?.getAttribute('number');
   }
 
-  setCountInUI = sp => {
-    sp.shadowRoot
+  setCountInUI = post => {
+    post.shadowRoot
       ?.querySelector(REDDIT_COUNT_EL)
-      .setAttribute('number', this.sessionStorage[sp.id].count.toString());
+      .setAttribute('number', this.sessionStorage[post.id].count.toString());
   };
 
   calcCount(voteType, prevVoteState, count) {
@@ -274,27 +316,20 @@ export default class VoteSync {
 
     // if upvote clicked
     if (voteType === BTN_UPVOTE_INDICATOR) {
-      // if previous state was clear, increment by 1
-      // if previous state was downvote, increment by 2
-      if (prevVoteState == 'Clear') return +count + 1;
-      else if (prevVoteState === 'D') return +count + 2;
+      if (prevVoteState == voteRecord[CLEAR_VOTE_INDICATOR]) return +count + 1;
+      else if (prevVoteState === voteRecord[BTN_DOWNVOTE_INDICATOR])
+        return +count + 2;
       // if downvote clicked
     } else if (voteType === BTN_DOWNVOTE_INDICATOR) {
-      // if previous state was clear, decrement by 1
-      // if previous state was upvote, decrement by 2
-      if (prevVoteState == 'Clear') return +count - 1;
-      else if (prevVoteState == 'U') return +count - 2;
+      if (prevVoteState == voteRecord[CLEAR_VOTE_INDICATOR]) return +count - 1;
+      else if (prevVoteState == voteRecord[BTN_UPVOTE_INDICATOR])
+        return +count - 2;
       // if clear vote clicked
-    } else if (voteType === 'Clear') {
-      // if previous state was upvote, decrement by 1
-      // if previous state was downvote, increment by 1
-      if (prevVoteState === 'U') return +count - 1;
-      else if (prevVoteState === 'D') return +count + 1;
+    } else if (voteType === CLEAR_VOTE_INDICATOR) {
+      if (prevVoteState === voteRecord[BTN_UPVOTE_INDICATOR]) return +count - 1;
+      else if (prevVoteState === voteRecord[BTN_DOWNVOTE_INDICATOR])
+        return +count + 1;
     }
-  }
-
-  getButtonSpan(sp) {
-    return sp.shadowRoot?.querySelector(REDDIT_BTN_CONTAINER);
   }
 
   syncLikes(key) {
@@ -303,28 +338,40 @@ export default class VoteSync {
     if (this.detail) return;
 
     const updateAppearance = k => {
-      const sp = document.getElementById(k);
-      if (sp === null || this.stateCopied.has(k)) {
+      const post = document.getElementById(k);
+      if (post === null || this.stateCopied.has(k)) {
         this.stateCopied.delete(k);
         return;
       }
 
       const dir = this.sessionStorage[k].vote;
-      const btnSpan = this.getButtonSpan(sp);
+      const btnSpan = this.getButtonSpan(post);
       const initState = this.getVoteStateFromUI(btnSpan);
       if (!btnSpan || dir === undefined || initState === undefined) return;
 
-      if (dir === 'U' && !(initState === 'U')) {
+      if (
+        // if syncing upvote and the initial state was not upvote
+        dir === voteRecord[BTN_UPVOTE_INDICATOR] &&
+        !(initState === BTN_UPVOTE_INDICATOR)
+      ) {
         syncUpvoteAppearance(btnSpan);
         this.btnStateRestored[k] = dir;
-      } else if (dir === 'D' && !(initState === 'D')) {
+      } else if (
+        // if syncing downvote and the initial state was not downvote
+        dir === voteRecord[BTN_DOWNVOTE_INDICATOR] &&
+        !(initState === BTN_DOWNVOTE_INDICATOR)
+      ) {
         syncDownvoteAppearance(btnSpan);
         this.btnStateRestored[k] = dir;
-      } else if (dir === 'Clear' && !(initState === 'Clear')) {
+      } else if (
+        // if syncing clear and the initial state was not clear
+        dir === voteRecord[CLEAR_VOTE_INDICATOR] &&
+        !(initState === CLEAR_VOTE_INDICATOR)
+      ) {
         syncClearAppearance(btnSpan);
-        this.btnStateRestored[k] = `Clear: ${initState}`;
+        this.btnStateRestored[k] = makeRestoredClearRecord(initState);
       }
-      this.setCountInUI(sp);
+      this.setCountInUI(post);
     };
 
     if (key) setTimeout(() => updateAppearance(key), ADD_HANDLERS_DELAY);

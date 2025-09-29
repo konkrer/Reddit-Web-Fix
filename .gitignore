@@ -7,3 +7,5 @@ icons/*
 store-description.md
 .DS_Store
 private/
+
+manifest.json

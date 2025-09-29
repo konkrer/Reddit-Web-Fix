@@ -2,9 +2,9 @@
 
 // Content script to manage vote state syncing on www.reddit.com
 
-// placeholders for imports
-let VoteSync, PostObserver, HrefObserver; // classes
-let VS, PO, HO; // instances
+// placeholders for imports and instances
+let VoteSync, PostObserver, HrefObserver; // class imports
+let VS, PO, HO; // instances 
 let VERBOSE = false;
 
 // List of URL path prefixes where the extension should be inactive
@@ -17,8 +17,8 @@ function isBlockedPath() {
 function cleanup() {
   if (PO) PO.stopMainObserver();
   if (HO) HO.stopHrefPoller();
-  if (VS) VS.removeHandlersShredditPosts();
-  console.debug('Reddit Web Fix: cleaned up.');
+  if (VS) VS.removeHandlersFromPosts();
+  console.log('Reddit Web Fix: shut down.');
 }
 
 // set up communication port

@@ -25,7 +25,7 @@ export class PostObserver {
               const sp = node.querySelectorAll?.('shreddit-post');
               sp?.forEach(p => {
                 setTimeout(() => {
-                  this.voteSync.addHandlersToShredditPosts([p]);
+                  this.voteSync.addHandlersToPosts([p]);
                   if (this.voteSync.sessionStorage[p.id])
                     this.voteSync.syncLikes(p.id);
                 }, 0);
