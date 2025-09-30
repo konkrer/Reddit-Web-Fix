@@ -18,7 +18,7 @@ const ADD_HANDLERS_DELAY = 0;
 /* Reddit elements / element markers for finding relevant elements. */
 
 // The reddit named html element with post data that is a shadow host.
-const REDDIT_POST_HOST = 'shreddit-post';
+const REDDIT_POST_HOST = 'shreddit-post'; // Update here and in observers.js.
 
 // The reddit named html element with the changeable post count as an attribute.
 const REDDIT_COUNT_EL = 'faceplate-number';

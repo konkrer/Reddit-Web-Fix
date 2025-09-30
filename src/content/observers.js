@@ -3,7 +3,7 @@
 
 // Reddit elements of interest.
 // The reddit named html element with post data that is a shadow host.
-const REDDIT_POST_HOST = 'shreddit-post';
+const REDDIT_POST_HOST = 'shreddit-post';  // Update here and in VoteSync.js.
 // The reddit elements that may get dynamically added to page and contain the REDDIT_POST_HOST.
 const REDDIT_DYN_ADD_1 = 'article';
 const REDDIT_DYN_ADD_2 = 'faceplate-batch';

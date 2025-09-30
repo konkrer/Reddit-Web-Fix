@@ -32,19 +32,20 @@ function cleanup() {
   console.log('Reddit Web Fix: shut down.');
 }
 
-// set up communication port
+// Set up for communication port to background script.
 (async () => {
   let PORT;
-  // Initialize connection to background script
+
+  // Port setup function.
   function initPort() {
     if (PORT) return;
     try {
       PORT = chrome.runtime.connect({ name: 'content' });
 
-      // Let background know which tab we are (sender.tab.id is also available there)
+      // Ping background script to convey this script's tab ID.
       PORT.postMessage({ type: 'hello' });
 
-      // Parse messages over PORT
+      // Parse incoming messages over PORT
       PORT.onMessage.addListener(msg => {
         if (msg.type === 'SET_VERBOSE') {
           VERBOSE = msg.value;
@@ -62,6 +63,7 @@ function cleanup() {
         }
       });
 
+      // Declare what to do on port disconnect.
       PORT.onDisconnect.addListener(() => {
         PORT = null;
         setTimeout(() => {
@@ -76,10 +78,12 @@ function cleanup() {
       cleanup();
     }
   }
+  // Initialize connection to background script.
   initPort();
 })();
 
-// Load the browser polyfill for async compatibility
+// Load the browser polyfill for browser API async compatibility
+// and load debug setting from storage to verbose state.
 (async () => {
   try {
     const polyfillURL = chrome.runtime.getURL(
@@ -99,7 +103,7 @@ function cleanup() {
   }
 })();
 
-// Initial load and initialization
+// Load and initialization of business logic.
 (async function loadAndInit() {
   // Dynamically import VoteSync and Observer modules
   try {
@@ -121,7 +125,7 @@ function cleanup() {
       throw new Error('Failed to load VoteSync or PostObserver modules');
     }
 
-    // Initial startup
+    // Initial startup.
     HO = new HrefObserver(isBlockedPath, VERBOSE, startup);
 
     if (isBlockedPath()) {
