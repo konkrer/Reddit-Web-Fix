@@ -2,19 +2,19 @@
 
 // Options page script to manage debug setting
 
-let getDebug, setDebug;
+let setDebug;
 
-const storage = chrome.runtime.getURL('src/utils/storage.js');
-import(storage).then(mod => {
-  getDebug = mod.getGetDebug(browser);
-  setDebug = mod.getSetDebug(browser);
+(async () => {
+  const storage = chrome.runtime.getURL('src/utils/storage.js');
+  const storageMod = await import(storage);
+
+  const getDebug = storageMod.getGetDebug(browser);
+  setDebug = storageMod.getSetDebug(browser);
 
   // get debug setting and sync set checkbox state
-  (async () => {
-    const debug = await getDebug();
-    document.getElementById('debugToggle').checked = debug;
-  })();
-});
+  const debug = await getDebug();
+  document.getElementById('debugToggle').checked = debug;
+})();
 
 // Send verbose setting to content script
 async function updateVerboseSetting(value) {

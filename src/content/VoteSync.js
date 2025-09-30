@@ -1,26 +1,44 @@
 'use strict';
 
-// placeholders for imported modules and constants
-let btnClsUD, btnClsStd, spnClsUp, spnClsDwn;
-let svgUpFilledPathD, svgDwnFillPathD, svgUpHollowPathD, svgDwnHollowPathD;
-let clickIgnoredAnimation;
+// placeholders for imported constants and modules.
+let BTN_CLS_UD,
+  BTN_CLS_STD,
+  SPN_CLS_UP,
+  SPN_CLS_DWN,
+  SVG_UP_FILLED_PATH,
+  SVG_DWN_FILLED_PATH,
+  SVG_UP_HOLLOW_PATH,
+  SVG_DWN_HOLLOW_PATH,
+  clickIgnoredAnimation;
 
 // VoteSync settings
 const ADD_HANDLERS_DELAY = 0;
+
+/* ---------------------------------------------------------------- */
+/* Reddit elements / element markers for finding relevant elements. */
+
 // The reddit named html element with post data that is a shadow host.
 const REDDIT_POST_HOST = 'shreddit-post';
+
 // The reddit named html element with the changeable post count as an attribute.
 const REDDIT_COUNT_EL = 'faceplate-number';
+
 // The html element that holds the vote buttons identifiable by attribute.
 const REDDIT_BTN_CONTAINER = '[data-post-click-location="vote"]';
+
 // These classes present on REDDIT_BTN_CONTAINER indicate vote state.
 const UPVOTE_INDICATOR_CLASS = 'bg-action-upvote';
 const DOWNVOTE_INDICATOR_CLASS = 'bg-action-downvote';
+
 // Upvote and downvote button indicator attributes (attributes found on buttons).
 const BTN_UPVOTE_INDICATOR = 'upvote';
 const BTN_DOWNVOTE_INDICATOR = 'downvote';
-// Clear (no vote) indicator.
+
+// Clear (no vote) indicator. (not derived from Reddit elements)
 const CLEAR_VOTE_INDICATOR = 'clear';
+
+/* ---------------------------------------------------------------- */
+/* Vote Record Keeping */
 
 // Vote record for vote state storage.
 const voteRecord = {
@@ -28,37 +46,41 @@ const voteRecord = {
   [BTN_DOWNVOTE_INDICATOR]: 'D',
   [CLEAR_VOTE_INDICATOR]: 'Clear',
 };
-// Make vote cleared record for button restored state value.
+// Make vote cleared record for button-restored-state value.
 const makeRestoredClearRecord = voteType =>
   `${voteRecord[CLEAR_VOTE_INDICATOR]}: ${voteRecord[voteType]}`;
 
-// Dynamic import of constants and animation modules
-(() => {
-  const constantsURL = chrome.runtime.getURL('src/content/constants.js');
-  import(constantsURL)
-    .then(mod => {
-      btnClsUD = mod.btnClsUD;
-      btnClsStd = mod.btnClsStd;
-      spnClsUp = mod.spnClsUp;
-      spnClsDwn = mod.spnClsDwn;
-      svgUpFilledPathD = mod.svgUpFilledPathD;
-      svgDwnFillPathD = mod.svgDwnFillPathD;
-      svgUpHollowPathD = mod.svgUpHollowPathD;
-      svgDwnHollowPathD = mod.svgDwnHollowPathD;
-    })
-    .catch(err => {
-      console.error('Could not load constants module', err);
-    });
+/* -----------------------------------------------------------*/
 
-  const clickAnimURL = chrome.runtime.getURL('src/content/animation.js');
-  import(clickAnimURL)
-    .then(mod => {
-      clickIgnoredAnimation = mod.clickIgnoredAnimation;
-    })
-    .catch(err => {
-      console.error('Could not load animation module', err);
-    });
+// Dynamic import of constants and animation modules
+(async () => {
+  const constModProm = import(
+    chrome.runtime.getURL('src/content/constants.js')
+  );
+  const animationModProm = import(
+    chrome.runtime.getURL('src/content/animation.js')
+  );
+  const [constMod, animationMod] = await Promise.all([
+    constModProm,
+    animationModProm,
+  ]);
+  const mods = constMod && animationMod;
+  if (mods) {
+    BTN_CLS_UD = constMod.BTN_CLS_UD;
+    BTN_CLS_STD = constMod.BTN_CLS_STD;
+    SPN_CLS_UP = constMod.SPN_CLS_UP;
+    SPN_CLS_DWN = constMod.SPN_CLS_DWN;
+    SVG_UP_FILLED_PATH = constMod.SVG_UP_FILLED_PATH;
+    SVG_DWN_FILLED_PATH = constMod.SVG_DWN_FILLED_PATH;
+    SVG_UP_HOLLOW_PATH = constMod.SVG_UP_HOLLOW_PATH;
+    SVG_DWN_HOLLOW_PATH = constMod.SVG_DWN_HOLLOW_PATH;
+    ({ clickIgnoredAnimation } = animationMod);
+  } else {
+    throw new Error('Failed to load constants.js or animation.js modules');
+  }
 })();
+
+/* -----------------------------------------------------------*/
 
 // VoteSync class to handle vote state tracking and syncing
 export default class VoteSync {
@@ -164,8 +186,9 @@ export default class VoteSync {
   }
 
   findVoteClickEventInSD(e) {
-    // Find vote click event in Shadow DOM.
-    // Check clicked element and three elements above.
+    // Find out if we have a vote click event looking in Shadow DOM.
+    // Check clicked element and three elements above
+    // for being a vote button having vote indicator attribute.
     for (let i = 0; i < 4; i++) {
       const pathElem = e.composedPath()[i];
       if (pathElem === undefined || pathElem.hasAttribute === undefined)
@@ -397,49 +420,49 @@ function getButtonsSvgPaths(btnSpan) {
 }
 
 function syncUpvoteAppearance(btnSpan) {
-  if (!btnSpan || spnClsUp === undefined) return;
+  if (!btnSpan || SPN_CLS_UP === undefined) return;
   const [buttonUp, buttonDn, pathUp, pathDn] = getButtonsSvgPaths(btnSpan);
 
-  btnSpan.classList.remove(...spnClsDwn.split(' '));
-  btnSpan.classList.add(...spnClsUp.split(' '));
-  buttonUp.classList.remove(...btnClsStd.split(' '));
-  buttonUp.classList.add(...btnClsUD.split(' '));
+  btnSpan.classList.remove(...SPN_CLS_DWN.split(' '));
+  btnSpan.classList.add(...SPN_CLS_UP.split(' '));
+  buttonUp.classList.remove(...BTN_CLS_STD.split(' '));
+  buttonUp.classList.add(...BTN_CLS_UD.split(' '));
   buttonUp.setAttribute('aria-pressed', 'true');
-  buttonDn.classList.remove(...btnClsUD.split(' '));
-  buttonDn.classList.add(...btnClsStd.split(' '));
+  buttonDn.classList.remove(...BTN_CLS_UD.split(' '));
+  buttonDn.classList.add(...BTN_CLS_STD.split(' '));
   buttonDn.setAttribute('aria-pressed', 'false');
-  pathDn.setAttribute('d', svgDwnHollowPathD);
-  pathUp.setAttribute('d', svgUpFilledPathD);
+  pathDn.setAttribute('d', SVG_DWN_HOLLOW_PATH);
+  pathUp.setAttribute('d', SVG_UP_FILLED_PATH);
 }
 
 function syncDownvoteAppearance(btnSpan) {
-  if (!btnSpan || spnClsUp === undefined) return;
+  if (!btnSpan || SPN_CLS_UP === undefined) return;
   const [buttonUp, buttonDn, pathUp, pathDn] = getButtonsSvgPaths(btnSpan);
 
-  btnSpan.classList.remove(...spnClsUp.split(' '));
-  btnSpan.classList.add(...spnClsDwn.split(' '));
-  buttonUp.classList.remove(...btnClsUD.split(' '));
-  buttonUp.classList.add(...btnClsStd.split(' '));
+  btnSpan.classList.remove(...SPN_CLS_UP.split(' '));
+  btnSpan.classList.add(...SPN_CLS_DWN.split(' '));
+  buttonUp.classList.remove(...BTN_CLS_UD.split(' '));
+  buttonUp.classList.add(...BTN_CLS_STD.split(' '));
   buttonUp.setAttribute('aria-pressed', 'false');
-  buttonDn.classList.remove(...btnClsStd.split(' '));
-  buttonDn.classList.add(...btnClsUD.split(' '));
+  buttonDn.classList.remove(...BTN_CLS_STD.split(' '));
+  buttonDn.classList.add(...BTN_CLS_UD.split(' '));
   buttonDn.setAttribute('aria-pressed', 'true');
-  pathDn.setAttribute('d', svgDwnFillPathD);
-  pathUp.setAttribute('d', svgUpHollowPathD);
+  pathDn.setAttribute('d', SVG_DWN_FILLED_PATH);
+  pathUp.setAttribute('d', SVG_UP_HOLLOW_PATH);
 }
 
 function syncClearAppearance(btnSpan) {
-  if (!btnSpan || spnClsUp === undefined) return;
+  if (!btnSpan || SPN_CLS_UP === undefined) return;
   const [buttonUp, buttonDn, pathUp, pathDn] = getButtonsSvgPaths(btnSpan);
 
-  btnSpan.classList.remove(...spnClsDwn.split(' '));
-  btnSpan.classList.remove(...spnClsUp.split(' '));
-  buttonUp.classList.remove(...btnClsUD.split(' '));
-  buttonUp.classList.add(...btnClsStd.split(' '));
+  btnSpan.classList.remove(...SPN_CLS_DWN.split(' '));
+  btnSpan.classList.remove(...SPN_CLS_UP.split(' '));
+  buttonUp.classList.remove(...BTN_CLS_UD.split(' '));
+  buttonUp.classList.add(...BTN_CLS_STD.split(' '));
   buttonUp.setAttribute('aria-pressed', 'false');
-  buttonDn.classList.remove(...btnClsUD.split(' '));
-  buttonDn.classList.add(...btnClsStd.split(' '));
+  buttonDn.classList.remove(...BTN_CLS_UD.split(' '));
+  buttonDn.classList.add(...BTN_CLS_STD.split(' '));
   buttonDn.setAttribute('aria-pressed', 'false');
-  pathDn.setAttribute('d', svgDwnHollowPathD);
-  pathUp.setAttribute('d', svgUpHollowPathD);
+  pathDn.setAttribute('d', SVG_DWN_HOLLOW_PATH);
+  pathUp.setAttribute('d', SVG_UP_HOLLOW_PATH);
 }

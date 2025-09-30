@@ -4,13 +4,24 @@
 
 // placeholders for imports and instances
 let VoteSync, PostObserver, HrefObserver; // class imports
-let VS, PO, HO; // instances 
+let VS, PO, HO; // instances
 let VERBOSE = false;
 
 // List of URL path prefixes where the extension should be inactive
 const BLOCKED_PREFIXES = ['/settings', '/drafts', '/premium', '/reddit-pro'];
 function isBlockedPath() {
   return BLOCKED_PREFIXES.some(p => location.pathname.startsWith(p));
+}
+
+// Function to initialize VoteSync, PostObserver, share methods,
+// and start observing DOM changes.
+function startup(HO) {
+  VS = new VoteSync(VERBOSE, isBlockedPath, HO);
+  PO = new PostObserver(VS);
+  VS.PO = PO;
+  HO.PO = PO;
+  HO.VS = VS;
+  PO.startMainObserver();
 }
 
 // Cleanup function for extension unloading.
@@ -22,7 +33,7 @@ function cleanup() {
 }
 
 // set up communication port
-(() => {
+(async () => {
   let PORT;
   // Initialize connection to background script
   function initPort() {
@@ -69,39 +80,24 @@ function cleanup() {
 })();
 
 // Load the browser polyfill for async compatibility
-const polyfillURL = chrome.runtime.getURL(
-  'src/polyfill/browser-polyfill.min.js'
-);
-import(polyfillURL)
-  .then(() => {
-    // dynamically import storage module to get getGetDebug function
-    const storage = chrome.runtime.getURL('src/utils/storage.js');
-    import(storage)
-      .then(mod => {
-        const getDebug = mod.getGetDebug(browser);
-        (async () => {
-          // get debug setting from storage and set local variable verbose
-          const debug = await getDebug();
-          VERBOSE = debug;
-          if (VS) VS.verbose = debug;
-        })();
-      })
-      .catch(err => console.error('Failed to load storage module:', err));
-  })
-  .catch(err => {
-    console.error('Failed to load browser polyfill:', err);
-  });
+(async () => {
+  try {
+    const polyfillURL = chrome.runtime.getURL(
+      'src/polyfill/browser-polyfill.min.js'
+    );
+    await import(polyfillURL);
 
-// Function to initialize VoteSync, PostObserver, share methods,
-// and start observing DOM changes.
-function startup(HO) {
-  VS = new VoteSync(VERBOSE, isBlockedPath, HO);
-  PO = new PostObserver(VS);
-  VS.PO = PO;
-  HO.PO = PO;
-  HO.VS = VS;
-  PO.startMainObserver();
-}
+    // dynamically import storage module to get getGetDebug function
+    const mod = await import(chrome.runtime.getURL('src/utils/storage.js'));
+    const getDebug = mod.getGetDebug(browser);
+    // get debug setting from storage and set local variable verbose
+    const debug = await getDebug();
+    VERBOSE = debug;
+    if (VS) VS.verbose = debug;
+  } catch (err) {
+    console.error('Failed to load polyfill or storage module:', err);
+  }
+})();
 
 // Initial load and initialization
 (async function loadAndInit() {
@@ -117,8 +113,8 @@ function startup(HO) {
       observerProm,
       voteSyncProm,
     ]);
-    const mod = voteSyncMod && observerMod;
-    if (mod) {
+    const mods = voteSyncMod && observerMod;
+    if (mods) {
       VoteSync = voteSyncMod.default;
       ({ PostObserver, HrefObserver } = observerMod);
     } else {

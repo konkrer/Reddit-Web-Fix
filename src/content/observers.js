@@ -1,5 +1,13 @@
 'use strict';
 
+
+// Reddit elements of interest.
+// The reddit named html element with post data that is a shadow host.
+const REDDIT_POST_HOST = 'shreddit-post';
+// The reddit elements that may get dynamically added to page and contain the REDDIT_POST_HOST.
+const REDDIT_DYN_ADD_1 = 'article';
+const REDDIT_DYN_ADD_2 = 'faceplate-batch';
+
 // Class to manage and observe DOM changes for vote button syncing
 export class PostObserver {
   constructor(voteSync) {
@@ -19,11 +27,11 @@ export class PostObserver {
           mutation.addedNodes.forEach(node => {
             if (
               node.nodeType === Node.ELEMENT_NODE &&
-              (node.tagName.toLowerCase() === 'article' ||
-                node.tagName.toLowerCase() === 'faceplate-batch')
+              (node.tagName.toLowerCase() === REDDIT_DYN_ADD_1 ||
+                node.tagName.toLowerCase() === REDDIT_DYN_ADD_2)
             ) {
-              const sp = node.querySelectorAll?.('shreddit-post');
-              sp?.forEach(p => {
+              const posts = node.querySelectorAll?.(REDDIT_POST_HOST);
+              posts?.forEach(p => {
                 setTimeout(() => {
                   this.voteSync.addHandlersToPosts([p]);
                   if (this.voteSync.sessionStorage[p.id])
@@ -31,7 +39,7 @@ export class PostObserver {
                 }, 0);
               });
               if (this.voteSync.verbose)
-                console.debug('New article/ faceplate-batch processed.');
+                console.debug('New post containing element processed.');
             }
           });
         }
