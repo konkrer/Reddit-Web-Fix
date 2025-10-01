@@ -3,8 +3,8 @@
 // Content script to manage vote state syncing on www.reddit.com
 
 // placeholders for imports and instances
-let VoteSync, PostObserver, HrefObserver; // class imports
-let VS, PO, HO; // instances
+let VoteSync, PostObserver, HrefObserver, Appearance; // class imports
+let VS, PO, HO, AP; // instances
 let VERBOSE = false;
 
 // List of URL path prefixes where the extension should be inactive
@@ -18,6 +18,8 @@ function isBlockedPath() {
 function startup(HO) {
   VS = new VoteSync(VERBOSE, isBlockedPath, HO);
   PO = new PostObserver(VS);
+  AP = new Appearance(VERBOSE);
+  PO.appearance = AP;
   VS.PO = PO;
   HO.PO = PO;
   HO.VS = VS;
@@ -113,27 +115,30 @@ function handlePortDisconnect(initPort) {
 })();
 
 async function loadModules() {
-  const voteSyncProm = import(
-    chrome.runtime.getURL('src/content/VoteSync.js')
-  );
+  const voteSyncProm = import(chrome.runtime.getURL('src/content/VoteSync.js'));
   const observerProm = import(
     chrome.runtime.getURL('src/content/observers.js')
   );
-  const [observerMod, voteSyncMod] = await Promise.all([
+  const appearanceProm = import(
+    chrome.runtime.getURL('src/content/Appearance.js')
+  );
+  const [observerMod, voteSyncMod, appearanceMod] = await Promise.all([
     observerProm,
     voteSyncProm,
+    appearanceProm,
   ]);
-  if (voteSyncMod && observerMod) {
+  if (voteSyncMod && observerMod && appearanceMod) {
     VoteSync = voteSyncMod.default;
     ({ PostObserver, HrefObserver } = observerMod);
+    Appearance = appearanceMod.default;
   } else {
-    throw new Error('Failed to load VoteSync or PostObserver modules');
+    throw new Error('Failed to load modules.');
   }
 }
 
 // Load and initialization of business logic.
 (async function loadAndInit() {
-  // Dynamically import VoteSync and Observer modules
+  // Dynamically import modules
   try {
     await loadModules();
 

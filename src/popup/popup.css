@@ -1,0 +1,104 @@
+body {
+  font-family: sans-serif;
+  width: 300px;
+  padding: 10px;
+  background: linear-gradient(#b70000, #9f7925);
+  color: rgb(219, 209, 209);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+h1 {
+    text-align: center;
+    margin: 0;
+    margin-bottom: 10px;
+    color: black;
+    font-size: 35px;
+    text-shadow: 1px 1px 4px rgb(196, 193, 193);
+}
+
+h2 {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings-panel {
+    background-color: rgb(53, 53, 53);
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: rgb(201, 200, 200);
+}
+
+label {
+  font-weight: bold;
+}
+
+input[type='color'] {
+  width: 100%;
+  height: 30px;
+  border: 1px solid #ccc;
+  padding: 0;
+}
+
+input[type='text'] {
+  width: 95%;
+}
+
+button {
+  padding: 10px 60px;
+  border: none;
+  background-color: #030e4e;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+button:hover {
+  background-color: #005a9e;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.input-row-item {
+  font-size: 0.9rem;
+}
+
+label,
+input {
+  display: block;
+  border-radius: 5px;
+}
+
+input[type='number'] {
+  width: 50px;
+}
+
+select {
+  border-radius: 5px;
+}
+
+.width-100 {
+  width: 100%;
+}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Page Background Settings</title>
+    <link rel="stylesheet" href="popup.css" />
+    <script type="module" src="../polyfill/browser-polyfill.min.js"></script>
+    <script defer type="module" src="popup.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Reddit Web Fix</h1>
+
+      <h2>Background Settings</h2>
+
+      <div class="control-group">
+        <label for="bg-type">Background Type:</label>
+        <select id="bg-type">
+          <option selected value="none">None</option>
+          <option value="color">Solid Color</option>
+          <option value="gradient">Gradient</option>
+          <option value="image">Image</option>
+        </select>
+      </div>
+
+      <div id="color-settings" class="settings-panel" style="display: none">
+        <label for="bg-color">Background Color:</label>
+        <input type="color" id="bg-color" value="#2c1111" />
+      </div>
+
+      <div id="gradient-settings" class="settings-panel" style="display: none">
+        <label for="gradient-type">Gradient Type:</label>
+        <select id="gradient-type">
+          <option value="linear">Linear</option>
+          <option value="radial">Radial</option>
+        </select>
+        <div class="control-group flex-row">
+          <span class="input-row-item">
+            <label for="gradient-color-1">Color 1:</label>
+            <input type="color" id="gradient-color-1" value="#2c1111" />
+          </span>
+          <span class="input-row-item">
+            <label for="gradient-color-2">Color 2:</label>
+            <input type="color" id="gradient-color-2" value="#231a1a" />
+          </span>
+          <div id="gradient-angle-settings" class="input-row-item">
+            <label for="gradient-angle">Angle:</label>
+            <input type="number" id="gradient-angle" value="90" />
+          </div>
+        </div>
+      </div>
+
+      <div id="image-settings" class="settings-panel" style="display: none">
+        <label for="bg-image-url">Image URL:</label>
+        <input
+          type="text"
+          id="bg-image-url"
+          placeholder="https://example.com/image.png"
+        />
+        <label for="bg-image-file">Or select a local file:</label>
+        <input type="file" id="bg-image-file" accept="image/*" />
+        <div class="control-group flex-row">
+          <span class="input-row-item width-100">
+            <label for="bg-image-size">Size:</label>
+            <select id="bg-image-size" class="width-100">
+              <option value="cover">Cover</option>
+              <option value="contain">Contain</option>
+              <option selected value="auto">Auto</option>
+            </select>
+          </span>
+          <!-- <span class="input-row-item">
+            <label for="bg-image-repeat">Repeat:</label>
+            <select id="bg-image-repeat">
+              <option value="no-repeat">No Repeat</option>
+              <option value="repeat">Repeat</option>
+              <option value="repeat-x">Repeat X</option>
+              <option value="repeat-y">Repeat Y</option>
+            </select>
+          </span>
+          <span class="input-row-item">
+            <label for="bg-image-position">Position:</label>
+            <select id="bg-image-position">
+              <option value="center">Center</option>
+              <option value="top">Top</option>
+              <option value="bottom">Bottom</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+            </select>
+          </span> -->
+        </div>
+      </div>
+
+      <button type="submit" id="save-settings">Save and Apply</button>
+    </div>
+  </body>
+</html>

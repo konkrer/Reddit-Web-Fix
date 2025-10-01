@@ -122,12 +122,14 @@ export default class VoteSync {
         if (this.verbose) console.debug('Blocked page.');
         this.PO.stopMainObserver();
         this.HO.startHrefPoller();
-        return;
+        return true;
       }
       this.testForDetailPage();
       this.stateCopied.clear();
       setTimeout(this.addCopySync, delay || ADD_HANDLERS_DELAY);
+      return true;
     }
+    return false;
   }
 
   addCopySync = () => {

@@ -36,6 +36,4 @@ elif [ "$TARGET_BUILD" == "firefox" ]; then
   cp manifest-both.json manifest.json
 fi
 
-zip -r "$OUTPUT_PATH" . -x "*.git*" -x "*.vscode*" -x "*node_modules*" -x "*.DS_Store" -x "*.zip"\
-  -x "manifest-both.json" -x "*.log" -x "manifest copy.json" -x "private/*" -x "*.old"\
-    -x "dist/*" -x "README.md" -x "LICENSE" -x "*.sh"
+zip -r "$OUTPUT_PATH" . -i "src/*" -i "icons/*" -i "manifest.json"

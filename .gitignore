@@ -20,3 +20,4 @@ codebase_switcher.py
 # Ignore .cursorignore files
 
 .cursorignore
+node_modules

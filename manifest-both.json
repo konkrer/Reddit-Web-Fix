@@ -21,7 +21,8 @@
         "icons/goldenSyncIcon.png",
         "src/content/animation.js",
         "src/content/VoteSync.js",
-        "src/content/observers.js"
+        "src/content/observers.js",
+        "src/content/Appearance.js"
       ],
       "matches": ["https://www.reddit.com/*"]
     }
@@ -29,6 +30,16 @@
   "options_ui": {
     "page": "src/options/options.html",
     "open_in_tab": false
+  },
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Page Background Settings",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self';"

@@ -13,6 +13,7 @@ export class PostObserver {
   constructor(voteSync) {
     this.voteSync = voteSync;
     this.observer = null;
+    this.appearance = null;
   }
 
   _processNode(node) {
@@ -45,7 +46,9 @@ export class PostObserver {
   startMainObserver() {
     if (this.observer) return;
     this.observer = new MutationObserver(mutationsList => {
-      this.voteSync.testForPageChange();
+      if (this.voteSync.testForPageChange()) {
+        this.appearance?.applyBackground();
+      }
       for (const mutation of mutationsList) {
         if (mutation.type === 'childList') {
           mutation.addedNodes.forEach(node => this._processNode(node));
