@@ -9,3 +9,14 @@ store-description.md
 private/
 
 manifest.json
+.cursorindexingignore
+.specstory/
+dist/
+
+# Ignore codebase switcher script
+
+codebase_switcher.py
+
+# Ignore .cursorignore files
+
+.cursorignore
