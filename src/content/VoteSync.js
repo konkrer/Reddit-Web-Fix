@@ -50,6 +50,21 @@ const voteRecord = {
 const makeRestoredClearRecord = voteType =>
   `${voteRecord[CLEAR_VOTE_INDICATOR]}: ${voteRecord[voteType]}`;
 
+const countAdjustments = {
+  [BTN_UPVOTE_INDICATOR]: {
+    [voteRecord[CLEAR_VOTE_INDICATOR]]: 1,
+    [voteRecord[BTN_DOWNVOTE_INDICATOR]]: 2,
+  },
+  [BTN_DOWNVOTE_INDICATOR]: {
+    [voteRecord[CLEAR_VOTE_INDICATOR]]: -1,
+    [voteRecord[BTN_UPVOTE_INDICATOR]]: -2,
+  },
+  [CLEAR_VOTE_INDICATOR]: {
+    [voteRecord[BTN_UPVOTE_INDICATOR]]: -1,
+    [voteRecord[BTN_DOWNVOTE_INDICATOR]]: 1,
+  },
+};
+
 /* -----------------------------------------------------------*/
 
 // Dynamic import of constants and animation modules
@@ -149,37 +164,26 @@ export default class VoteSync {
 
   copyPostVoteState(post) {
     const btnSpan = this.getButtonSpan(post);
-    if (!btnSpan) return;
-    if (!this.detail && post.hasAttribute('post-seen')) {
+    if (!btnSpan || (!this.detail && post.hasAttribute('post-seen'))) {
       return;
     }
-    const count = this.getCountFromUI(post);
-    if (isNaN(count)) return;
 
-    // if upvote state seen record state
+    const count = this.getCountFromUI(post);
+    if (isNaN(count)) {
+      return;
+    }
+
+    let voteState;
     if (btnSpan.classList.contains(UPVOTE_INDICATOR_CLASS)) {
-      this.sessionStorage[post.id] = {
-        vote: voteRecord[BTN_UPVOTE_INDICATOR],
-        count,
-      };
-      this.stateCopied.add(post.id);
-    } else if (
-      // if downvote state seen record state
-      btnSpan.classList.contains(DOWNVOTE_INDICATOR_CLASS)
-    ) {
-      this.sessionStorage[post.id] = {
-        vote: voteRecord[BTN_DOWNVOTE_INDICATOR],
-        count,
-      };
-      this.stateCopied.add(post.id);
-    } else if (
-      // if on detail page record clear state
-      this.detail
-    ) {
-      this.sessionStorage[post.id] = {
-        vote: voteRecord[CLEAR_VOTE_INDICATOR],
-        count,
-      };
+      voteState = voteRecord[BTN_UPVOTE_INDICATOR];
+    } else if (btnSpan.classList.contains(DOWNVOTE_INDICATOR_CLASS)) {
+      voteState = voteRecord[BTN_DOWNVOTE_INDICATOR];
+    } else if (this.detail) {
+      voteState = voteRecord[CLEAR_VOTE_INDICATOR];
+    }
+
+    if (voteState) {
+      this.sessionStorage[post.id] = { vote: voteState, count };
       this.stateCopied.add(post.id);
     }
     post.setAttribute('post-seen', 'true');
@@ -189,105 +193,106 @@ export default class VoteSync {
     // Find out if we have a vote click event looking in Shadow DOM.
     // Check clicked element and three elements above
     // for being a vote button having vote indicator attribute.
-    for (let i = 0; i < 4; i++) {
-      const pathElem = e.composedPath()[i];
-      if (pathElem === undefined || pathElem.hasAttribute === undefined)
-        continue;
-      if (pathElem.hasAttribute(BTN_UPVOTE_INDICATOR))
-        return [true, BTN_UPVOTE_INDICATOR, pathElem];
-      else if (pathElem.hasAttribute(BTN_DOWNVOTE_INDICATOR))
-        return [true, BTN_DOWNVOTE_INDICATOR, pathElem];
+    const path = e.composedPath();
+    for (let i = 0; i < 4 && i < path.length; i++) {
+      const pathElem = path[i];
+      if (pathElem?.hasAttribute) {
+        if (pathElem.hasAttribute(BTN_UPVOTE_INDICATOR)) {
+          return [true, BTN_UPVOTE_INDICATOR, pathElem];
+        }
+        if (pathElem.hasAttribute(BTN_DOWNVOTE_INDICATOR)) {
+          return [true, BTN_DOWNVOTE_INDICATOR, pathElem];
+        }
+      }
     }
     return [false, null, null];
   }
 
+  _handleIgnoreClick(post, btnElem) {
+    this.setCountInUI(post);
+    if (clickIgnoredAnimation) {
+      clickIgnoredAnimation(btnElem);
+    }
+  }
+
+  _handleClearVote(post, prevVoteState, currCount, btnRestoredState) {
+    this.sessionStorage[post.id] = {
+      vote: voteRecord[CLEAR_VOTE_INDICATOR],
+      count: this.calcCount(CLEAR_VOTE_INDICATOR, prevVoteState, currCount),
+    };
+    if (btnRestoredState === undefined) {
+      this.watchForVoteNotCleared(post, prevVoteState, currCount);
+    }
+  }
+
+  _handleSetVote(post, voteType, prevVoteState, currCount, btnRestoredState) {
+    this.sessionStorage[post.id] = {
+      vote: voteRecord[voteType],
+      count: this.calcCount(voteType, prevVoteState, currCount),
+    };
+
+    const isRestoredUpToDown =
+      voteType === BTN_DOWNVOTE_INDICATOR &&
+      btnRestoredState === voteRecord[BTN_UPVOTE_INDICATOR];
+    const isRestoredDownToUp =
+      voteType === BTN_UPVOTE_INDICATOR &&
+      btnRestoredState === voteRecord[BTN_DOWNVOTE_INDICATOR];
+
+    if (isRestoredDownToUp || isRestoredUpToDown) {
+      const voteState =
+        voteType === BTN_UPVOTE_INDICATOR ? 'upvote' : 'downvote';
+      syncVoteAppearance(this.getButtonSpan(post), voteState);
+    }
+  }
+
   handleVotes = e => {
-    /* Function to handle vote button clicks and update state as appropriate.
-    Also trigger ignored click animation as needed. */
-
-    // If not vote button clicked return.
-    const targetId = e.target.id;
-    if (!targetId || e.target.tagName.toLowerCase() !== REDDIT_POST_HOST)
+    const post = e.target;
+    const targetId = post.id;
+    if (!targetId || post.tagName.toLowerCase() !== REDDIT_POST_HOST) {
       return;
-    const [voteClick, voteType, btnElem] = this.findVoteClickEventInSD(e);
-    if (!voteClick) return;
+    }
 
-    // Get button restored state.
+    const [voteClick, voteType, btnElem] = this.findVoteClickEventInSD(e);
+    if (!voteClick) {
+      return;
+    }
+
     const btnRestoredState = this.btnStateRestored[targetId];
     delete this.btnStateRestored[targetId];
 
-    // Get previous vote state and current vote count.
     const prevVoteState = this.sessionStorage[targetId]?.vote;
-    let currCount =
-      this.sessionStorage[targetId]?.count || this.getCountFromUI(e.target);
-    if (isNaN(currCount)) return;
-
-    // --- Clear vote handler ---
-    const handleClearVote = () => {
-      this.sessionStorage[targetId] = {
-        vote: voteRecord[CLEAR_VOTE_INDICATOR],
-        count: this.calcCount(CLEAR_VOTE_INDICATOR, prevVoteState, currCount),
-      };
-      if (btnRestoredState === undefined) {
-        this.watchForVoteNotCleared(e.target, prevVoteState, currCount);
-      }
-    };
-
-    // --- Set vote handler ---
-    const handleSetVote = voteType => {
-      // set vote record in state storage
-      this.sessionStorage[targetId] = {
-        vote: voteRecord[voteType],
-        count: this.calcCount(voteType, prevVoteState, currCount),
-      };
-      // if going from restored down to up, or from restored up to down
-      if (
-        (voteType === BTN_UPVOTE_INDICATOR &&
-          btnRestoredState === voteRecord[BTN_DOWNVOTE_INDICATOR]) ||
-        (voteType === BTN_DOWNVOTE_INDICATOR &&
-          btnRestoredState === voteRecord[BTN_UPVOTE_INDICATOR])
-      ) {
-        // force UI reset to show proper vote state, remove contraindicating svg arrows.
-        const syncFn =
-          voteType === BTN_UPVOTE_INDICATOR
-            ? syncUpvoteAppearance
-            : syncDownvoteAppearance;
-        syncFn.call(this, this.getButtonSpan(e.target));
-      }
-    };
-
-    // --- Ignore click handler ---
-    const handleIgnoreClick = () => {
-      this.setCountInUI(e.target);
-      if (clickIgnoredAnimation) clickIgnoredAnimation(btnElem);
-    };
-
-    // --- Main Logic ---
-    // Handle vote click based on vote type,
-    // button restored state, and previous state.
-    if (
-      // if voting the same way that the button was restored to
-      btnRestoredState == voteRecord[voteType] ||
-      btnRestoredState == makeRestoredClearRecord(voteType)
-    ) {
-      handleIgnoreClick();
+    const currCount =
+      this.sessionStorage[targetId]?.count ?? this.getCountFromUI(post);
+    if (isNaN(currCount)) {
       return;
     }
-    // if verbose is set true - log click event to console for debugging.
-    if (this.verbose)
-      console.debug(
-        voteType === BTN_UPVOTE_INDICATOR ? 'up click' : 'down click:',
-        targetId
-      );
 
-    // if voting the same way already voted - clear vote
-    if (prevVoteState === voteRecord[voteType]) {
-      handleClearVote();
-    } else {
-      // standard vote
-      handleSetVote(voteType);
+    if (
+      btnRestoredState === voteRecord[voteType] ||
+      btnRestoredState === makeRestoredClearRecord(voteType)
+    ) {
+      this._handleIgnoreClick(post, btnElem);
+      return;
     }
-    this.setCountInUI(e.target);
+
+    if (this.verbose) {
+      const voteDirection =
+        voteType === BTN_UPVOTE_INDICATOR ? 'up' : 'down';
+      console.debug(`${voteDirection} click:`, targetId);
+    }
+
+    if (prevVoteState === voteRecord[voteType]) {
+      this._handleClearVote(post, prevVoteState, currCount, btnRestoredState);
+    } else {
+      this._handleSetVote(
+        post,
+        voteType,
+        prevVoteState,
+        currCount,
+        btnRestoredState
+      );
+    }
+    this.setCountInUI(post);
   };
 
   watchForVoteNotCleared(post, initialState, currCount) {
@@ -333,26 +338,11 @@ export default class VoteSync {
   };
 
   calcCount(voteType, prevVoteState, count) {
-    // calculate new count based on previous state and vote action
-    // if prevVoteState undefined return current count
-    if (prevVoteState === undefined) return +count;
-
-    // if upvote clicked
-    if (voteType === BTN_UPVOTE_INDICATOR) {
-      if (prevVoteState == voteRecord[CLEAR_VOTE_INDICATOR]) return +count + 1;
-      else if (prevVoteState === voteRecord[BTN_DOWNVOTE_INDICATOR])
-        return +count + 2;
-      // if downvote clicked
-    } else if (voteType === BTN_DOWNVOTE_INDICATOR) {
-      if (prevVoteState == voteRecord[CLEAR_VOTE_INDICATOR]) return +count - 1;
-      else if (prevVoteState == voteRecord[BTN_UPVOTE_INDICATOR])
-        return +count - 2;
-      // if clear vote clicked
-    } else if (voteType === CLEAR_VOTE_INDICATOR) {
-      if (prevVoteState === voteRecord[BTN_UPVOTE_INDICATOR]) return +count - 1;
-      else if (prevVoteState === voteRecord[BTN_DOWNVOTE_INDICATOR])
-        return +count + 1;
+    if (prevVoteState === undefined) {
+      return +count;
     }
+    const adjustment = countAdjustments[voteType]?.[prevVoteState] ?? 0;
+    return +count + adjustment;
   }
 
   syncLikes(key) {
@@ -377,21 +367,21 @@ export default class VoteSync {
         dir === voteRecord[BTN_UPVOTE_INDICATOR] &&
         !(initState === BTN_UPVOTE_INDICATOR)
       ) {
-        syncUpvoteAppearance(btnSpan);
+        syncVoteAppearance(btnSpan, 'upvote');
         this.btnStateRestored[k] = dir;
       } else if (
         // if syncing downvote and the initial state was not downvote
         dir === voteRecord[BTN_DOWNVOTE_INDICATOR] &&
         !(initState === BTN_DOWNVOTE_INDICATOR)
       ) {
-        syncDownvoteAppearance(btnSpan);
+        syncVoteAppearance(btnSpan, 'downvote');
         this.btnStateRestored[k] = dir;
       } else if (
         // if syncing clear and the initial state was not clear
         dir === voteRecord[CLEAR_VOTE_INDICATOR] &&
         !(initState === CLEAR_VOTE_INDICATOR)
       ) {
-        syncClearAppearance(btnSpan);
+        syncVoteAppearance(btnSpan, 'clear');
         this.btnStateRestored[k] = makeRestoredClearRecord(initState);
       }
       this.setCountInUI(post);
@@ -419,50 +409,32 @@ function getButtonsSvgPaths(btnSpan) {
   return [buttonUp, buttonDn, pathUp, pathDn];
 }
 
-function syncUpvoteAppearance(btnSpan) {
+function syncVoteAppearance(btnSpan, voteState) {
   if (!btnSpan || SPN_CLS_UP === undefined) return;
   const [buttonUp, buttonDn, pathUp, pathDn] = getButtonsSvgPaths(btnSpan);
 
-  btnSpan.classList.remove(...SPN_CLS_DWN.split(' '));
-  btnSpan.classList.add(...SPN_CLS_UP.split(' '));
-  buttonUp.classList.remove(...BTN_CLS_STD.split(' '));
-  buttonUp.classList.add(...BTN_CLS_UD.split(' '));
-  buttonUp.setAttribute('aria-pressed', 'true');
-  buttonDn.classList.remove(...BTN_CLS_UD.split(' '));
-  buttonDn.classList.add(...BTN_CLS_STD.split(' '));
-  buttonDn.setAttribute('aria-pressed', 'false');
-  pathDn.setAttribute('d', SVG_DWN_HOLLOW_PATH);
-  pathUp.setAttribute('d', SVG_UP_FILLED_PATH);
-}
-
-function syncDownvoteAppearance(btnSpan) {
-  if (!btnSpan || SPN_CLS_UP === undefined) return;
-  const [buttonUp, buttonDn, pathUp, pathDn] = getButtonsSvgPaths(btnSpan);
-
-  btnSpan.classList.remove(...SPN_CLS_UP.split(' '));
-  btnSpan.classList.add(...SPN_CLS_DWN.split(' '));
+  // Reset to clear state first
+  btnSpan.classList.remove(...SPN_CLS_DWN.split(' '), ...SPN_CLS_UP.split(' '));
   buttonUp.classList.remove(...BTN_CLS_UD.split(' '));
   buttonUp.classList.add(...BTN_CLS_STD.split(' '));
-  buttonUp.setAttribute('aria-pressed', 'false');
-  buttonDn.classList.remove(...BTN_CLS_STD.split(' '));
-  buttonDn.classList.add(...BTN_CLS_UD.split(' '));
-  buttonDn.setAttribute('aria-pressed', 'true');
-  pathDn.setAttribute('d', SVG_DWN_FILLED_PATH);
-  pathUp.setAttribute('d', SVG_UP_HOLLOW_PATH);
-}
-
-function syncClearAppearance(btnSpan) {
-  if (!btnSpan || SPN_CLS_UP === undefined) return;
-  const [buttonUp, buttonDn, pathUp, pathDn] = getButtonsSvgPaths(btnSpan);
-
-  btnSpan.classList.remove(...SPN_CLS_DWN.split(' '));
-  btnSpan.classList.remove(...SPN_CLS_UP.split(' '));
-  buttonUp.classList.remove(...BTN_CLS_UD.split(' '));
-  buttonUp.classList.add(...BTN_CLS_STD.split(' '));
-  buttonUp.setAttribute('aria-pressed', 'false');
   buttonDn.classList.remove(...BTN_CLS_UD.split(' '));
   buttonDn.classList.add(...BTN_CLS_STD.split(' '));
+  buttonUp.setAttribute('aria-pressed', 'false');
   buttonDn.setAttribute('aria-pressed', 'false');
   pathDn.setAttribute('d', SVG_DWN_HOLLOW_PATH);
   pathUp.setAttribute('d', SVG_UP_HOLLOW_PATH);
+
+  if (voteState === 'upvote') {
+    btnSpan.classList.add(...SPN_CLS_UP.split(' '));
+    buttonUp.classList.remove(...BTN_CLS_STD.split(' '));
+    buttonUp.classList.add(...BTN_CLS_UD.split(' '));
+    buttonUp.setAttribute('aria-pressed', 'true');
+    pathUp.setAttribute('d', SVG_UP_FILLED_PATH);
+  } else if (voteState === 'downvote') {
+    btnSpan.classList.add(...SPN_CLS_DWN.split(' '));
+    buttonDn.classList.remove(...BTN_CLS_STD.split(' '));
+    buttonDn.classList.add(...BTN_CLS_UD.split(' '));
+    buttonDn.setAttribute('aria-pressed', 'true');
+    pathDn.setAttribute('d', SVG_DWN_FILLED_PATH);
+  }
 }

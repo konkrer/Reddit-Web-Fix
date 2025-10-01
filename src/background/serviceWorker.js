@@ -51,15 +51,19 @@ function broadcast(message) {
   }
 }
 
+function handleSetVerbose(msg) {
+  if (typeof msg.tabId === 'number') {
+    sendToTab(msg.tabId, msg);
+  } else {
+    broadcast(msg);
+  }
+}
+
 // Listen for messages from options pages
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.type === 'SET_VERBOSE') {
     try {
-      if (typeof msg.tabId === 'number') {
-        sendToTab(msg.tabId, msg);
-      } else {
-        broadcast(msg);
-      }
+      handleSetVerbose(msg);
       sendResponse({ ok: true });
     } catch (err) {
       sendResponse({ ok: false, error: err });

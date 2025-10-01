@@ -15,33 +15,40 @@ export class PostObserver {
     this.observer = null;
   }
 
+  _processNode(node) {
+    if (
+      node.nodeType !== Node.ELEMENT_NODE ||
+      (node.tagName.toLowerCase() !== REDDIT_DYN_ADD_1 &&
+        node.tagName.toLowerCase() !== REDDIT_DYN_ADD_2)
+    ) {
+      return;
+    }
+
+    const posts = node.querySelectorAll?.(REDDIT_POST_HOST);
+    posts?.forEach(p => {
+      setTimeout(() => {
+        this.voteSync.addHandlersToPosts([p]);
+        if (this.voteSync.sessionStorage[p.id]) {
+          this.voteSync.syncLikes(p.id);
+        }
+      }, 0);
+    });
+
+    if (this.voteSync.verbose) {
+      console.debug('New post containing element processed.');
+    }
+  }
+
   // Observe DOM changes to detect new posts loaded dynamically
   // and add event handlers to them and sync their state.
   // Also test for page changes.
   startMainObserver() {
     if (this.observer) return;
     this.observer = new MutationObserver(mutationsList => {
+      this.voteSync.testForPageChange();
       for (const mutation of mutationsList) {
         if (mutation.type === 'childList') {
-          this.voteSync.testForPageChange();
-          mutation.addedNodes.forEach(node => {
-            if (
-              node.nodeType === Node.ELEMENT_NODE &&
-              (node.tagName.toLowerCase() === REDDIT_DYN_ADD_1 ||
-                node.tagName.toLowerCase() === REDDIT_DYN_ADD_2)
-            ) {
-              const posts = node.querySelectorAll?.(REDDIT_POST_HOST);
-              posts?.forEach(p => {
-                setTimeout(() => {
-                  this.voteSync.addHandlersToPosts([p]);
-                  if (this.voteSync.sessionStorage[p.id])
-                    this.voteSync.syncLikes(p.id);
-                }, 0);
-              });
-              if (this.voteSync.verbose)
-                console.debug('New post containing element processed.');
-            }
-          });
+          mutation.addedNodes.forEach(node => this._processNode(node));
         }
       }
     });
@@ -79,25 +86,37 @@ export class HrefObserver {
     this.VS = undefined;
     this.PO = undefined;
   }
+
+  _handleHrefChange(lastHref) {
+    if (location.href === lastHref) {
+      return lastHref;
+    }
+
+    lastHref = location.href;
+    if (this.isBlockedPath()) {
+      return lastHref;
+    }
+
+    this.stopHrefPoller();
+    setTimeout(() => {
+      if (this.VS) {
+        this.VS.testForPageChange(1000);
+        this.PO.startMainObserver();
+      } else {
+        this.startup(this);
+      }
+    }, 100);
+
+    return lastHref;
+  }
+
   startHrefPoller(interval = 500) {
     if (this.pollerId) return;
     let lastHref = location.href;
-    this.pollerId = setInterval(() => {
-      if (location.href !== lastHref) {
-        lastHref = location.href;
-        // only restart DOM work once we've left a blocked path
-        if (!this.isBlockedPath()) {
-          this.stopHrefPoller();
-          // small delay to let the new page render
-          setTimeout(() => {
-            if (VS) {
-              this.VS.testForPageChange(1000);
-              this.PO.startMainObserver();
-            } else this.startup(this);
-          }, 100);
-        }
-      }
-    }, interval);
+    this.pollerId = setInterval(
+      () => (lastHref = this._handleHrefChange(lastHref)),
+      interval
+    );
     if (this.VS?.verbose || this.verbose)
       console.debug('Reddit Web Fix: href poller started.');
   }

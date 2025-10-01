@@ -32,6 +32,33 @@ function cleanup() {
   console.log('Reddit Web Fix: shut down.');
 }
 
+function handlePortMessage(msg) {
+  if (msg.type === 'SET_VERBOSE') {
+    VERBOSE = msg.value;
+    if (VS) {
+      VS.verbose = msg.value;
+      console.debug('Verbose mode updated:', msg.value);
+    } else {
+      console.debug(
+        'Verbose mode set, but VoteSync not initialized yet:',
+        msg.value
+      );
+    }
+  } else if (msg.type === 'CLEANUP') {
+    cleanup();
+  }
+}
+
+function handlePortDisconnect(initPort) {
+  setTimeout(() => {
+    if (!chrome.runtime?.id) {
+      cleanup();
+    } else {
+      initPort();
+    }
+  }, 1000);
+}
+
 // Set up for communication port to background script.
 (async () => {
   let PORT;
@@ -46,32 +73,12 @@ function cleanup() {
       PORT.postMessage({ type: 'hello' });
 
       // Parse incoming messages over PORT
-      PORT.onMessage.addListener(msg => {
-        if (msg.type === 'SET_VERBOSE') {
-          VERBOSE = msg.value;
-          if (VS) {
-            VS.verbose = msg.value;
-            console.debug('Verbose mode updated:', msg.value);
-          } else {
-            console.debug(
-              'Verbose mode set, but VoteSync not initialized yet:',
-              msg.value
-            );
-          }
-        } else if (msg.type === 'CLEANUP') {
-          cleanup();
-        }
-      });
+      PORT.onMessage.addListener(handlePortMessage);
 
       // Declare what to do on port disconnect.
       PORT.onDisconnect.addListener(() => {
         PORT = null;
-        setTimeout(() => {
-          // if no runtime context cleanup
-          if (!chrome.runtime?.id) cleanup();
-          // otherwise attempt to reconnect
-          else initPort();
-        }, 1000);
+        handlePortDisconnect(initPort);
       });
     } catch (err) {
       console.debug('Port setup failed:', err.message);
@@ -91,39 +98,44 @@ function cleanup() {
     );
     await import(polyfillURL);
 
-    // dynamically import storage module to get getGetDebug function
-    const mod = await import(chrome.runtime.getURL('src/utils/storage.js'));
-    const getDebug = mod.getGetDebug(browser);
-    // get debug setting from storage and set local variable verbose
+    const storageMod = await import(
+      chrome.runtime.getURL('src/utils/storage.js')
+    );
+    const getDebug = storageMod.getGetDebug(browser);
     const debug = await getDebug();
     VERBOSE = debug;
-    if (VS) VS.verbose = debug;
+    if (VS) {
+      VS.verbose = debug;
+    }
   } catch (err) {
     console.error('Failed to load polyfill or storage module:', err);
   }
 })();
 
+async function loadModules() {
+  const voteSyncProm = import(
+    chrome.runtime.getURL('src/content/VoteSync.js')
+  );
+  const observerProm = import(
+    chrome.runtime.getURL('src/content/observers.js')
+  );
+  const [observerMod, voteSyncMod] = await Promise.all([
+    observerProm,
+    voteSyncProm,
+  ]);
+  if (voteSyncMod && observerMod) {
+    VoteSync = voteSyncMod.default;
+    ({ PostObserver, HrefObserver } = observerMod);
+  } else {
+    throw new Error('Failed to load VoteSync or PostObserver modules');
+  }
+}
+
 // Load and initialization of business logic.
 (async function loadAndInit() {
   // Dynamically import VoteSync and Observer modules
   try {
-    const voteSyncProm = import(
-      chrome.runtime.getURL('src/content/VoteSync.js')
-    );
-    const observerProm = import(
-      chrome.runtime.getURL('src/content/observers.js')
-    );
-    const [observerMod, voteSyncMod] = await Promise.all([
-      observerProm,
-      voteSyncProm,
-    ]);
-    const mods = voteSyncMod && observerMod;
-    if (mods) {
-      VoteSync = voteSyncMod.default;
-      ({ PostObserver, HrefObserver } = observerMod);
-    } else {
-      throw new Error('Failed to load VoteSync or PostObserver modules');
-    }
+    await loadModules();
 
     // Initial startup.
     HO = new HrefObserver(isBlockedPath, VERBOSE, startup);
