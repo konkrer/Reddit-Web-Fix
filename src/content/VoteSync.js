@@ -103,7 +103,7 @@ export default class VoteSync {
     this.verbose = verbose;
     this.isBlockedPath = isBlockedPath;
     this.HO = HO; // Href Observer
-    this.PO = undefined; // Post Observer
+    this.MO = undefined; // Post Observer
     this.sessionStorage = {};
     this.stateCopied = new Set();
     this.btnStateRestored = {};
@@ -111,16 +111,16 @@ export default class VoteSync {
     this.detail = undefined;
 
     this.testForPageChange(1000);
-    if (this.verbose) console.debug('VoteSync initialized.');
+    this.log('VoteSync initialized.');
   }
 
   testForPageChange(delay) {
     if (this.currentPage !== window.location.href) {
-      if (this.verbose) console.debug('Page change detected.');
+      this.log('Page change detected.');
       this.currentPage = window.location.href;
       if (this.isBlockedPath()) {
-        if (this.verbose) console.debug('Blocked page.');
-        this.PO.stopMainObserver();
+        this.log('Blocked page.');
+        this.MO.stopMainObserver();
         this.HO.startHrefPoller();
         return true;
       }
@@ -136,8 +136,14 @@ export default class VoteSync {
     this.addHandlersToPosts();
     this.btnStateRestored = {};
     this.syncLikes();
-    if (this.verbose)
-      console.debug('Added handlers, Copied State, Synced Button State');
+    this.log('Added handlers, Copied State, Synced Button State');
+  };
+
+  addSyncPost = post => {
+    this.addHandlersToPosts([post]);
+    if (this.sessionStorage[post.id]) {
+      this.syncLikes(post.id);
+    }
   };
 
   getPosts() {
@@ -146,7 +152,7 @@ export default class VoteSync {
   }
 
   getButtonSpan(post) {
-    return post.shadowRoot?.querySelector(REDDIT_BTN_CONTAINER);
+    return post?.shadowRoot?.querySelector(REDDIT_BTN_CONTAINER);
   }
 
   addHandlersToPosts(postsIn) {
@@ -277,11 +283,8 @@ export default class VoteSync {
       return;
     }
 
-    if (this.verbose) {
-      const voteDirection =
-        voteType === BTN_UPVOTE_INDICATOR ? 'up' : 'down';
-      console.debug(`${voteDirection} click:`, targetId);
-    }
+    const voteDirection = voteType === BTN_UPVOTE_INDICATOR ? 'up' : 'down';
+    this.log(`${voteDirection} click:`, targetId);
 
     if (prevVoteState === voteRecord[voteType]) {
       this._handleClearVote(post, prevVoteState, currCount, btnRestoredState);
@@ -306,8 +309,7 @@ export default class VoteSync {
       const currUIState = this.getVoteStateFromUI(btnSpan);
       // if state is still upvote or downvote after clicking upvote/downvote to clear vote
       if (voteRecord[currUIState] === initialState) {
-        if (this.verbose)
-          console.debug('Upvote not cleared, syncing state.', post.id);
+        this.log('Upvote not cleared, syncing state.', post.id);
         // reset vote state and count to match UI and show sync animation
         this.sessionStorage[post.id] = {
           vote: initialState,
@@ -397,6 +399,12 @@ export default class VoteSync {
     this.detail = /^https?:\/\/(www\.)?reddit.com\/r\/.+\/comments\/.+/.test(
       window.location.href
     );
+  }
+
+  log(...args) {
+    if (this.verbose) {
+      console.debug(...args);
+    }
   }
 }
 

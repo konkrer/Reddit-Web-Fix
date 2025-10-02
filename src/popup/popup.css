@@ -1,10 +1,14 @@
 body {
   font-family: sans-serif;
+  min-height: 400px;
   width: 300px;
-  padding: 10px;
-  background: linear-gradient(#b70000, #9f7925);
+  padding: 18px;
+  margin: 0px;
+  background: linear-gradient(#8d0202, 80%, #3b0000f5);
   color: rgb(219, 209, 209);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: inset black 0px 30px 55px;
+  border: inset #ff6300;
 }
 
 .container {
@@ -14,28 +18,29 @@ body {
 }
 
 h1 {
-    text-align: center;
-    margin: 0;
-    margin-bottom: 10px;
-    color: black;
-    font-size: 35px;
-    text-shadow: 1px 1px 4px rgb(196, 193, 193);
+  text-align: center;
+  margin: 0;
+  color: black;
+  font-size: 30px;
+  text-shadow: 1px 1px 3px rgb(196, 193, 193);
+  font-family: monospace;
+  text-shadow: black 0px 0px 12px;
 }
 
 h2 {
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 2px 2px 4px rgb(0, 0, 0);
+  margin-bottom: 0;
 }
 
-
 .control-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .settings-panel {
-    background-color: rgb(53, 53, 53);
-  border: 1px solid #ccc;
+  background-color: rgb(0 0 0 / 60%);
+  /* border: 1px solid #ccc; */
   padding: 10px;
   border-radius: 5px;
   display: flex;
@@ -62,15 +67,30 @@ input[type='text'] {
 button {
   padding: 10px 60px;
   border: none;
-  background-color: #030e4e;
+  background-color: #011480;
   color: white;
   border-radius: 5px;
   cursor: pointer;
   font-size: 1em;
+  box-shadow: black 2px 2px 4px;
 }
 
 button:hover {
-  background-color: #005a9e;
+  background-color: #0a3549;
+}
+
+button:active {
+  box-shadow: rgb(173, 173, 173) 2px 2px 14px !important;
+}
+
+button[type='reset'] {
+  font-size: x-small;
+  width: 40px !important;
+  height: 18px;
+  background-color: rgb(119, 119, 119);
+  padding: 0;
+  box-shadow: none;
+  border-radius: 3px;
 }
 
 .flex-row {
@@ -78,7 +98,11 @@ button:hover {
   flex-direction: row;
   gap: 10px;
   align-items: center;
-  justify-content: space-around;
+  justify-content: space-evenly;
+}
+
+.flex-start {
+  justify-content: start;
 }
 
 .input-row-item {
@@ -87,18 +111,130 @@ button:hover {
 
 label,
 input {
-  display: block;
+  /* display: block; */
   border-radius: 5px;
 }
 
 input[type='number'] {
-  width: 50px;
-}
-
-select {
-  border-radius: 5px;
+  height: 26px;
+  border: none;
+  width: 64px;
 }
 
 .width-100 {
   width: 100%;
+}
+
+.mb-15 {
+  margin-bottom: 15px;
+}
+
+.mr-15 {
+  margin-right: 15px;
+}
+
+#gradient-angle-settings > label {
+  display: block;
+}
+
+select,
+::picker(select) {
+  appearance: base-select;
+}
+
+select {
+  border-radius: 10px;
+  /* border: 1px solid #000000; */
+  border: none;
+  background: #724949;
+  padding: 3px 40px;
+  transition: 0.4s;
+}
+
+select:hover,
+select:focus {
+  background: #0a3549;
+}
+
+select::picker-icon {
+  color: #999999;
+  transition: 0.4s rotate;
+}
+
+select:open::picker-icon {
+  rotate: 180deg;
+}
+
+::picker(select) {
+  border: none;
+  background: none;
+  padding: none;
+  opacity: 0;
+  transition: all 0.4s allow-discrete;
+  top: calc(anchor(bottom) + 1px);
+  left: anchor(20%);
+}
+
+option {
+  display: flex;
+  justify-content: flex-start;
+  gap: 20px;
+
+  border: 2px solid #c0c0c0;
+  background: #eeeeee;
+  padding: 10px;
+  transition: 0.4s;
+  max-width: 200px;
+}
+
+option:first-of-type {
+  border-radius: 8px 8px 0 0;
+}
+
+option:last-of-type {
+  border-radius: 0 0 8px 8px;
+}
+
+option:not(option:last-of-type) {
+  border-bottom: none;
+}
+
+option:nth-of-type(odd) {
+  background: white;
+}
+
+option:hover,
+option:focus {
+  background: rgb(156, 165, 189);
+}
+
+option .icon {
+  font-size: 1.6rem;
+  text-box: trim-both cap alphabetic;
+}
+
+option:checked {
+  font-weight: bold;
+}
+
+option::checkmark {
+  order: 1;
+  margin-left: auto;
+  /* content: "✅"; */
+}
+
+::picker(select):popover-open {
+  opacity: 1;
+}
+
+@starting-style {
+  ::picker(select):popover-open {
+    opacity: 0;
+  }
+}
+
+.bungee-spice-regular {
+  font-family: "Bungee Spice", sans-serif;
+  font-weight: 400;
+  font-style: normal;
 }

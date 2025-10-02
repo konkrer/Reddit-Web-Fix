@@ -12,15 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const bgColor = document.getElementById('bg-color');
 
   // Gradient settings
-  const gradientType = document.getElementById('gradient-type');
+  const gradientType = document.getElementsByName('gradient-type');
   const gradientColor1 = document.getElementById('gradient-color-1');
   const gradientColor2 = document.getElementById('gradient-color-2');
   const gradientAngle = document.getElementById('gradient-angle');
-  const gradientAngleSettings = document.getElementById(
-    'gradient-angle-settings'
-  );
 
   // Image settings
+  const clearImageUrlBtn = document.querySelector('button[type="reset"]');
   const bgImageUrl = document.getElementById('bg-image-url');
   const bgImageFile = document.getElementById('bg-image-file');
   const bgImageSize = document.getElementById('bg-image-size');
@@ -49,11 +47,24 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('showHidePanels', bgType.value);
   }
 
+  function getGradientType() {
+    for (let btn of gradientType) {
+      if (btn.checked) return btn.value;
+    }
+  }
+
+  function setGradientType(type) {
+    for (let btn of gradientType) {
+      if (btn.value === type) btn.checked = true;
+    }
+  }
+
   function showHideGradientControls() {
-    if (gradientType.value === 'linear') {
-      gradientAngleSettings.style.display = 'block';
+    const currGradientType = getGradientType();
+    if (currGradientType === 'linear') {
+      gradientAngle.disabled = false;
     } else {
-      gradientAngleSettings.style.display = 'none';
+      gradientAngle.disabled = true;
     }
   }
 
@@ -67,14 +78,14 @@ document.addEventListener('DOMContentLoaded', () => {
     bgColor.value = settings.color || '#2c1111';
 
     // Gradient
-    gradientType.value = settings.gradientType || 'linear';
+    setGradientType(settings.gradientType || 'linear');
     gradientColor1.value = settings.gradientColor1 || '#2d0101';
-    gradientColor2.value = settings.gradientColor2 || '#231a1a';
+    gradientColor2.value = settings.gradientColor2 || '#212245';
     gradientAngle.value = settings.gradientAngle || '90';
 
     // Image
     bgImageUrl.value = settings.imageUrl || '';
-    bgImageSize.value = settings.imageSize || 'cover';
+    bgImageSize.value = settings.imageSize || 'auto';
 
     showHidePanels();
   }
@@ -85,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Color
       color: bgColor.value,
       // Gradient
-      gradientType: gradientType.value,
+      gradientType: getGradientType(),
       gradientColor1: gradientColor1.value,
       gradientColor2: gradientColor2.value,
       gradientAngle: gradientAngle.value,
@@ -115,10 +126,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function clearImageUrl() {
+    bgImageUrl.value = '';
+  }
+
   // --- Event Listeners ---
   bgType.addEventListener('change', showHidePanels);
-  gradientType.addEventListener('change', showHideGradientControls);
+  gradientSettings.addEventListener('change', showHideGradientControls);
   saveButton.addEventListener('click', saveSettings);
+  clearImageUrlBtn.addEventListener('click', clearImageUrl);
 
   // --- Initialization ---
   chrome.storage.local.get('backgroundSettings', loadSettings);

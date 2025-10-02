@@ -11,7 +11,7 @@ export default class Appearance {
       if (namespace === 'local' && changes.backgroundSettings) {
         this.log('Background settings changed, reloading.');
         this.settings = changes.backgroundSettings.newValue;
-        this.applyBackground();
+        this._applyBackground();
       }
     });
   }
@@ -23,13 +23,20 @@ export default class Appearance {
       this.settings = data.backgroundSettings;
       this.log('Background settings loaded:', this.settings);
       this.applyBackground();
+      // additional call applyBackground with timeout??
     } else {
       this.log('No background settings found.');
     }
   }
 
+  // Apply background twice in case first one is to early to find target element.
+  applyBackground = () => {
+    this._applyBackground();
+    setTimeout(this._applyBackground, 500);
+  };
+
   // Apply the background style to the grid container.
-  applyBackground() {
+  _applyBackground = () => {
     const gridContainer = document.querySelector('.grid-container');
     if (!gridContainer) {
       this.log('Grid container not found.');
@@ -37,8 +44,8 @@ export default class Appearance {
     }
 
     if (!this.settings) {
-        gridContainer.style.background = ''
-        return;
+      gridContainer.style.background = '';
+      return;
     }
 
     switch (this.settings.type) {
@@ -51,9 +58,10 @@ export default class Appearance {
       case 'gradient':
         let gradientCss = '';
         if (this.settings.gradientType === 'linear') {
-            gradientCss = `linear-gradient(${this.settings.gradientAngle}deg, ${this.settings.gradientColor1}, ${this.settings.gradientColor2})`;
-        } else { // radial
-            gradientCss = `radial-gradient(${this.settings.gradientColor1}, ${this.settings.gradientColor2})`;
+          gradientCss = `linear-gradient(${this.settings.gradientAngle}deg, ${this.settings.gradientColor1}, ${this.settings.gradientColor2})`;
+        } else {
+          // radial
+          gradientCss = `radial-gradient(${this.settings.gradientColor1}, ${this.settings.gradientColor2})`;
         }
         gridContainer.style.background = gradientCss;
         break;
@@ -70,7 +78,7 @@ export default class Appearance {
         gridContainer.style.backgroundPosition = 'top';
         break;
     }
-  }
+  };
 
   log(message) {
     if (this.verbose) {

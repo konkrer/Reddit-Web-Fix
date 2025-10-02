@@ -3,8 +3,8 @@
 // Content script to manage vote state syncing on www.reddit.com
 
 // placeholders for imports and instances
-let VoteSync, PostObserver, HrefObserver, Appearance; // class imports
-let VS, PO, HO, AP; // instances
+let VoteSync, MainObserver, HrefObserver, Appearance; // class imports
+let VS, MO, HO, AP; // instances
 let VERBOSE = false;
 
 // List of URL path prefixes where the extension should be inactive
@@ -13,22 +13,22 @@ function isBlockedPath() {
   return BLOCKED_PREFIXES.some(p => location.pathname.startsWith(p));
 }
 
-// Function to initialize VoteSync, PostObserver, share methods,
+// Function to initialize VoteSync, MainObserver, share methods,
 // and start observing DOM changes.
 function startup(HO) {
   VS = new VoteSync(VERBOSE, isBlockedPath, HO);
-  PO = new PostObserver(VS);
+  MO = new MainObserver(VS);
   AP = new Appearance(VERBOSE);
-  PO.appearance = AP;
-  VS.PO = PO;
-  HO.PO = PO;
+  MO.appearance = AP;
+  VS.MO = MO;
+  HO.MO = MO;
   HO.VS = VS;
-  PO.startMainObserver();
+  MO.startMainObserver();
 }
 
 // Cleanup function for extension unloading.
 function cleanup() {
-  if (PO) PO.stopMainObserver();
+  if (MO) MO.stopMainObserver();
   if (HO) HO.stopHrefPoller();
   if (VS) VS.removeHandlersFromPosts();
   console.log('Reddit Web Fix: shut down.');
@@ -39,6 +39,7 @@ function handlePortMessage(msg) {
     VERBOSE = msg.value;
     if (VS) {
       VS.verbose = msg.value;
+      AP.verbose = msg.value;
       console.debug('Verbose mode updated:', msg.value);
     } else {
       console.debug(
@@ -129,7 +130,7 @@ async function loadModules() {
   ]);
   if (voteSyncMod && observerMod && appearanceMod) {
     VoteSync = voteSyncMod.default;
-    ({ PostObserver, HrefObserver } = observerMod);
+    ({ MainObserver, HrefObserver } = observerMod);
     Appearance = appearanceMod.default;
   } else {
     throw new Error('Failed to load modules.');
