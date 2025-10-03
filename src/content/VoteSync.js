@@ -114,25 +114,43 @@ export default class VoteSync {
     this.log('VoteSync initialized.');
   }
 
-  testForPageChange(delay) {
+  testForPageChange(addDelay = ADD_HANDLERS_DELAY) {
+    // return true if page change detected to allowed page, false otherwise
     if (this.currentPage !== window.location.href) {
       this.log('Page change detected.');
-      this.currentPage = window.location.href;
-      if (this.isBlockedPath()) {
-        this.log('Blocked page.');
-        this.MO.stopMainObserver();
-        this.HO.startHrefPoller();
-        return true;
-      }
-      this.testForDetailPage();
-      this.stateCopied.clear();
-      setTimeout(this.addCopySync, delay || ADD_HANDLERS_DELAY);
-      return true;
+      return this._newPageDetected(addDelay);
     }
     return false;
   }
 
+  _newPageDetected(addDelay) {
+    // test for blocked page and allowed page
+    this.currentPage = window.location.href;
+    if (this.isBlockedPath()) {
+      this._newBlockedPageDetected();
+      return false;
+    }
+    this._newAllowedPageDetected(addDelay);
+    return true;
+  }
+
+  _newBlockedPageDetected() {
+    // stop main observer and start href poller
+    this.log('Blocked page.');
+    this.MO.stopMainObserver();
+    this.HO.startHrefPoller();
+  }
+
+  _newAllowedPageDetected(addDelay) {
+    // test for detail page and clear state copied set
+    // add copy sync with delay
+    this.testForDetailPage();
+    this.stateCopied.clear();
+    setTimeout(this.addCopySync, addDelay);
+  }
+
   addCopySync = () => {
+    // add handlers to posts and sync button state
     this.addHandlersToPosts();
     this.btnStateRestored = {};
     this.syncLikes();
@@ -140,6 +158,7 @@ export default class VoteSync {
   };
 
   addSyncPost = post => {
+    // add handlers to post and sync vote state
     this.addHandlersToPosts([post]);
     if (this.sessionStorage[post.id]) {
       this.syncLikes(post.id);
@@ -147,15 +166,18 @@ export default class VoteSync {
   };
 
   getPosts() {
+    // get all posts
     const posts = document.querySelectorAll(REDDIT_POST_HOST);
     return posts;
   }
 
   getButtonSpan(post) {
+    // get button span
     return post?.shadowRoot?.querySelector(REDDIT_BTN_CONTAINER);
   }
 
   addHandlersToPosts(postsIn) {
+    // add handlers to posts
     const posts = postsIn || this.getPosts();
     posts.forEach(post => {
       this.copyPostVoteState(post);
@@ -164,6 +186,7 @@ export default class VoteSync {
   }
 
   removeHandlersFromPosts() {
+    // remove handlers from posts
     const posts = this.getPosts();
     posts.forEach(post => {
       post.removeEventListener('click', this.handleVotes);
@@ -171,52 +194,79 @@ export default class VoteSync {
   }
 
   copyPostVoteState(post) {
+    // copy post vote state
     const btnSpan = this.getButtonSpan(post);
-    if (!btnSpan || (!this.detail && post.hasAttribute('post-seen'))) {
+    if (!btnSpan || (!this.detail && this._getPostSeen(post))) {
       return;
     }
 
+    this._copyVoteState(post, btnSpan);
+    this._setPostSeen(post);
+  }
+
+  _copyVoteState(post, btnSpan) {
+    // copy vote state to session storage
     const count = this.getCountFromUI(post);
-    if (isNaN(count)) {
+    if (isNaN(count)) return;
+
+    const voteState = this.getVoteStateFromUI(btnSpan);
+    // only copy clear vote state on detail page
+    // so return if not detail page and vote state is clear
+    if (!voteState || (voteState === CLEAR_VOTE_INDICATOR && !this.detail))
       return;
-    }
+    this.sessionStorage[post.id] = { vote: voteRecord[voteState], count };
+    this.stateCopied.add(post.id);
+  }
 
-    let voteState;
-    if (btnSpan.classList.contains(UPVOTE_INDICATOR_CLASS)) {
-      voteState = voteRecord[BTN_UPVOTE_INDICATOR];
-    } else if (btnSpan.classList.contains(DOWNVOTE_INDICATOR_CLASS)) {
-      voteState = voteRecord[BTN_DOWNVOTE_INDICATOR];
-    } else if (this.detail) {
-      voteState = voteRecord[CLEAR_VOTE_INDICATOR];
-    }
+  _getPostSeen(post) {
+    // check if post seen
+    return post.hasAttribute('post-seen');
+  }
 
-    if (voteState) {
-      this.sessionStorage[post.id] = { vote: voteState, count };
-      this.stateCopied.add(post.id);
-    }
+  _setPostSeen(post) {
+    // set post seen attribute
     post.setAttribute('post-seen', 'true');
   }
 
-  findVoteClickEventInSD(e) {
-    // Find out if we have a vote click event looking in Shadow DOM.
+  findVoteButtonClickEvent(e) {
+    // find if event was a vote button click event
     // Check clicked element and three elements above
     // for being a vote button having vote indicator attribute.
+    // Return [found bool, voteType, button element]
+    let foundClick = [false, null, null];
     const path = e.composedPath();
     for (let i = 0; i < 4 && i < path.length; i++) {
-      const pathElem = path[i];
-      if (pathElem?.hasAttribute) {
-        if (pathElem.hasAttribute(BTN_UPVOTE_INDICATOR)) {
-          return [true, BTN_UPVOTE_INDICATOR, pathElem];
-        }
-        if (pathElem.hasAttribute(BTN_DOWNVOTE_INDICATOR)) {
-          return [true, BTN_DOWNVOTE_INDICATOR, pathElem];
-        }
-      }
+      foundClick = this._findVoteButton(path[i]) || foundClick;
     }
-    return [false, null, null];
+    return foundClick;
+  }
+
+  _findVoteButton(pathElem) {
+    // find vote button
+    if (!pathElem?.hasAttribute) return false;
+    return (
+      this._findUpvoteButton(pathElem) || this._findDownvoteButton(pathElem)
+    );
+  }
+
+  _findUpvoteButton(pathElem) {
+    // find upvote button
+    if (pathElem.hasAttribute(BTN_UPVOTE_INDICATOR)) {
+      return [true, BTN_UPVOTE_INDICATOR, pathElem];
+    }
+    return false;
+  }
+
+  _findDownvoteButton(pathElem) {
+    // find downvote button
+    if (pathElem.hasAttribute(BTN_DOWNVOTE_INDICATOR)) {
+      return [true, BTN_DOWNVOTE_INDICATOR, pathElem];
+    }
+    return false;
   }
 
   _handleIgnoreClick(post, btnElem) {
+    // set count in ui and animate click ignored
     this.setCountInUI(post);
     if (clickIgnoredAnimation) {
       clickIgnoredAnimation(btnElem);
@@ -224,16 +274,20 @@ export default class VoteSync {
   }
 
   _handleClearVote(post, prevVoteState, currCount, btnRestoredState) {
+    // set vote state to clear and count to calculated count
+    // if btnRestoredState is undefined, watch for vote not cleared
     this.sessionStorage[post.id] = {
       vote: voteRecord[CLEAR_VOTE_INDICATOR],
       count: this.calcCount(CLEAR_VOTE_INDICATOR, prevVoteState, currCount),
     };
     if (btnRestoredState === undefined) {
-      this.watchForVoteNotCleared(post, prevVoteState, currCount);
+      this._watchForVoteNotCleared(post, prevVoteState, currCount);
     }
   }
 
   _handleSetVote(post, voteType, prevVoteState, currCount, btnRestoredState) {
+    // set vote state to voteType and count to calculated count
+    // if btnRestoredState is restored up to down or down to up, sync vote appearance
     this.sessionStorage[post.id] = {
       vote: voteRecord[voteType],
       count: this.calcCount(voteType, prevVoteState, currCount),
@@ -246,28 +300,29 @@ export default class VoteSync {
       voteType === BTN_UPVOTE_INDICATOR &&
       btnRestoredState === voteRecord[BTN_DOWNVOTE_INDICATOR];
 
-    if (isRestoredDownToUp || isRestoredUpToDown) {
-      const voteState =
-        voteType === BTN_UPVOTE_INDICATOR ? 'upvote' : 'downvote';
-      syncVoteAppearance(this.getButtonSpan(post), voteState);
+    if (isRestoredUpToDown || isRestoredDownToUp) {
+      syncVoteAppearance(this.getButtonSpan(post), voteType);
     }
   }
 
   handleVotes = e => {
+    // handle votes
     const post = e.target;
     const targetId = post.id;
     if (!targetId || post.tagName.toLowerCase() !== REDDIT_POST_HOST) {
       return;
     }
 
-    const [voteClick, voteType, btnElem] = this.findVoteClickEventInSD(e);
+    const [voteClick, voteType, btnElem] = this.findVoteButtonClickEvent(e);
     if (!voteClick) {
       return;
     }
 
+    // get btn restored state
     const btnRestoredState = this.btnStateRestored[targetId];
     delete this.btnStateRestored[targetId];
 
+    // get prev vote state and curr count
     const prevVoteState = this.sessionStorage[targetId]?.vote;
     const currCount =
       this.sessionStorage[targetId]?.count ?? this.getCountFromUI(post);
@@ -275,7 +330,28 @@ export default class VoteSync {
       return;
     }
 
+    this._handleVoteLogic(
+      post,
+      voteType,
+      prevVoteState,
+      currCount,
+      btnRestoredState,
+      btnElem
+    );
+    this.setCountInUI(post);
+  };
+
+  _handleVoteLogic(
+    post,
+    voteType,
+    prevVoteState,
+    currCount,
+    btnRestoredState,
+    btnElem
+  ) {
     if (
+      // if btnRestoredState is the same as the current vote type or
+      // the clear vote type restored from the current vote type, handle ignore click
       btnRestoredState === voteRecord[voteType] ||
       btnRestoredState === makeRestoredClearRecord(voteType)
     ) {
@@ -283,12 +359,14 @@ export default class VoteSync {
       return;
     }
 
-    const voteDirection = voteType === BTN_UPVOTE_INDICATOR ? 'up' : 'down';
-    this.log(`${voteDirection} click:`, targetId);
+    // if click not ignored, log vote type and post id
+    this.log(`${voteType} click:`, post.id);
 
     if (prevVoteState === voteRecord[voteType]) {
+      // if previous vote state was the same as the current vote type, handle clear vote
       this._handleClearVote(post, prevVoteState, currCount, btnRestoredState);
     } else {
+      // if previous vote state was not the same as the current vote type, handle set vote
       this._handleSetVote(
         post,
         voteType,
@@ -297,10 +375,9 @@ export default class VoteSync {
         btnRestoredState
       );
     }
-    this.setCountInUI(post);
-  };
+  }
 
-  watchForVoteNotCleared(post, initialState, currCount) {
+  _watchForVoteNotCleared(post, initialState, currCount) {
     // Watch for case when action that should clear vote does not clear the UI state.
     // If so we need to reset vote state to original voteType and count and show sync animation.
     setTimeout(() => {
@@ -354,46 +431,43 @@ export default class VoteSync {
     // if detail page do not sync
     if (this.detail) return;
 
-    const updateAppearance = k => {
-      const post = document.getElementById(k);
-      if (post === null || this.stateCopied.has(k)) {
-        this.stateCopied.delete(k);
-        return;
-      }
-
-      const dir = this.sessionStorage[k].vote;
-      const btnSpan = this.getButtonSpan(post);
-      const initState = this.getVoteStateFromUI(btnSpan);
-      if (!btnSpan || dir === undefined || initState === undefined) return;
-
-      if (
-        // if syncing upvote and the initial state was not upvote
-        dir === voteRecord[BTN_UPVOTE_INDICATOR] &&
-        !(initState === BTN_UPVOTE_INDICATOR)
-      ) {
-        syncVoteAppearance(btnSpan, 'upvote');
-        this.btnStateRestored[k] = dir;
-      } else if (
-        // if syncing downvote and the initial state was not downvote
-        dir === voteRecord[BTN_DOWNVOTE_INDICATOR] &&
-        !(initState === BTN_DOWNVOTE_INDICATOR)
-      ) {
-        syncVoteAppearance(btnSpan, 'downvote');
-        this.btnStateRestored[k] = dir;
-      } else if (
-        // if syncing clear and the initial state was not clear
-        dir === voteRecord[CLEAR_VOTE_INDICATOR] &&
-        !(initState === CLEAR_VOTE_INDICATOR)
-      ) {
-        syncVoteAppearance(btnSpan, 'clear');
-        this.btnStateRestored[k] = makeRestoredClearRecord(initState);
-      }
-      this.setCountInUI(post);
-    };
-
-    if (key) setTimeout(() => updateAppearance(key), ADD_HANDLERS_DELAY);
-    else Object.keys(this.sessionStorage).forEach(updateAppearance);
+    if (key) setTimeout(() => this._updateAppearance(key), ADD_HANDLERS_DELAY);
+    else Object.keys(this.sessionStorage).forEach(this._updateAppearance);
   }
+
+  _updateAppearance = k => {
+    const post = document.getElementById(k);
+    if (post === null || this.stateCopied.has(k)) {
+      this.stateCopied.delete(k);
+      return;
+    }
+
+    const dir = this.sessionStorage[k].vote;
+    const btnSpan = this.getButtonSpan(post);
+    const initState = this.getVoteStateFromUI(btnSpan);
+    if (!btnSpan || dir === undefined || initState === undefined) return;
+
+    this._syncLogic(dir, initState, k, btnSpan);
+    this.setCountInUI(post);
+  };
+
+  _syncLogic = (dir, initState, k, btnSpan) => {
+    const indicator =
+      dir === voteRecord[BTN_UPVOTE_INDICATOR]
+        ? BTN_UPVOTE_INDICATOR
+        : dir === voteRecord[BTN_DOWNVOTE_INDICATOR]
+        ? BTN_DOWNVOTE_INDICATOR
+        : CLEAR_VOTE_INDICATOR;
+    if (
+      // if syncing and the initial state was not the same as the indicator
+      !(initState === indicator)
+    ) {
+      syncVoteAppearance(btnSpan, indicator);
+      if (indicator === CLEAR_VOTE_INDICATOR)
+        this.btnStateRestored[k] = makeRestoredClearRecord(initState);
+      else this.btnStateRestored[k] = dir;
+    }
+  };
 
   testForDetailPage() {
     this.detail = /^https?:\/\/(www\.)?reddit.com\/r\/.+\/comments\/.+/.test(
