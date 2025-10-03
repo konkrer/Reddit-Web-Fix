@@ -4,8 +4,9 @@
 // The reddit named html element with post data that is a shadow host.
 const REDDIT_POST_HOST = 'shreddit-post'; // Update here and in VoteSync.js.
 // The reddit elements that may get dynamically added to page and contain the REDDIT_POST_HOST.
-const REDDIT_DYN_ADD_1 = 'article';
-const REDDIT_DYN_ADD_2 = 'faceplate-batch';
+const REDDIT_DYN_ADD_1 = 'article'; // element name for post parent
+const REDDIT_DYN_ADD_2 = 'faceplate-batch'; // element name for post parent
+const REDDIT_DYN_ADD_3 = 'grid-container'; // class name for grid parent
 
 // Class to manage and observe DOM changes for vote button syncing
 export class MainObserver {
@@ -15,10 +16,15 @@ export class MainObserver {
     this.appearance = null;
   }
 
-  _processParentNode(node) {
+  _processPostParentNode(node) {
     const posts = node.querySelectorAll?.(REDDIT_POST_HOST);
     posts?.forEach(p => setTimeout(() => this.voteSync.addSyncPost(p), 0));
     this.log('New post containing element processed.');
+  }
+
+  _processGridParentNode(node) {
+    this.appearance?.applyBackground();
+    this.log('Grid container processed.');
   }
 
   _postParentFilter(node) {
@@ -29,28 +35,32 @@ export class MainObserver {
     );
   }
 
+  _gridParentFilter(node) {
+    return (
+      node.nodeType === Node.ELEMENT_NODE &&
+      node.classList.contains(REDDIT_DYN_ADD_3)
+    );
+  }
+
   _processNodes(nodes) {
     for (let node of nodes) {
       if (this._postParentFilter(node)) {
-        this._processParentNode(node);
+        this._processPostParentNode(node);
+      } else if (this._gridParentFilter(node)) {
+        this._processGridParentNode(node);
       }
     }
   }
 
-  _checkForNewPageSync() {
-    if (this.voteSync.testForPageChange()) {
-      this.appearance?.applyBackground();
-    }
-  }
-
   _processMutationList = mutationList => {
-    this._checkForNewPageSync();
+    this.voteSync.testForPageChange();
     for (const mutation of mutationList) {
       if (mutation.type === 'childList') {
         this._processNodes(mutation.addedNodes);
       }
     }
   };
+  
   // Observe DOM changes to detect new posts loaded dynamically
   // and add event handlers to them and sync their state.
   // Also test for page changes.

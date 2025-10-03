@@ -196,7 +196,7 @@ export default class VoteSync {
   copyPostVoteState(post) {
     // copy post vote state
     const btnSpan = this.getButtonSpan(post);
-    if (!btnSpan || (!this.detail && this._getPostSeen(post))) {
+    if (!btnSpan || this._getPostSeen(post)) {
       return;
     }
 
@@ -428,8 +428,6 @@ export default class VoteSync {
 
   syncLikes(key) {
     // sync UI state with stored state
-    // if detail page do not sync
-    if (this.detail) return;
 
     if (key) setTimeout(() => this._updateAppearance(key), ADD_HANDLERS_DELAY);
     else Object.keys(this.sessionStorage).forEach(this._updateAppearance);
