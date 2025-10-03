@@ -70,13 +70,3 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
   }
 });
-
-// Listen for onSuspend event and shutdown observers, etc.
-// onSuspend doesn't fire before shutdown but still implemented.
-chrome.runtime.onSuspend.addListener(() => {
-  broadcast({
-    type: 'CLEANUP',
-  });
-
-  portsByTab.clear();
-});

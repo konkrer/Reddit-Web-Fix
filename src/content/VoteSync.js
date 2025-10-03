@@ -99,11 +99,8 @@ const countAdjustments = {
 
 // VoteSync class to handle vote state tracking and syncing
 export default class VoteSync {
-  constructor(verbose = true, isBlockedPath, HO) {
-    this.verbose = verbose;
-    this.isBlockedPath = isBlockedPath;
-    this.HO = HO; // Href Observer
-    this.MO = undefined; // Post Observer
+  constructor(coordinator) {
+    this.coordinator = coordinator;
     this.sessionStorage = {};
     this.stateCopied = new Set();
     this.btnStateRestored = {};
@@ -111,13 +108,13 @@ export default class VoteSync {
     this.detail = undefined;
 
     this.testForPageChange(1000);
-    this.log('VoteSync initialized.');
+    this.coordinator.log('VoteSync initialized.');
   }
 
   testForPageChange(addDelay = ADD_HANDLERS_DELAY) {
     // return true if page change detected to allowed page, false otherwise
     if (this.currentPage !== window.location.href) {
-      this.log('Page change detected.');
+      this.coordinator.log('Page change detected.');
       return this._newPageDetected(addDelay);
     }
     return false;
@@ -126,7 +123,7 @@ export default class VoteSync {
   _newPageDetected(addDelay) {
     // test for blocked page and allowed page
     this.currentPage = window.location.href;
-    if (this.isBlockedPath()) {
+    if (this.coordinator.isBlockedPath()) {
       this._newBlockedPageDetected();
       return false;
     }
@@ -136,9 +133,9 @@ export default class VoteSync {
 
   _newBlockedPageDetected() {
     // stop main observer and start href poller
-    this.log('Blocked page.');
-    this.MO.stopMainObserver();
-    this.HO.startHrefPoller();
+    this.coordinator.log('Blocked page.');
+    this.coordinator.stopMainObserver();
+    this.coordinator.startHrefPoller();
   }
 
   _newAllowedPageDetected(addDelay) {
@@ -154,7 +151,7 @@ export default class VoteSync {
     this.addHandlersToPosts();
     this.btnStateRestored = {};
     this.syncLikes();
-    this.log('Added handlers, Copied State, Synced Button State');
+    this.coordinator.log('Added handlers, Copied State, Synced Button State');
   };
 
   addSyncPost = post => {
@@ -360,7 +357,7 @@ export default class VoteSync {
     }
 
     // if click not ignored, log vote type and post id
-    this.log(`${voteType} click:`, post.id);
+    this.coordinator.log(`${voteType} click:`, post.id);
 
     if (prevVoteState === voteRecord[voteType]) {
       // if previous vote state was the same as the current vote type, handle clear vote
@@ -386,7 +383,7 @@ export default class VoteSync {
       const currUIState = this.getVoteStateFromUI(btnSpan);
       // if state is still upvote or downvote after clicking upvote/downvote to clear vote
       if (voteRecord[currUIState] === initialState) {
-        this.log('Upvote not cleared, syncing state.', post.id);
+        this.coordinator.log('Upvote not cleared, syncing state.', post.id);
         // reset vote state and count to match UI and show sync animation
         this.sessionStorage[post.id] = {
           vote: initialState,
@@ -471,12 +468,6 @@ export default class VoteSync {
     this.detail = /^https?:\/\/(www\.)?reddit.com\/r\/.+\/comments\/.+/.test(
       window.location.href
     );
-  }
-
-  log(...args) {
-    if (this.verbose) {
-      console.debug(...args);
-    }
   }
 }
 

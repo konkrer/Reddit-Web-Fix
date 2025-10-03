@@ -2,14 +2,14 @@
 
 // Class to manage page appearance customizations, like background.
 export default class Appearance {
-  constructor(verbose = false) {
-    this.verbose = verbose;
+  constructor(coordinator) {
+    this.coordinator = coordinator;
     this.settings = null;
     this.loadSettings();
 
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace === 'local' && changes.backgroundSettings) {
-        this.log('Background settings changed, reloading.');
+        this.coordinator.log('Background settings changed, reloading.');
         this.settings = changes.backgroundSettings.newValue;
         this._applyBackground();
       }
@@ -21,25 +21,25 @@ export default class Appearance {
     const data = await browser.storage.local.get('backgroundSettings');
     if (data.backgroundSettings) {
       this.settings = data.backgroundSettings;
-      this.log('Background settings loaded:', this.settings);
+      this.coordinator.log('Background settings loaded:', this.settings);
       this.applyBackground();
       // additional call applyBackground with timeout??
     } else {
-      this.log('No background settings found.');
+      this.coordinator.log('No background settings found.');
     }
   }
 
   // Apply background twice in case first one is to early to find target element.
   applyBackground = () => {
     this._applyBackground();
-    setTimeout(this._applyBackground, 500);
+    // setTimeout(this._applyBackground, 500);
   };
 
   // Apply the background style to the grid container.
   _applyBackground = () => {
     const gridContainer = document.querySelector('.grid-container');
     if (!gridContainer) {
-      this.log('Grid container not found.');
+      this.coordinator.log('Grid container not found.');
       return;
     }
 
@@ -79,10 +79,4 @@ export default class Appearance {
         break;
     }
   };
-
-  log(message) {
-    if (this.verbose) {
-      console.debug(message);
-    }
-  }
 }

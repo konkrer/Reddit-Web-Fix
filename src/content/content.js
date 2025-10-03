@@ -2,44 +2,107 @@
 
 // Content script to manage vote state syncing on www.reddit.com
 
-// placeholders for imports and instances
-let VoteSync, MainObserver, HrefObserver, Appearance; // class imports
-let VS, MO, HO, AP; // instances
-let VERBOSE = false;
-
 // List of URL path prefixes where the extension should be inactive
 const BLOCKED_PREFIXES = ['/settings', '/drafts', '/premium', '/reddit-pro'];
-function isBlockedPath() {
-  return BLOCKED_PREFIXES.some(p => location.pathname.startsWith(p));
+
+// placeholders for imports and instances
+let VoteSync, MainObserver, HrefObserver, Appearance; // class imports
+let CO; // instances
+let VERBOSE = false;
+
+// Coordinator Class to manage the overall functionality for the Reddit Web Fix extension
+class RedditFixCoordinator {
+  constructor(verbose) {
+    this.hrefObserver = new HrefObserver(this);
+    this.voteSync = null;
+    this.mainObserver = null;
+    this.verbose = verbose;
+    this.guardedStart();
+  }
+
+  // Check if the current path is blocked
+  isBlockedPath() {
+    return BLOCKED_PREFIXES.some(p => location.pathname.startsWith(p));
+  }
+
+  // Start the extension based on the current path
+  guardedStart() {
+    if (this.isBlockedPath()) {
+      this.startHrefPoller(500);
+    } else {
+      this.startup();
+    }
+  }
+
+  // Start the extension
+  startup() {
+    this.appearance = new Appearance(this);
+    this.voteSync = new VoteSync(this);
+    this.mainObserver = new MainObserver(this);
+    this.mainObserver.startMainObserver();
+  }
+
+  // Clean up the extension
+  cleanUp() {
+    if (this.mainObserver) this.mainObserver.stopMainObserver();
+    if (this.hrefObserver) this.hrefObserver.stopHrefPoller();
+    if (this.voteSync) this.voteSync.removeHandlersFromPosts();
+    this.log('Reddit Web Fix: shut down.');
+  }
+
+  // Proxy methods that other classes need
+  testForPageChange(addDelay = 0) {
+    this.voteSync?.testForPageChange(addDelay);
+  }
+  addSyncPost(post) {
+    this.voteSync?.addSyncPost(post);
+  }
+  startMainObserver() {
+    this.mainObserver?.startMainObserver();
+  }
+  stopMainObserver() {
+    this.mainObserver?.stopMainObserver();
+  }
+  startHrefPoller() {
+    this.hrefObserver?.startHrefPoller();
+  }
+  applyBackground() {
+    this.appearance?.applyBackground();
+  }
+
+  log(message) {
+    if (this.verbose) {
+      console.debug(message);
+    }
+  }
 }
 
 // Function to initialize VoteSync, MainObserver, share methods,
 // and start observing DOM changes.
-function startup(HO) {
-  VS = new VoteSync(VERBOSE, isBlockedPath, HO);
-  MO = new MainObserver(VS);
-  AP = new Appearance(VERBOSE);
-  MO.appearance = AP;
-  VS.MO = MO;
-  HO.MO = MO;
-  HO.VS = VS;
-  MO.startMainObserver();
-}
+// function startup(HO) {
+//   VS = new VoteSync(VERBOSE, isBlockedPath, HO);
+//   MO = new MainObserver(VS);
+//   AP = new Appearance(VERBOSE);
+//   MO.appearance = AP;
+//   VS.MO = MO;
+//   HO.MO = MO;
+//   HO.VS = VS;
+//   MO.startMainObserver();
+// }
 
 // Cleanup function for extension unloading.
-function cleanup() {
-  if (MO) MO.stopMainObserver();
-  if (HO) HO.stopHrefPoller();
-  if (VS) VS.removeHandlersFromPosts();
-  console.log('Reddit Web Fix: shut down.');
-}
+// function cleanup() {
+//   if (MO) MO.stopMainObserver();
+//   if (HO) HO.stopHrefPoller();
+//   if (VS) VS.removeHandlersFromPosts();
+//   console.log('Reddit Web Fix: shut down.');
+// }
 
 function handlePortMessage(msg) {
   if (msg.type === 'SET_VERBOSE') {
     VERBOSE = msg.value;
-    if (VS) {
-      VS.verbose = msg.value;
-      AP.verbose = msg.value;
+    if (CO) {
+      CO.verbose = msg.value;
       console.debug('Verbose mode updated:', msg.value);
     } else {
       console.debug(
@@ -48,14 +111,14 @@ function handlePortMessage(msg) {
       );
     }
   } else if (msg.type === 'CLEANUP') {
-    cleanup();
+    CO.cleanUp();
   }
 }
 
 function handlePortDisconnect(initPort) {
   setTimeout(() => {
     if (!chrome.runtime?.id) {
-      cleanup();
+      CO.cleanUp();
     } else {
       initPort();
     }
@@ -85,7 +148,7 @@ function handlePortDisconnect(initPort) {
       });
     } catch (err) {
       console.debug('Port setup failed:', err.message);
-      cleanup();
+      CO.cleanUp();
     }
   }
   // Initialize connection to background script.
@@ -107,8 +170,8 @@ function handlePortDisconnect(initPort) {
     const getDebug = storageMod.getGetDebug(browser);
     const debug = await getDebug();
     VERBOSE = debug;
-    if (VS) {
-      VS.verbose = debug;
+    if (CO) {
+      CO.verbose = debug;
     }
   } catch (err) {
     console.error('Failed to load polyfill or storage module:', err);
@@ -144,14 +207,8 @@ async function loadModules() {
     await loadModules();
 
     // Initial startup.
-    HO = new HrefObserver(isBlockedPath, VERBOSE, startup);
+    CO = new RedditFixCoordinator(VERBOSE);
 
-    if (isBlockedPath()) {
-      HO.startHrefPoller(500);
-    } else {
-      // normal operation
-      startup(HO);
-    }
     console.log('Reddit Web Fix: activated.');
   } catch (err) {
     console.error('Failed to Initialize Reddit Web Fix:', err);

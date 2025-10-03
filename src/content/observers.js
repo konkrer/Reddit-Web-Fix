@@ -1,30 +1,29 @@
 'use strict';
 
 // Reddit elements of interest.
-// The reddit named html element with post data that is a shadow host.
+// The reddit-named html element with post data that is a shadow host.
 const REDDIT_POST_HOST = 'shreddit-post'; // Update here and in VoteSync.js.
-// The reddit elements that may get dynamically added to page and contain the REDDIT_POST_HOST.
+// The reddit elements that may get dynamically added to page and are watched and handled.
 const REDDIT_DYN_ADD_1 = 'article'; // element name for post parent
-const REDDIT_DYN_ADD_2 = 'faceplate-batch'; // element name for post parent
-const REDDIT_DYN_ADD_3 = 'grid-container'; // class name for grid parent
+const REDDIT_DYN_ADD_2 = 'faceplate-batch'; // alternate element name for post parent
+const REDDIT_DYN_ADD_3 = 'grid-container'; // class name for grid parent for background
 
 // Class to manage and observe DOM changes for vote button syncing
 export class MainObserver {
-  constructor(voteSync) {
-    this.voteSync = voteSync;
+  constructor(coordinator) {
+    this.coordinator = coordinator;
     this.observer = null;
-    this.appearance = null;
   }
 
   _processPostParentNode(node) {
     const posts = node.querySelectorAll?.(REDDIT_POST_HOST);
-    posts?.forEach(p => setTimeout(() => this.voteSync.addSyncPost(p), 0));
-    this.log('New post containing element processed.');
+    posts?.forEach(p => setTimeout(() => this.coordinator.addSyncPost(p), 0));
+    this.coordinator.log('New post containing element processed.');
   }
 
   _processGridParentNode(node) {
-    this.appearance?.applyBackground();
-    this.log('Grid container processed.');
+    this.coordinator.applyBackground();
+    this.coordinator.log('Grid container processed.');
   }
 
   _postParentFilter(node) {
@@ -53,14 +52,14 @@ export class MainObserver {
   }
 
   _processMutationList = mutationList => {
-    this.voteSync.testForPageChange();
+    this.coordinator.testForPageChange();
     for (const mutation of mutationList) {
       if (mutation.type === 'childList') {
         this._processNodes(mutation.addedNodes);
       }
     }
   };
-  
+
   // Observe DOM changes to detect new posts loaded dynamically
   // and add event handlers to them and sync their state.
   // Also test for page changes.
@@ -69,7 +68,7 @@ export class MainObserver {
     this.observer = new MutationObserver(this._processMutationList);
     try {
       this.observer.observe(document.body, { childList: true, subtree: true });
-      this.log('Reddit Web Fix: main observer started.');
+      this.coordinator.log('Reddit Web Fix: main observer started.');
     } catch (e) {
       console.error('Reddit Web Fix: failed to start observer', e);
     }
@@ -83,13 +82,7 @@ export class MainObserver {
       /* ignore */
     }
     this.observer = null;
-    this.log('Reddit Web Fix: main observer stopped.');
-  }
-
-  log(message) {
-    if (this.voteSync.verbose) {
-      console.debug(message);
-    }
+    this.coordinator.log('Reddit Web Fix: main observer stopped.');
   }
 }
 
@@ -97,33 +90,32 @@ export class MainObserver {
 // observer is paused (e.g., on blocked paths) and restart DOM work when navigating
 // back to unblocked paths.
 export class HrefObserver {
-  constructor(isBlockedPath, verbose, startup) {
-    this.isBlockedPath = isBlockedPath;
-    this.startup = startup;
-    this.verbose = verbose;
+  constructor(coordinator) {
+    this.coordinator = coordinator;
     this.pollerId = null;
-    this.VS = undefined;
-    this.MO = undefined;
   }
 
   _handleHrefChange(lastHref) {
+    // if the href has not changed, return the last href
     if (location.href === lastHref) {
       return lastHref;
     }
 
+    // update the last href
     lastHref = location.href;
-    if (this.isBlockedPath()) {
+    // if the path is blocked, return the last href
+    if (this.coordinator.isBlockedPath()) {
       return lastHref;
     }
 
     this.stopHrefPoller();
     setTimeout(() => {
-      if (this.VS) {
-        this.VS.testForPageChange(1000);
-        this.MO.startMainObserver();
-        this.MO.appearance?.applyBackground();
+      if (this.coordinator.voteSync) {
+        this.coordinator.testForPageChange(1000);
+        this.coordinator.startMainObserver();
+        this.coordinator.applyBackground();
       } else {
-        this.startup(this);
+        this.coordinator.startup(this);
       }
     }, 100);
 
@@ -137,19 +129,13 @@ export class HrefObserver {
       () => (lastHref = this._handleHrefChange(lastHref)),
       interval
     );
-    this.log('Reddit Web Fix: href poller started.');
+    this.coordinator.log('Reddit Web Fix: href poller started.');
   }
 
   stopHrefPoller() {
     if (!this.pollerId) return;
     clearInterval(this.pollerId);
     this.pollerId = null;
-    this.log('Reddit Web Fix: href poller stopped.');
-  }
-
-  log(message) {
-    if (this.VS.verbose || this.verbose) {
-      console.debug(message);
-    }
+    this.coordinator.log('Reddit Web Fix: href poller stopped.');
   }
 }
