@@ -20,39 +20,39 @@
       <h1 class="bungee-spice-regular">Reddit Web Fix</h1>
 
       <!-- TITLE -->
-      <h2 class="noto-sans-jp-regular">Customize Appearance</h2>
+      <h2 class="noto-sans-jp-100">Customize Appearance</h2>
 
       <!-- BACKGROUND TYPE SELECTOR -->
       <div class="control-group">
-        <label for="bg-type" class="noto-sans-jp-regular">Background:</label>
+        <label for="bg-type" class="noto-sans-jp-200">Background:</label>
         <select id="bg-type">
           <button>
             <selectedcontent></selectedcontent>
           </button>
 
           <option selected value="none">
-            <span class="option-label noto-sans-jp-regular">None</span>
+            <span class="option-label noto-sans-jp-300">None</span>
           </option>
           <option value="color">
-            <span class="option-label noto-sans-jp-regular">Solid Color</span>
+            <span class="option-label noto-sans-jp-300">Solid Color</span>
           </option>
           <option value="gradient">
-            <span class="option-label noto-sans-jp-regular">Gradient</span>
+            <span class="option-label noto-sans-jp-300">Gradient</span>
           </option>
           <option value="image">
-            <span class="option-label noto-sans-jp-regular">Image</span>
+            <span class="option-label noto-sans-jp-300">Image</span>
           </option>
         </select>
       </div>
 
       <!-- BLANK INPUT GROUP -->
       <div id="blank-settings" class="settings-panel">
-        <p class="noto-sans-jp-regular">C'mon do something…</p>
+        <p class="noto-sans-jp-800">C'mon do something…</p>
       </div>
 
       <!-- SOLID COLOR INPUT GROUP -->
       <div id="color-settings" class="settings-panel" style="display: none">
-        <label for="bg-color" class="noto-sans-jp-regular"
+        <label for="bg-color" class="noto-sans-jp-300"
           >Background Color:</label
         >
         <input type="color" id="bg-color" value="#2c1111" />
@@ -60,7 +60,7 @@
 
       <!-- GRADIENT INPUT GROUP 1 -->
       <div id="gradient-settings" class="settings-panel" style="display: none">
-        <div for="gradient-type" class="noto-sans-jp-regular">
+        <div for="gradient-type" class="noto-sans-jp-300">
           Gradient Type:
         </div>
         <div class="flex-row flex-start mb-15">
@@ -88,19 +88,19 @@
         <!-- GRADIENT INPUT GROUP 2 -->
         <div class="control-group flex-row mb-15">
           <span class="input-row-item">
-            <label for="gradient-color-1" class="noto-sans-jp-regular"
+            <label for="gradient-color-1" class="noto-sans-jp-300"
               >Color 1:</label
             >
             <input type="color" id="gradient-color-1" value="#2c1111" />
           </span>
           <span class="input-row-item">
-            <label for="gradient-color-2" class="noto-sans-jp-regular"
+            <label for="gradient-color-2" class="noto-sans-jp-300"
               >Color 2:</label
             >
             <input type="color" id="gradient-color-2" value="#212245" />
           </span>
           <div id="gradient-angle-settings" class="input-row-item">
-            <label for="gradient-angle" class="noto-sans-jp-regular"
+            <label for="gradient-angle" class="noto-sans-jp-300"
               >Angle:</label
             >
             <input type="number" id="gradient-angle" value="90" disabled />
@@ -114,11 +114,11 @@
         <span>
           <label
             for="bg-image-url"
-            class="input-row-item mr-10 noto-sans-jp-regular"
-            class="noto-sans-jp-regular"
+            class="input-row-item mr-10 noto-sans-jp-300"
+            class="noto-sans-jp-300"
             >Image URL:</label
           >
-          <button type="reset" class="noto-sans-jp-regular">Clear</button>
+          <button type="reset" class="noto-sans-jp-300">Clear</button>
         </span>
         <input
           type="text"
@@ -131,18 +131,19 @@
         <div class="flex-row flex-start">
           <label
             for="bg-image-file"
-            class="input-row-item mr-10 noto-sans-jp-regular"
-            class="noto-sans-jp-regular"
+            class="input-row-item mr-10 noto-sans-jp-300"
+            class="noto-sans-jp-300"
             >Or select a local file:</label
           >
-          <span id="image-file-name" class="noto-sans-jp-regular"></span>
+          <span id="image-file-name" class="noto-sans-jp-300"></span>
         </div>
         <input type="file" id="bg-image-file" accept="image/*" />
 
         <!-- Image controls -->
         <div class="control-group flex-row">
+          <!-- Image size -->
           <span class="input-row-item width-100">
-            <label for="bg-image-size" class="noto-sans-jp-regular"
+            <label for="bg-image-size" class="noto-sans-jp-300"
               >Size:</label
             >
             <select id="bg-image-size">
@@ -150,21 +151,22 @@
                 <selectedcontent></selectedcontent>
               </button>
               <option selected value="auto">
-                <span class="option-label noto-sans-jp-regular">Auto</span>
+                <span class="option-label noto-sans-jp-300">Auto</span>
               </option>
               <option value="contain">
-                <span class="option-label noto-sans-jp-regular">Contain</span>
+                <span class="option-label noto-sans-jp-300">Contain</span>
               </option>
             </select>
           </span>
         </div>
+        <!-- Image dimmer -->
         <div class="">
-          <label for="bg-dimmer" class="noto-sans-jp-regular">Dimmer:</label>
-          <input type="range" id="bg-dimmer" min="0" max="100" value="0" class="ml-15" />
+          <label id="bg-dimmer-label" for="bg-dimmer" class="noto-sans-jp-300 input-row-item">Dimmer:</label>
+          <input type="range" id="bg-dimmer" min="0" max="100" value="34" class="ml-15" />
         </div>
       </div>
 
-      <button type="submit" id="save-settings" class="noto-sans-jp-regular">
+      <button type="submit" id="save-settings" class="noto-sans-jp-200">
         Save and Apply
       </button>
     </div>

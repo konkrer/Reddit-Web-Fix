@@ -13,6 +13,7 @@ let BTN_CLS_UD,
 
 // VoteSync settings
 const ADD_HANDLERS_DELAY = 0;
+const CLEAR_BACKGROUND_DELAY = 0;
 
 /* ---------------------------------------------------------------- */
 /* Reddit elements / element markers for finding relevant elements. */
@@ -136,6 +137,9 @@ export default class VoteSync {
     this.coordinator.log('Blocked page.');
     this.coordinator.stopMainObserver();
     this.coordinator.startHrefPoller();
+    setTimeout(() => {
+      this.coordinator.clearBackground();
+    }, CLEAR_BACKGROUND_DELAY);
   }
 
   _newAllowedPageDetected(addDelay) {

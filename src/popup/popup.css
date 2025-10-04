@@ -1,12 +1,17 @@
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
 body {
-  font-family: sans-serif;
-  /* min-height: 450px; */
+  font-family: 'Noto Sans JP', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
   width: 300px;
   padding: 18px;
-  margin: 0px;
+  margin: 0;
   background: linear-gradient(#530404, 80%, #3b0000f5);
   color: rgb(219, 209, 209);
-  /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
   box-shadow: inset black 0px 30px 55px;
 }
 
@@ -16,21 +21,115 @@ body {
   gap: 15px;
 }
 
+/* css variables */
+:root {
+  --accent-color: #724949;
+  --accent-color-hover: #0a3549;
+  --accent-color-active: #0a1345;
+  --accent-color-disabled: #3b0000f5;
+  --text-color: rgb(219, 209, 209);
+  --text-color-disabled: #3b0000f5;
+  --text-color-placeholder: rgba(189, 187, 187, 0.397);
+  --text-color-shadow: rgb(0, 0, 0);
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+
 h1 {
   text-align: center;
   margin: 0;
   color: black;
-  font-size: 30px;
-  text-shadow: 1px 1px 3px rgb(196, 193, 193);
-  font-family: monospace;
-  text-shadow: black 0px 0px 12px;
   font-size: xx-large;
+  font-family: monospace;
+  text-shadow: var(--text-color-shadow) 0px 0px 12px;
 }
 
 h2 {
-  text-shadow: 2px 2px 4px rgb(0, 0, 0);
+  text-shadow: 2px 2px 4px var(--text-color-shadow);
   margin-bottom: 0;
+  /* font-weight: 100; */
 }
+
+.bungee-spice-regular {
+  font-family: 'Bungee Spice', sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.noto-sans-jp-100 {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 100;
+  font-style: normal;
+}
+
+.noto-sans-jp-200 {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 200;
+  font-style: normal;
+}
+
+.noto-sans-jp-300 {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.noto-sans-jp-regular {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* ============================================
+   LAYOUT UTILITIES
+   ============================================ */
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-evenly;
+}
+
+.flex-start {
+  justify-content: start;
+}
+
+/* Spacing utilities */
+.width-100 {
+  width: 100%;
+}
+
+.mb-15 {
+  margin-bottom: 15px;
+}
+
+.mr-10 {
+  margin-right: 10px;
+}
+
+.mr-15 {
+  margin-right: 15px;
+}
+
+.ml-10 {
+  margin-left: 10px;
+}
+
+.ml-15 {
+  margin-left: 15px;
+}
+
+/* ============================================
+   CONTROL GROUPS & PANELS
+   ============================================ */
 
 .control-group {
   display: flex;
@@ -39,8 +138,7 @@ h2 {
 }
 
 .settings-panel {
-  background-color: rgb(0 0 0 / 60%);
-  /* border: 1px solid #ccc; */
+  background-color: rgba(99, 47, 47, 0.658);
   padding: 10px;
   border-radius: 5px;
   display: flex;
@@ -58,34 +156,31 @@ h2 {
   font-size: small;
 }
 
+/* ============================================
+   FORM ELEMENTS - COMMON
+   ============================================ */
+
 label {
   font-weight: bold;
 }
 
-input[type='color'] {
-  width: 100%;
-  height: 30px;
-  border: 1px solid #ccc;
-  padding: 0;
+label,
+input {
+  border-radius: 5px;
 }
 
-input[type='text'] {
-  width: 95%;
+.input-row-item {
+  font-size: 0.9rem;
 }
 
-input[type='file']::file-selector-button {
-  background-color: rgb(119, 119, 119); /* Green background */
-  color: white; /* White text color */
-  padding: 6px 6px;
-  border: none;
-  border-radius: 0px;
-  cursor: pointer;
-}
+/* ============================================
+   BUTTONS
+   ============================================ */
 
 button {
   padding: 10px 60px;
   border: none;
-  background-color: #0a1345;
+  background-color: #020720;
   color: white;
   border-radius: 5px;
   cursor: pointer;
@@ -112,114 +207,77 @@ button[type='reset'] {
   border-radius: 3px;
 }
 
-.flex-row {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-evenly;
+/* ============================================
+   INPUT TYPES
+   ============================================ */
+
+/* Color input */
+input[type='color'] {
+  width: 100%;
+  height: 30px;
+  border: 1px solid #ccc;
+  padding: 0;
 }
 
-.flex-start {
-  justify-content: start;
+/* Text input */
+input[type='text'] {
+  width: 95%;
 }
 
-.input-row-item {
-  font-size: 0.9rem;
-}
-
-label,
-input {
-  /* display: block; */
-  border-radius: 5px;
-}
-
+/* Number input */
 input[type='number'] {
   height: 26px;
   border: none;
   width: 64px;
 }
 
-.width-100 {
-  width: 100%;
+/* File input */
+input[type='file']::file-selector-button {
+  background-color: rgb(119, 119, 119);
+  color: white;
+  padding: 6px 6px;
+  border: none;
+  border-radius: 0px;
+  cursor: pointer;
 }
 
-.mb-15 {
-  margin-bottom: 15px;
+/* Range input */
+input[type='range'] {
+  accent-color: var(--accent-color);
 }
 
-.mr-10 {
-  margin-right: 10px;
-}
-
-.mr-15 {
-  margin-right: 15px;
-}
-
-.ml-10 {
-  margin-left: 10px;
-}
-
-.ml-15 {
-  margin-left: 15px;
-}
-
-#gradient-angle-settings > label {
-  display: block;
-}
+/* ============================================
+   SELECT DROPDOWNS
+   ============================================ */
 
 select,
 ::picker(select) {
   appearance: base-select;
 }
 
-select,
-#bg-image-url {
+select {
   border-radius: 5px;
-  /* border: 1px solid #000000; */
   border: none;
-  background: #724949;
-  padding: 0px 40px;
+  background: var(--accent-color);
+  padding: 0px 30px;
   transition: 0.4s;
-}
-
-#bg-image-url,
-#bg-image-file {
-  border-radius: 5px;
-  /* padding: 7px 6px 7px 6px; */
-  color: white;
-  margin-bottom: 5px;
-}
-
-#bg-image-url {
-  /* width: 100%; */
-  padding: 6px 6px 6px 8px;
-}
-
-#bg-image-file {
-  /* width: 100%; */
-  /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
-  background: #724949;
-  /* padding: 0px 5px 0px 0px; */
-  border-radius: 5px;
-  /* margin-bottom: 10px; */
-}
-
-#bg-image-url::placeholder,
-#bg-image-file::placeholder {
-  color: rgba(189, 187, 187, 0.397);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 900;
+  font-style: normal;
+  width: 186px;
 }
 
 select:hover {
-  background: #0a3549;
+  background: var(--accent-color-hover);
 }
 
 select::picker-icon {
   color: #999999;
   transition: 0.4s rotate;
-  position: relative;
-  top: 5px;
-  transform-origin: 50% 35%;
+  /* position: relative; */
+  /* top: 5px; */
+  /* transform-origin: 50% 35%; */
 }
 
 select:open::picker-icon {
@@ -236,11 +294,24 @@ select:open::picker-icon {
   left: anchor(20%);
 }
 
+::picker(select):popover-open {
+  opacity: 1;
+}
+
+@starting-style {
+  ::picker(select):popover-open {
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   SELECT OPTIONS
+   ============================================ */
+
 option {
   display: flex;
   justify-content: flex-start;
   gap: 20px;
-
   border: 2px solid #c0c0c0;
   background: #eeeeee;
   padding: 10px;
@@ -269,50 +340,61 @@ option:focus {
   background: rgb(156, 165, 189);
 }
 
+option:checked {
+  font-weight: bold;
+}
+
 option .icon {
   font-size: 1.6rem;
   text-box: trim-both cap alphabetic;
 }
 
-option:checked {
-  font-weight: bold;
-}
-
 option::checkmark {
   order: 1;
   margin-left: auto;
-  /* content: "✅"; */
 }
 
-::picker(select):popover-open {
-  opacity: 1;
+/* ============================================
+   SPECIFIC ELEMENT STYLES
+   ============================================ */
+
+/* Gradient settings */
+#gradient-angle-settings > label {
+  display: block;
 }
 
-@starting-style {
-  ::picker(select):popover-open {
-    opacity: 0;
-  }
+/* Image URL input */
+#bg-image-url {
+  border-radius: 5px;
+  border: none;
+  background: var(--accent-color);
+  padding: 6px 6px 6px 8px;
+  color: white;
+  margin-bottom: 5px;
+  transition: 0.4s;
 }
 
-.bungee-spice-regular {
-  font-family: 'Bungee Spice', sans-serif;
-  font-weight: 400;
-  font-style: normal;
+#bg-image-url::placeholder {
+  color: rgba(189, 187, 187, 0.397);
 }
 
-.noto-sans-jp-regular {
-  font-family: 'Noto Sans JP', sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 400;
-  font-style: normal;
+/* Image file input */
+#bg-image-file {
+  border-radius: 5px;
+  background: var(--accent-color);
+  color: white;
+  margin-bottom: 5px;
 }
 
+#bg-image-file::placeholder {
+  color: rgba(189, 187, 187, 0.397);
+}
+
+/* Image file name display */
 #image-file-name {
   color: #999999;
   font-size: xx-small;
-  /* margin-left: 5px; */
-  background: #203737;
-  /* padding: 3px 6px; */
+  background: var(--accent-color);
   border-radius: 3px;
   max-width: 112px;
   height: 12px;
@@ -322,7 +404,13 @@ option::checkmark {
   text-wrap: nowrap;
 }
 
+/* Image size select */
 #bg-image-size {
   margin: 8px 0px;
   width: 100%;
+}
+
+#bg-dimmer-label {
+    position: relative;
+    bottom: 3.5px;
 }

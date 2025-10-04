@@ -11,7 +11,7 @@ export default class Appearance {
       if (namespace === 'local' && changes.backgroundSettings) {
         this.coordinator.log('Background settings changed, reloading.');
         this.settings = changes.backgroundSettings.newValue;
-        this._applyBackground();
+        this.applyBackground();
       }
     });
   }
@@ -29,14 +29,69 @@ export default class Appearance {
     }
   }
 
-  // Apply background twice in case first one is to early to find target element.
-  applyBackground = () => {
-    this._applyBackground();
-    // setTimeout(this._applyBackground, 500);
+  clearBackground = () => {
+    const gridContainer = document.querySelector('.grid-container');
+    if (!gridContainer) {
+      this.coordinator.log('Grid container not found.');
+      return;
+    }
+    this._clearBackground(gridContainer);
+  };
+
+  _clearBackground = (gridContainer) => {
+    gridContainer.style.background = '';
+    gridContainer.style.willChange = '';
+    gridContainer.style.transform = '';
+  };
+
+  _applyColorBackground = (gridContainer) => {
+    gridContainer.style.background = this.settings.color;
+    gridContainer.style.willChange = '';
+    gridContainer.style.transform = '';
+  };
+
+  _applyGradientBackground = (gridContainer, gradientCss) => {
+    gridContainer.style.background = gradientCss;
+    gridContainer.style.willChange = '';
+    gridContainer.style.transform = '';
+  };
+
+  _applyImageBackground = (gridContainer, dimmerOverlay, imageUrl) => {
+    gridContainer.style.background = `${dimmerOverlay}, ${imageUrl}`;
+    gridContainer.style.backgroundSize = this.settings.imageSize;
+    gridContainer.style.backgroundRepeat = 'repeat';
+    gridContainer.style.backgroundPosition = 'top';
+    // Force hardware acceleration to prevent rendering shifts during scroll
+    gridContainer.style.willChange = 'transform';
+    gridContainer.style.transform = 'translateZ(0)';
+  };
+
+  _calculateDimmerGradient = () => {
+    const dimmerValue = this.settings.dimmer || 0;
+    const alpha = dimmerValue / 100; // Convert 0-100 to 0-1
+    return `linear-gradient(rgba(0, 0, 0, ${alpha}), rgba(0, 0, 0, ${alpha}))`;
+  };
+
+  _calculateGradientCss = () => {
+    if (this.settings.gradientType === 'linear') {
+      return `linear-gradient(${this.settings.gradientAngle}deg, ${this.settings.gradientColor1}, ${this.settings.gradientColor2})`;
+    } else {
+      return `radial-gradient(${this.settings.gradientColor1}, ${this.settings.gradientColor2})`;
+    }
+  };
+
+  _calculateImageUrl = () => {
+    let imageUrl = '';
+    if (this.settings.imageDataUrl) {
+      imageUrl = `url(${this.settings.imageDataUrl})`;
+    } else if (this.settings.imageUrl) {
+      imageUrl = `url(${this.settings.imageUrl})`;
+    }
+    return imageUrl;
   };
 
   // Apply the background style to the grid container.
-  _applyBackground = () => {
+  applyBackground = () => {
     const gridContainer = document.querySelector('.grid-container');
     if (!gridContainer) {
       this.coordinator.log('Grid container not found.');
@@ -44,54 +99,25 @@ export default class Appearance {
     }
 
     if (!this.settings) {
-      gridContainer.style.background = '';
+      this._clearBackground(gridContainer);
       return;
     }
 
     switch (this.settings.type) {
       case 'none':
-        gridContainer.style.background = '';
-        gridContainer.style.willChange = '';
-        gridContainer.style.transform = '';
+        this._clearBackground(gridContainer);
         break;
       case 'color':
-        gridContainer.style.background = this.settings.color;
-        gridContainer.style.willChange = '';
-        gridContainer.style.transform = '';
+        this._applyColorBackground(gridContainer);
         break;
       case 'gradient':
-        let gradientCss = '';
-        if (this.settings.gradientType === 'linear') {
-          gradientCss = `linear-gradient(${this.settings.gradientAngle}deg, ${this.settings.gradientColor1}, ${this.settings.gradientColor2})`;
-        } else {
-          // radial
-          gradientCss = `radial-gradient(${this.settings.gradientColor1}, ${this.settings.gradientColor2})`;
-        }
-        gridContainer.style.background = gradientCss;
-        gridContainer.style.willChange = '';
-        gridContainer.style.transform = '';
+        const gradientCss = this._calculateGradientCss();
+        this._applyGradientBackground(gridContainer, gradientCss);
         break;
       case 'image':
-        let imageUrl = '';
-        if (this.settings.imageDataUrl) {
-          imageUrl = `url(${this.settings.imageDataUrl})`;
-        } else if (this.settings.imageUrl) {
-          imageUrl = `url(${this.settings.imageUrl})`;
-        }
-
-        // Apply dimmer overlay if dimmer value is set
-        const dimmerValue = this.settings.dimmer || 0;
-        const alpha = dimmerValue / 100; // Convert 0-100 to 0-1
-        const dimmerOverlay = `linear-gradient(rgba(0, 0, 0, ${alpha}), rgba(0, 0, 0, ${alpha}))`;
-
-        gridContainer.style.background = `${dimmerOverlay}, ${imageUrl}`;
-        gridContainer.style.backgroundSize = this.settings.imageSize;
-        gridContainer.style.backgroundRepeat = 'repeat';
-        gridContainer.style.backgroundPosition = 'top';
-
-        // Force hardware acceleration to prevent rendering shifts during scroll
-        gridContainer.style.willChange = 'transform';
-        gridContainer.style.transform = 'translateZ(0)';
+        const imageUrl = this._calculateImageUrl();
+        const dimmerOverlay = this._calculateDimmerGradient();
+        this._applyImageBackground(gridContainer, dimmerOverlay, imageUrl);
         break;
     }
   };

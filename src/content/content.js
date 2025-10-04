@@ -69,6 +69,9 @@ class RedditFixCoordinator {
   applyBackground() {
     this.appearance?.applyBackground();
   }
+  clearBackground() {
+    this.appearance?.clearBackground();
+  }
 
   log(message) {
     if (this.verbose) {
