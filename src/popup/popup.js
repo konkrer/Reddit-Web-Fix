@@ -22,6 +22,7 @@ const bgImageUrl = document.getElementById('bg-image-url');
 const bgImageFile = document.getElementById('bg-image-file');
 const bgImageFileName = document.getElementById('image-file-name');
 const bgImageSize = document.getElementById('bg-image-size');
+const bgDimmer = document.getElementById('bg-dimmer');
 
 // --- Functions ---
 
@@ -94,6 +95,7 @@ function setValuesToElements(settings) {
   bgImageUrl.value = settings.imageUrl || '';
   bgImageFileName.textContent = settings.imageFileName || '';
   bgImageSize.value = settings.imageSize || 'auto';
+  bgDimmer.value = settings.dimmer || '0';
 }
 
 function saveSettings() {
@@ -110,6 +112,7 @@ function saveSettings() {
     // Image
     imageUrl: bgImageUrl.value,
     imageSize: bgImageSize.value,
+    dimmer: bgDimmer.value,
 
     imageDataUrl: null,
   };

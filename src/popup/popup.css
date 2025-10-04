@@ -1,14 +1,13 @@
 body {
   font-family: sans-serif;
-  min-height: 450px;
+  /* min-height: 450px; */
   width: 300px;
   padding: 18px;
   margin: 0px;
-  background: linear-gradient(#7d0404, 80%, #3b0000f5);
+  background: linear-gradient(#530404, 80%, #3b0000f5);
   color: rgb(219, 209, 209);
   /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
   box-shadow: inset black 0px 30px 55px;
-  border: inset #ff6300;
 }
 
 .container {
@@ -25,6 +24,7 @@ h1 {
   text-shadow: 1px 1px 3px rgb(196, 193, 193);
   font-family: monospace;
   text-shadow: black 0px 0px 12px;
+  font-size: xx-large;
 }
 
 h2 {
@@ -47,7 +47,7 @@ h2 {
   flex-direction: column;
   gap: 10px;
   color: rgb(201, 200, 200);
-  min-height: 219px;
+  min-height: 241px;
   margin-top: 5px;
   box-shadow: inset #472828 0px 0px 6px 1px;
 }
@@ -76,7 +76,7 @@ input[type='text'] {
 input[type='file']::file-selector-button {
   background-color: rgb(119, 119, 119); /* Green background */
   color: white; /* White text color */
-  padding: 6px 4px;
+  padding: 6px 6px;
   border: none;
   border-radius: 0px;
   cursor: pointer;
@@ -156,6 +156,14 @@ input[type='number'] {
   margin-right: 15px;
 }
 
+.ml-10 {
+  margin-left: 10px;
+}
+
+.ml-15 {
+  margin-left: 15px;
+}
+
 #gradient-angle-settings > label {
   display: block;
 }
@@ -171,30 +179,30 @@ select,
   /* border: 1px solid #000000; */
   border: none;
   background: #724949;
-  padding: 4px 40px;
+  padding: 0px 40px;
   transition: 0.4s;
 }
 
 #bg-image-url,
 #bg-image-file {
   border-radius: 5px;
-  padding: 7px 6px 7px 6px;
+  /* padding: 7px 6px 7px 6px; */
   color: white;
   margin-bottom: 5px;
 }
 
 #bg-image-url {
-  width: 94%;
-  padding: 8px 6px 7px 6px;
+  /* width: 100%; */
+  padding: 6px 6px 6px 8px;
 }
 
 #bg-image-file {
-  width: 97%;
+  /* width: 100%; */
   /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
   background: #724949;
-  padding: 0px 5px 0px 0px;
+  /* padding: 0px 5px 0px 0px; */
   border-radius: 5px;
-  margin-bottom: 10px;
+  /* margin-bottom: 10px; */
 }
 
 #bg-image-url::placeholder,
@@ -202,14 +210,16 @@ select,
   color: rgba(189, 187, 187, 0.397);
 }
 
-select:hover,
-select:focus {
+select:hover {
   background: #0a3549;
 }
 
 select::picker-icon {
   color: #999999;
   transition: 0.4s rotate;
+  position: relative;
+  top: 5px;
+  transform-origin: 50% 35%;
 }
 
 select:open::picker-icon {
@@ -314,5 +324,5 @@ option::checkmark {
 
 #bg-image-size {
   margin: 8px 0px;
-  width: 98%;
+  width: 100%;
 }

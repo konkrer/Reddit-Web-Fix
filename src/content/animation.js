@@ -25,7 +25,6 @@ export function clickIgnoredAnimation(btnElem) {
     zIndex: '2147483647',
     transition: 'none',
     willChange: 'transform, opacity',
-    border: '1px solid limegreen',
     borderRadius: '50%',
     backgroundColor: 'rgba(0,0,0,0.9)',
   });

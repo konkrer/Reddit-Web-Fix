@@ -39,7 +39,9 @@
           <option value="gradient">
             <span class="option-label noto-sans-jp-regular">Gradient</span>
           </option>
-          <option value="image"><span class="option-label noto-sans-jp-regular">Image</span></option>
+          <option value="image">
+            <span class="option-label noto-sans-jp-regular">Image</span>
+          </option>
         </select>
       </div>
 
@@ -50,13 +52,17 @@
 
       <!-- SOLID COLOR INPUT GROUP -->
       <div id="color-settings" class="settings-panel" style="display: none">
-        <label for="bg-color" class="noto-sans-jp-regular">Background Color:</label>
+        <label for="bg-color" class="noto-sans-jp-regular"
+          >Background Color:</label
+        >
         <input type="color" id="bg-color" value="#2c1111" />
       </div>
 
       <!-- GRADIENT INPUT GROUP 1 -->
       <div id="gradient-settings" class="settings-panel" style="display: none">
-        <div for="gradient-type" class="noto-sans-jp-regular">Gradient Type:</div>
+        <div for="gradient-type" class="noto-sans-jp-regular">
+          Gradient Type:
+        </div>
         <div class="flex-row flex-start mb-15">
           <span>
             <input
@@ -82,15 +88,21 @@
         <!-- GRADIENT INPUT GROUP 2 -->
         <div class="control-group flex-row mb-15">
           <span class="input-row-item">
-            <label for="gradient-color-1" class="noto-sans-jp-regular">Color 1:</label>
+            <label for="gradient-color-1" class="noto-sans-jp-regular"
+              >Color 1:</label
+            >
             <input type="color" id="gradient-color-1" value="#2c1111" />
           </span>
           <span class="input-row-item">
-            <label for="gradient-color-2" class="noto-sans-jp-regular">Color 2:</label>
+            <label for="gradient-color-2" class="noto-sans-jp-regular"
+              >Color 2:</label
+            >
             <input type="color" id="gradient-color-2" value="#212245" />
           </span>
           <div id="gradient-angle-settings" class="input-row-item">
-            <label for="gradient-angle" class="noto-sans-jp-regular">Angle:</label>
+            <label for="gradient-angle" class="noto-sans-jp-regular"
+              >Angle:</label
+            >
             <input type="number" id="gradient-angle" value="90" disabled />
           </div>
         </div>
@@ -98,9 +110,41 @@
 
       <!-- IMAGE INPUT GROUP -->
       <div id="image-settings" class="settings-panel" style="display: none">
+        <!-- Image from URL -->
+        <span>
+          <label
+            for="bg-image-url"
+            class="input-row-item mr-10 noto-sans-jp-regular"
+            class="noto-sans-jp-regular"
+            >Image URL:</label
+          >
+          <button type="reset" class="noto-sans-jp-regular">Clear</button>
+        </span>
+        <input
+          type="text"
+          id="bg-image-url"
+          placeholder="https://example.com/image.png"
+          value="https://i.etsystatic.com/8384550/r/il/753ef1/5659289347/il_794xN.5659289347_7oz4.jpg"
+        />
+
+        <!-- Image from file -->
+        <div class="flex-row flex-start">
+          <label
+            for="bg-image-file"
+            class="input-row-item mr-10 noto-sans-jp-regular"
+            class="noto-sans-jp-regular"
+            >Or select a local file:</label
+          >
+          <span id="image-file-name" class="noto-sans-jp-regular"></span>
+        </div>
+        <input type="file" id="bg-image-file" accept="image/*" />
+
+        <!-- Image controls -->
         <div class="control-group flex-row">
           <span class="input-row-item width-100">
-            <label for="bg-image-size" class="noto-sans-jp-regular">Size:</label>
+            <label for="bg-image-size" class="noto-sans-jp-regular"
+              >Size:</label
+            >
             <select id="bg-image-size">
               <button>
                 <selectedcontent></selectedcontent>
@@ -114,28 +158,15 @@
             </select>
           </span>
         </div>
-        <span>
-          <label for="bg-image-url" class="input-row-item mr-10 noto-sans-jp-regular"
-            class="noto-sans-jp-regular">Image URL:</label
-          >
-          <button type="reset" class="noto-sans-jp-regular">Clear</button>
-        </span>
-        <input
-          type="text"
-          id="bg-image-url"
-          placeholder="https://example.com/image.png"
-          value="https://i.etsystatic.com/8384550/r/il/753ef1/5659289347/il_794xN.5659289347_7oz4.jpg"
-        />
-        <div class="flex-row flex-start">
-          <label for="bg-image-file" class="input-row-item mr-10 noto-sans-jp-regular"
-            class="noto-sans-jp-regular">Or select a local file:</label
-          >
-          <span id="image-file-name" class="noto-sans-jp-regular"></span>
+        <div class="">
+          <label for="bg-dimmer" class="noto-sans-jp-regular">Dimmer:</label>
+          <input type="range" id="bg-dimmer" min="0" max="100" value="0" class="ml-15" />
         </div>
-        <input type="file" id="bg-image-file" accept="image/*" />
       </div>
 
-      <button type="submit" id="save-settings" class="noto-sans-jp-regular">Save and Apply</button>
+      <button type="submit" id="save-settings" class="noto-sans-jp-regular">
+        Save and Apply
+      </button>
     </div>
   </body>
 </html>
