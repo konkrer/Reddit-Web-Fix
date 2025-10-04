@@ -1,6 +1,9 @@
 # Reddit Web Fix
 
-Small browser extension that improves Reddit's post-vote UI by preserving up/down highlights and updating the displayed vote count consistently while you browse.
+![Extension Icon](icons/icon128.png)
+
+
+Small browser extension that improves Reddit's post-vote UI by preserving up/down highlights and updating the displayed vote count consistently while you browse. Also enables you to customize the page background to a different color, color gradient, or to an image.
 
 ## Features
 
@@ -9,6 +12,7 @@ Small browser extension that improves Reddit's post-vote UI by preserving up/dow
 - Keep displayed vote counts in sync with local interactions
 - No network calls, uses zero data. Simply uses information already seen for better user experience.
 - Lightweight modern extension (Manifest V3)
+- Customize Reddit page background
 - Options page to enable verbose/debug logging
 
 ## Quick install (developer)
@@ -27,6 +31,9 @@ Small browser extension that improves Reddit's post-vote UI by preserving up/dow
 3. Enable "Developer mode" (Chrome/Edge).
 4. Chrome/Edge — Drag zip file onto extension page — Firefox: Click "Load Temporary Add-on" and select the zip file.
 5. Visit https://www.reddit.com and verify the extension is active (check the console for "Reddit Web Fix: activated.").
+
+## Use
+- Pin the extension to the toolbar to access customization settings.
 
 ## Files of interest
 
