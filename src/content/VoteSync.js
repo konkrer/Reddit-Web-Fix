@@ -105,6 +105,9 @@ export default class VoteSync {
     this.sessionStorage = {};
     this.stateCopied = new Set();
     this.btnStateRestored = {};
+    // Light-weight tracking of seen but not vote state tracked posts.
+    // For clear vote state syncing across pages to provide better vote count syncing.
+    this.seenButNotTracked = new Set();
     this.currentPage = undefined;
     this.detail = undefined;
 
@@ -211,10 +214,24 @@ export default class VoteSync {
     if (isNaN(count)) return;
 
     const voteState = this.getVoteStateFromUI(btnSpan);
-    // only copy clear vote state on detail page
-    // so return if not detail page and vote state is clear
-    if (!voteState || (voteState === CLEAR_VOTE_INDICATOR && !this.detail))
+    // We want to copy clear vote state on detail page, but
+    // on other pages don't copy clear vote and return if
+    // post not yet in seenButNotTracked and post has no vote state stored*
+    // (*to prevent adding to seenButNotTracked again after it is cleared and vote state copied)
+    if (
+      !voteState ||
+      (voteState === CLEAR_VOTE_INDICATOR &&
+        !this.detail &&
+        !this.seenButNotTracked.has(post.id) &&
+        !this.sessionStorage[post.id])
+    ) {
+      this.seenButNotTracked.add(post.id);
       return;
+    } else {
+      // remove post from seenButNotTracked in case it is present
+      this.seenButNotTracked.delete(post.id);
+    }
+    // copy vote state to session storage and note it was copied for sync
     this.sessionStorage[post.id] = { vote: voteRecord[voteState], count };
     this.stateCopied.add(post.id);
   }

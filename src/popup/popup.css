@@ -47,10 +47,11 @@ h1 {
   text-shadow: var(--text-color-shadow) 0px 0px 12px;
 }
 
-h2 {
+h2,
+h3 {
   text-shadow: 2px 2px 4px var(--text-color-shadow);
   margin-bottom: 0;
-  /* font-weight: 100; */
+  margin-block-start: 0.4em;
 }
 
 .bungee-spice-regular {
@@ -153,15 +154,19 @@ h2 {
   gap: 10px;
 }
 
+.panel-control {
+  font-size: 0.9rem;
+}
+
 .settings-panel {
   background-color: rgba(99, 47, 47, 0.658);
   padding: 10px;
   border-radius: 17px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
   color: rgb(201, 200, 200);
-  min-height: 241px;
+  min-height: 210px;
   margin-top: 5px;
   box-shadow: inset #472828 0px 0px 6px 1px;
 }
@@ -186,7 +191,7 @@ input {
 }
 
 .input-row-item {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 /* ============================================
@@ -200,7 +205,7 @@ button {
   color: white;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 1.1em;
+  /* font-size: 1.1em; */
   box-shadow: white 0px 0px 2px;
 }
 
@@ -226,6 +231,10 @@ button[type='reset'] {
 /* ============================================
    INPUT TYPES
    ============================================ */
+
+input {
+  font-size: 0.75rem;
+}
 
 /* Color input */
 input[type='color'] {
@@ -281,7 +290,6 @@ select {
   font-optical-sizing: auto;
   font-weight: 900;
   font-style: normal;
-  width: 186px;
 }
 
 select:hover {
@@ -420,6 +428,11 @@ option::checkmark {
   text-wrap: nowrap;
 }
 
+#bg-type {
+  font-size: 0.9rem;
+  width: 186px;
+}
+
 /* Image size select */
 #bg-image-size {
   margin: 8px 0px;
@@ -427,6 +440,6 @@ option::checkmark {
 }
 
 #bg-dimmer-label {
-    position: relative;
-    bottom: 3.5px;
+  position: relative;
+  bottom: 3.5px;
 }
