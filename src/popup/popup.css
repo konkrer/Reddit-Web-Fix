@@ -166,7 +166,7 @@ h3 {
   flex-direction: column;
   gap: 5px;
   color: rgb(201, 200, 200);
-  min-height: 210px;
+  min-height: 213px;
   margin-top: 5px;
   box-shadow: inset #472828 0px 0px 6px 1px;
 }
@@ -182,7 +182,7 @@ h3 {
    ============================================ */
 
 label {
-  font-weight: bold;
+  color: var(--text-color);
 }
 
 label,
@@ -199,14 +199,18 @@ input {
    ============================================ */
 
 button {
-  padding: 10px 60px;
+  padding: 10px 10px;
   border: none;
   background-color: #020720;
-  color: white;
-  border-radius: 5px;
+  color: var(--text-color);
+  /* border-radius: 5px; */
   cursor: pointer;
-  /* font-size: 1.1em; */
   box-shadow: white 0px 0px 2px;
+}
+
+button[type='submit'] {
+    font-size: large;
+    text-shadow: rgba(0, 0, 0, 0.722) 0 30px 50px;
 }
 
 button:hover {
@@ -226,6 +230,8 @@ button[type='reset'] {
   padding: 0;
   box-shadow: none;
   border-radius: 3px;
+  color: black;
+  font-weight: 500;
 }
 
 /* ============================================
@@ -234,6 +240,7 @@ button[type='reset'] {
 
 input {
   font-size: 0.75rem;
+  color: var(--text-color) !important;
 }
 
 /* Color input */
@@ -246,20 +253,18 @@ input[type='color'] {
 
 /* Text input */
 input[type='text'] {
-  width: 95%;
+  /* width: 95%; */
+  color: var(--text-color);
 }
 
-/* Number input */
-input[type='number'] {
-  height: 26px;
-  border: none;
-  width: 64px;
+input[type='text']::placeholder {
+  color: rgba(255, 255, 255, 0.46);
 }
 
 /* File input */
 input[type='file']::file-selector-button {
   background-color: rgb(119, 119, 119);
-  color: white;
+  color: black;
   padding: 6px 6px;
   border: none;
   border-radius: 0px;
@@ -288,7 +293,6 @@ select {
   transition: 0.4s;
   font-family: 'Noto Sans JP', sans-serif;
   font-optical-sizing: auto;
-  font-weight: 900;
   font-style: normal;
 }
 
@@ -299,9 +303,6 @@ select:hover {
 select::picker-icon {
   color: #999999;
   transition: 0.4s rotate;
-  /* position: relative; */
-  /* top: 5px; */
-  /* transform-origin: 50% 35%; */
 }
 
 select:open::picker-icon {
@@ -315,7 +316,7 @@ select:open::picker-icon {
   opacity: 0;
   transition: all 0.4s allow-discrete;
   top: calc(anchor(bottom) + 1px);
-  left: anchor(20%);
+  left: anchor(10%);
 }
 
 ::picker(select):popover-open {
@@ -340,7 +341,7 @@ option {
   background: #eeeeee;
   padding: 10px;
   transition: 0.4s;
-  max-width: 200px;
+  max-width: 200px; 
 }
 
 option:first-of-type {
@@ -389,43 +390,33 @@ option::checkmark {
 
 /* Image URL input */
 #bg-image-url {
-  border-radius: 5px;
   border: none;
   background: var(--accent-color);
   padding: 6px 6px 6px 8px;
-  color: white;
   margin-bottom: 5px;
-  transition: 0.4s;
-}
-
-#bg-image-url::placeholder {
-  color: rgba(189, 187, 187, 0.397);
 }
 
 /* Image file input */
 #bg-image-file {
   border-radius: 5px;
   background: var(--accent-color);
-  color: white;
+  color: var(--text-color);
   margin-bottom: 5px;
-}
-
-#bg-image-file::placeholder {
-  color: rgba(189, 187, 187, 0.397);
 }
 
 /* Image file name display */
 #image-file-name {
-  color: #999999;
+  color: black;
   font-size: xx-small;
-  background: var(--accent-color);
+  background: antiquewhite;
   border-radius: 3px;
   max-width: 112px;
   height: 12px;
-  display: inline;
+  display: none;
   overflow: clip;
   font-weight: normal;
   text-wrap: nowrap;
+  padding: 2px 3px;
 }
 
 #bg-type {
@@ -443,3 +434,11 @@ option::checkmark {
   position: relative;
   bottom: 3.5px;
 }
+
+ #save-icon {
+    margin-right:4px;
+ }
+
+ #apply-icon {
+    margin-left: 1px;
+ }

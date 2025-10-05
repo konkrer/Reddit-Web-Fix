@@ -93,9 +93,15 @@ function setValuesToElements(settings) {
   gradientColor2.value = settings.gradientColor2 || '#212245';
   gradientAngle.value = settings.gradientAngle || '90';
   bgImageUrl.value = settings.imageUrl || '';
-  bgImageFileName.textContent = settings.imageFileName || '';
   bgImageSize.value = settings.imageSize || 'auto';
   bgDimmer.value = settings.dimmer || '0';
+  if (settings.imageFileName) {
+    bgImageFileName.textContent = settings.imageFileName;
+    bgImageFileName.style.display = 'inline';
+  } else {
+    bgImageFileName.textContent = '';
+    bgImageFileName.style.display = 'none';
+  }
 }
 
 function saveSettings() {
@@ -125,16 +131,17 @@ function saveSettings() {
       settings.imageFileName = file.name;
       chrome.storage.local.set({ backgroundSettings: settings }, () => {
         console.log('Background settings saved with local image.');
-        //   window.close();
       });
+      bgImageFileName.textContent = file.name;
+      bgImageFileName.style.display = 'inline';
     };
     reader.readAsDataURL(file);
   } else {
     settings.imageFileName = '';
     bgImageFileName.textContent = '';
+    bgImageFileName.style.display = 'none';
     chrome.storage.local.set({ backgroundSettings: settings }, () => {
       console.log('Background settings saved.');
-      // window.close();
     });
   }
 }
