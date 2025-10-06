@@ -80,6 +80,7 @@ function setValuesToElements(settings) {
   bgImageUrl.value = settings.common.imageUrl || '';
   bgImageSize.value = settings.common.imageSize || 'auto';
   bgDimmer.value = settings.common.dimmer || '0';
+  bgDimmerValue.textContent = settings.common.dimmer || '34';
 
   setImageFileName(settings.common.imageFileName);
 }

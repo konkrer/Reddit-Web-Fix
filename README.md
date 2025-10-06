@@ -7,12 +7,12 @@ Small browser extension that improves Reddit's post-vote UI by preserving up/dow
 
 ## Features
 
-- Works with Chrome, Edge, and Firefox
 - Preserve upvote/downvote highlights across navigation
 - Keep displayed vote counts in sync with local interactions
-- No network calls, uses zero data. Simply uses information already seen for better user experience.
+- No network calls, uses zero data. Simply uses information already seen for better user experience
+- Customize Reddit background to add your own style
+- Works with Chrome, Edge, and Firefox
 - Lightweight modern extension (Manifest V3)
-- Customize Reddit page background
 - Options page to enable verbose/debug logging
 
 ## Quick install (developer)
@@ -27,15 +27,15 @@ background section for Chrome/Edge or leave as is for Firefox.
 5. Visit https://www.reddit.com and verify the extension is active (check the console for "Reddit Web Fix: activated.").
 
 ### Load Zipped
-1. `Run buildZip.sh` (see below) to create the proper zip file for browser type.
+1. Run `buildZip.sh` (see below) to create the proper zip file for target browser type.
 2. Open Chrome / Edge: chrome(edge)://extensions/ — Firefox: about:debugging#/runtime/this-firefox
 3. Enable "Developer mode" (Chrome/Edge).
 4. Chrome/Edge — Drag zip file onto extension page — Firefox: Click "Load Temporary Add-on" and select the zip file.
 5. Visit https://www.reddit.com and verify the extension is active (check the console for "Reddit Web Fix: activated.").
 
 ## Use
-- Pin the extension to the toolbar to access customization settings.
-
+- After installing vote syncing happens automatically.
+- For reddit page background customization pin the extension to the browser toolbar and click the extension icon.
 ## Files of interest
 
 - manifest-both.json — extension manifest - make changes here (MV3)

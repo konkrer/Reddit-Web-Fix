@@ -13,8 +13,7 @@ export default class Appearance {
         this.coordinator.log('Background settings changed, reloading.');
         this.settings = changes.backgroundSettings.newValue.common;
         if (this.settings.imageFileName) {
-          this.imageDataUrl =
-            changes.backgroundSettings.newValue.imageDataUrl;
+          this.imageDataUrl = changes.backgroundSettings.newValue.imageDataUrl;
         } else {
           this.imageDataUrl = null;
         }
@@ -45,20 +44,16 @@ export default class Appearance {
 
   _clearBackground = gridContainer => {
     gridContainer.style.background = '';
-    gridContainer.style.willChange = '';
-    gridContainer.style.transform = '';
+    gridContainer.style.transition = '';
   };
 
   _applyColorBackground = gridContainer => {
     gridContainer.style.background = this.settings.color;
-    gridContainer.style.willChange = '';
-    gridContainer.style.transform = '';
+
   };
 
   _applyGradientBackground = (gridContainer, gradientCss) => {
     gridContainer.style.background = gradientCss;
-    gridContainer.style.willChange = '';
-    gridContainer.style.transform = '';
   };
 
   _applyImageBackground = (gridContainer, dimmerOverlay, imageUrl) => {
@@ -108,6 +103,9 @@ export default class Appearance {
       this._clearBackground(gridContainer);
       return;
     }
+    gridContainer.style.transition = '0.6s';
+    gridContainer.style.willChange = '';
+    gridContainer.style.transform = '';
 
     switch (this.settings.type) {
       case 'none':
