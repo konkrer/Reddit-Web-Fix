@@ -80,27 +80,6 @@ class RedditFixCoordinator {
   }
 }
 
-// Function to initialize VoteSync, MainObserver, share methods,
-// and start observing DOM changes.
-// function startup(HO) {
-//   VS = new VoteSync(VERBOSE, isBlockedPath, HO);
-//   MO = new MainObserver(VS);
-//   AP = new Appearance(VERBOSE);
-//   MO.appearance = AP;
-//   VS.MO = MO;
-//   HO.MO = MO;
-//   HO.VS = VS;
-//   MO.startMainObserver();
-// }
-
-// Cleanup function for extension unloading.
-// function cleanup() {
-//   if (MO) MO.stopMainObserver();
-//   if (HO) HO.stopHrefPoller();
-//   if (VS) VS.removeHandlersFromPosts();
-//   console.log('Reddit Web Fix: shut down.');
-// }
-
 function handlePortMessage(msg) {
   if (msg.type === 'SET_VERBOSE') {
     VERBOSE = msg.value;

@@ -166,7 +166,7 @@ h3 {
   flex-direction: column;
   gap: 5px;
   color: rgb(201, 200, 200);
-  min-height: 213px;
+  min-height: 215px;
   margin-top: 5px;
   box-shadow: inset #472828 0px 0px 6px 1px;
 }
@@ -208,30 +208,34 @@ button {
   box-shadow: white 0px 0px 2px;
 }
 
-button[type='submit'] {
-    font-size: large;
-    text-shadow: rgba(0, 0, 0, 0.722) 0 30px 50px;
-}
-
 button:hover {
   background-color: #0a3549;
   box-shadow: white 1px 0px 5px;
 }
 
 button:active {
-  box-shadow: rgb(173, 173, 173) 0px 0px 14px !important;
+    box-shadow: rgb(173, 173, 173) 0px 0px 14px !important;
+}
+
+button[type='submit'] {
+    font-size: large;
+    text-shadow: rgba(0, 0, 0, 0.722) 0 30px 50px;
 }
 
 button[type='reset'] {
-  font-size: x-small;
-  width: 40px;
-  height: 16px;
-  background-color: rgb(119, 119, 119);
-  padding: 0;
-  box-shadow: none;
-  border-radius: 3px;
-  color: black;
-  font-weight: 500;
+    font-size: x-small;
+    width: 40px;
+    height: 16px;
+    background-color: rgb(119, 119, 119);
+    padding: 0;
+    box-shadow: none;
+    border-radius: 3px;
+    color: black;
+    font-weight: 500;
+}
+
+button[type="reset"]:hover {
+  background-color: #0a3549;
 }
 
 /* ============================================
@@ -240,7 +244,7 @@ button[type='reset'] {
 
 input {
   font-size: 0.75rem;
-  color: var(--text-color) !important;
+  color: var(--text-color);
 }
 
 /* Color input */
@@ -249,6 +253,12 @@ input[type='color'] {
   height: 30px;
   border: 1px solid #ccc;
   padding: 0;
+}
+
+input[type="number"] {
+    width: 47px;
+    height: 24px;
+    color: black;
 }
 
 /* Text input */
@@ -270,10 +280,15 @@ input[type='file']::file-selector-button {
   border-radius: 0px;
   cursor: pointer;
 }
+input[type='file']::file-selector-button:hover {
+  background-color: #0a3549;
+}
 
 /* Range input */
 input[type='range'] {
   accent-color: var(--accent-color);
+  width: 175px;
+  margin-left: 8px;
 }
 
 /* ============================================
@@ -294,6 +309,8 @@ select {
   font-family: 'Noto Sans JP', sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
+  height: 26px;
+  padding-top: 1px;
 }
 
 select:hover {
@@ -383,6 +400,12 @@ option::checkmark {
    SPECIFIC ELEMENT STYLES
    ============================================ */
 
+#bg-color {
+    width: 150px;
+    height: 50px;
+}
+
+
 /* Gradient settings */
 #gradient-angle-settings > label {
   display: block;
@@ -428,6 +451,7 @@ option::checkmark {
 #bg-image-size {
   margin: 8px 0px;
   width: 100%;
+  padding-top: 3px;
 }
 
 #bg-dimmer-label {
@@ -441,4 +465,18 @@ option::checkmark {
 
  #apply-icon {
     margin-left: 1px;
+ }
+
+ #bg-dimmer-value {
+    width: 15px;
+    text-align: center;
+    padding: 1px 5px 2px 5px;
+    border-radius: 5px;
+    background-color: var(--accent-color);
+    color: var(--text-color);
+    margin-left: 8px;
+    font-size: 0.8rem;
+    position: relative;
+    top: -3px;
+    display: inline-block;
  }

@@ -5,12 +5,19 @@ export default class Appearance {
   constructor(coordinator) {
     this.coordinator = coordinator;
     this.settings = null;
+    // this.imageDataUrl = null;
     this.loadSettings();
 
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace === 'local' && changes.backgroundSettings) {
         this.coordinator.log('Background settings changed, reloading.');
-        this.settings = changes.backgroundSettings.newValue;
+        this.settings = changes.backgroundSettings.newValue.common;
+        if (this.settings.imageFileName) {
+          this.imageDataUrl =
+            changes.backgroundSettings.newValue.imageDataUrl;
+        } else {
+          this.imageDataUrl = null;
+        }
         this.applyBackground();
       }
     });
@@ -18,14 +25,12 @@ export default class Appearance {
 
   // Load settings from chrome.storage.local.
   async loadSettings() {
-    const data = await browser.storage.local.get('backgroundSettings');
-    if (data.backgroundSettings) {
-      this.settings = data.backgroundSettings;
+    const settings = await browser.storage.local.get('backgroundSettings');
+    if (settings.backgroundSettings) {
+      this.settings = settings.backgroundSettings.common;
+      this.imageDataUrl = settings.backgroundSettings.imageDataUrl;
       this.coordinator.log('Background settings loaded:', this.settings);
       this.applyBackground();
-      // additional call applyBackground with timeout??
-    } else {
-      this.coordinator.log('No background settings found.');
     }
   }
 
@@ -38,13 +43,13 @@ export default class Appearance {
     this._clearBackground(gridContainer);
   };
 
-  _clearBackground = (gridContainer) => {
+  _clearBackground = gridContainer => {
     gridContainer.style.background = '';
     gridContainer.style.willChange = '';
     gridContainer.style.transform = '';
   };
 
-  _applyColorBackground = (gridContainer) => {
+  _applyColorBackground = gridContainer => {
     gridContainer.style.background = this.settings.color;
     gridContainer.style.willChange = '';
     gridContainer.style.transform = '';
@@ -57,22 +62,23 @@ export default class Appearance {
   };
 
   _applyImageBackground = (gridContainer, dimmerOverlay, imageUrl) => {
-    gridContainer.style.background = `${dimmerOverlay}, ${imageUrl}`;
+    gridContainer.style.background = '';
     gridContainer.style.backgroundSize = this.settings.imageSize;
     gridContainer.style.backgroundRepeat = 'repeat';
     gridContainer.style.backgroundPosition = 'top';
+    gridContainer.style.backgroundImage = `${dimmerOverlay}, ${imageUrl}`;
     // Force hardware acceleration to prevent rendering shifts during scroll
     gridContainer.style.willChange = 'transform';
     gridContainer.style.transform = 'translateZ(0)';
   };
 
-  _calculateDimmerGradient = () => {
+  _createDimmerGradient = () => {
     const dimmerValue = this.settings.dimmer || 0;
     const alpha = dimmerValue / 100; // Convert 0-100 to 0-1
     return `linear-gradient(rgba(0, 0, 0, ${alpha}), rgba(0, 0, 0, ${alpha}))`;
   };
 
-  _calculateGradientCss = () => {
+  _createGradientCss = () => {
     if (this.settings.gradientType === 'linear') {
       return `linear-gradient(${this.settings.gradientAngle}deg, ${this.settings.gradientColor1}, ${this.settings.gradientColor2})`;
     } else {
@@ -80,15 +86,15 @@ export default class Appearance {
     }
   };
 
-  _calculateImageUrl = () => {
+  _createImageUrl() {
     let imageUrl = '';
-    if (this.settings.imageDataUrl) {
-      imageUrl = `url(${this.settings.imageDataUrl})`;
+    if (this.settings.imageFileName) {
+      imageUrl = `url(${this.imageDataUrl})`;
     } else if (this.settings.imageUrl) {
       imageUrl = `url(${this.settings.imageUrl})`;
     }
     return imageUrl;
-  };
+  }
 
   // Apply the background style to the grid container.
   applyBackground = () => {
@@ -111,12 +117,12 @@ export default class Appearance {
         this._applyColorBackground(gridContainer);
         break;
       case 'gradient':
-        const gradientCss = this._calculateGradientCss();
+        const gradientCss = this._createGradientCss();
         this._applyGradientBackground(gridContainer, gradientCss);
         break;
       case 'image':
-        const imageUrl = this._calculateImageUrl();
-        const dimmerOverlay = this._calculateDimmerGradient();
+        const imageUrl = this._createImageUrl();
+        const dimmerOverlay = this._createDimmerGradient();
         this._applyImageBackground(gridContainer, dimmerOverlay, imageUrl);
         break;
     }

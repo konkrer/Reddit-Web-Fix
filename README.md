@@ -18,12 +18,13 @@ Small browser extension that improves Reddit's post-vote UI by preserving up/dow
 ## Quick install (developer)
 
 ### Load Unpacked
-**Note**: `Run buildZip.sh` (see below) to create the proper `manifest.json` for browser type first.
-1. Open Chrome / Edge: chrome(edge)://extensions/ — Firefox: about:debugging#/runtime/this-firefox
-2. Enable "Developer mode" (Chrome/Edge).
-3. Chrome/Edge: Click "Load unpacked" and select the repository folder —
+1. Run `buildZip.sh` (see below) to create the proper manifest.json file for each browser type, or manually copy manifest-both.json and rename to manifest.json and remove "scripts" field from 
+background section for Chrome/Edge or leave as is for Firefox.
+2. Open Chrome / Edge: chrome(edge)://extensions/ — Firefox: about:debugging#/runtime/this-firefox
+3. Enable "Developer mode" (Chrome/Edge).
+4. Chrome/Edge: Click "Load unpacked" and select the repository folder —
    Firefox: Click "Load Temporary Add-on" and select the manifest.json file.
-4. Visit https://www.reddit.com and verify the extension is active (check the console for "Reddit Web Fix: activated.").
+5. Visit https://www.reddit.com and verify the extension is active (check the console for "Reddit Web Fix: activated.").
 
 ### Load Zipped
 1. `Run buildZip.sh` (see below) to create the proper zip file for browser type.
