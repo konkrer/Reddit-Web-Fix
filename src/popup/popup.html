@@ -17,7 +17,7 @@
   <body>
     <!-- CONTAINER -->
     <div class="container">
-        <!-- TITLE -->
+      <!-- TITLE -->
       <h1 class="bungee-spice-regular">Reddit Web Fix</h1>
 
       <!-- SUBTITLE -->
@@ -57,18 +57,15 @@
 
       <!-- SOLID COLOR INPUT GROUP -->
       <div id="color-settings" class="settings-panel" style="display: none">
-        <label for="bg-color" class="fw-300 mb-15"
-          >Background Color:</label
-        >
+        <label for="bg-color" class="fw-300 mb-15">Background Color:</label>
         <div class="flex-row">
-        <input type="color" id="bg-color" value="#2c1111" /></div>
+          <input type="color" id="bg-color" value="#2c1111" />
+        </div>
       </div>
 
       <!-- GRADIENT INPUT GROUP 1 -->
       <div id="gradient-settings" class="settings-panel" style="display: none">
-        <div for="gradient-type" class="fw-300">
-          Gradient Type:
-        </div>
+        <div for="gradient-type" class="fw-300">Gradient Type:</div>
         <div class="flex-row flex-start mb-15">
           <span>
             <input
@@ -94,23 +91,42 @@
         <!-- GRADIENT INPUT GROUP 2 -->
         <div class="control-group flex-row mb-15">
           <span class="input-row-item">
-            <label for="gradient-color-1" class="fw-300"
-              >Color 1:</label
-            >
+            <label for="gradient-color-1" class="fw-300">Color 1:</label>
             <input type="color" id="gradient-color-1" value="#2c1111" />
           </span>
           <span class="input-row-item">
-            <label for="gradient-color-2" class="fw-300"
-              >Color 2:</label
-            >
+            <label for="gradient-color-2" class="fw-300">Color 2:</label>
             <input type="color" id="gradient-color-2" value="#212245" />
           </span>
           <div id="gradient-angle-settings" class="input-row-item">
-            <label for="gradient-angle" class="fw-300"
-              >Angle:</label
-            >
+            <label for="gradient-angle" class="fw-300">Angle:</label>
             <input type="number" id="gradient-angle" value="90" disabled />
           </div>
+        </div>
+
+        <!-- GRADIENT Dimmer -->
+        <div class="input-row-item flex-row justify-center">
+          <label for="bg-gradient-dimmer" class="bg-dimmer-label fw-400"
+            >Dimmer:</label
+          >
+          <input
+            type="range"
+            id="bg-gradient-dimmer"
+            min="0"
+            max="100"
+            value="0"
+          />
+          <div class="bg-dimmer-value fw-200" id="bg-gradient-dimmer-value">
+            0
+          </div>
+        </div>
+
+        <!-- Gradient scroll lock -->
+        <div class="flex-row mt-10">
+          <span>
+            <label for="bg-gradient-scroll" class="fw-400">Scroll:</label>
+            <input type="checkbox" id="bg-gradient-scroll" checked />
+          </span>
         </div>
       </div>
 
@@ -118,9 +134,7 @@
       <div id="image-settings" class="settings-panel" style="display: none">
         <!-- Image from URL -->
         <span>
-          <label
-            for="bg-image-url"
-            class="input-row-item mr-10 fw-400"
+          <label for="bg-image-url" class="input-row-item mr-10 fw-400"
             >Image URL:</label
           >
           <button type="reset" class="fw-300">Clear</button>
@@ -134,9 +148,7 @@
 
         <!-- Image from file -->
         <div class="flex-row flex-start">
-          <label
-            for="bg-image-file"
-            class="input-row-item mr-10 fw-400"
+          <label for="bg-image-file" class="input-row-item mr-10 fw-400"
             >Or select a local file:</label
           >
           <span id="image-file-name" class="fw-300"></span>
@@ -144,12 +156,10 @@
         <input type="file" id="bg-image-file" accept="image/*" />
 
         <!-- Image controls -->
-        <div class="control-group flex-row">
+        <div class="control-group flex-row justify-between">
           <!-- Image size -->
-          <span class="input-row-item width-100">
-            <label for="bg-image-size" class="fw-400"
-              >Size:</label
-            >
+          <span class="input-row-item">
+            <label for="bg-image-size" class="fw-400">Size:</label>
             <select id="bg-image-size">
               <button>
                 <selectedcontent></selectedcontent>
@@ -160,19 +170,42 @@
               <option value="contain">
                 <span class="option-label fw-300">Contain</span>
               </option>
+              <option value="cover">
+                <span class="option-label fw-300">Cover</span>
+              </option>
             </select>
           </span>
+
+          <!-- Scroll Lock: -->
+          <div class="input-row-item flex-row checkbox-row-item">
+            <label for="bg-image-scroll" class="fw-400">Scroll:</label>
+            <input type="checkbox" id="bg-image-scroll" checked />
+          </div>
+
+          <!-- Flow Effect: -->
+          <div class="input-row-item flex-row checkbox-row-item">
+            <label for="bg-image-flow" class="fw-400">Flow:</label>
+            <input type="checkbox" id="bg-image-flow" checked />
+          </div>
         </div>
+
         <!-- Image dimmer -->
         <div class="">
-          <label id="bg-dimmer-label" for="bg-dimmer" class="fw-400 input-row-item">Dimmer:</label>
+          <label for="bg-dimmer" class="fw-400 input-row-item bg-dimmer-label"
+            >Dimmer:</label
+          >
           <input type="range" id="bg-dimmer" min="0" max="100" value="34" />
-          <div id="bg-dimmer-value" class="fw-200">34</div>
+          <div class="bg-dimmer-value fw-200" id="bg-dimmer-value">34</div>
         </div>
       </div>
 
-      <button type="submit" id="save-settings" class="fw-200 bungee-spice-regular">
-       <span id="save-icon">💾</span> Save and Apply <span id="apply-icon">🔧</span>
+      <button
+        type="submit"
+        id="save-settings"
+        class="fw-200 bungee-spice-regular"
+      >
+        <span id="save-icon">💾</span> Save and Apply
+        <span id="apply-icon">🔧</span>
       </button>
     </div>
   </body>

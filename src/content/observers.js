@@ -21,6 +21,7 @@ export class MainObserver {
     this.coordinator.log('New post containing element processed.');
   }
 
+  // Apply the background to the grid container - which is its own "parent".
   _processGridParentNode(node) {
     this.coordinator.applyBackground();
     this.coordinator.log('Grid container processed.');

@@ -15,13 +15,17 @@ const gradientType = document.getElementsByName('gradient-type');
 const gradientColor1 = document.getElementById('gradient-color-1');
 const gradientColor2 = document.getElementById('gradient-color-2');
 const gradientAngle = document.getElementById('gradient-angle');
-
+const bgGradientDimmer = document.getElementById('bg-gradient-dimmer');
+const bgGradientDimmerValue = document.getElementById('bg-gradient-dimmer-value');
+const bgGradientScroll = document.getElementById('bg-gradient-scroll');
 // Image settings
 const clearImageUrlBtn = document.querySelector('button[type="reset"]');
 const bgImageUrl = document.getElementById('bg-image-url');
 const bgImageFile = document.getElementById('bg-image-file');
 const bgImageFileName = document.getElementById('image-file-name');
 const bgImageSize = document.getElementById('bg-image-size');
+const bgImageScroll = document.getElementById('bg-image-scroll');
+const bgImageFlow = document.getElementById('bg-image-flow');
 const bgDimmer = document.getElementById('bg-dimmer');
 const bgDimmerValue = document.getElementById('bg-dimmer-value');
 
@@ -77,10 +81,15 @@ function setValuesToElements(settings) {
   gradientColor1.value = settings.common.gradientColor1 || '#2d0101';
   gradientColor2.value = settings.common.gradientColor2 || '#212245';
   gradientAngle.value = settings.common.gradientAngle || '90';
+  bgGradientDimmer.value = settings.common.gradientDimmer ?? '0';
+  bgGradientDimmerValue.textContent = settings.common.gradientDimmer ?? '0';
+  bgGradientScroll.checked = settings.common.gradientScroll ?? true;
   bgImageUrl.value = settings.common.imageUrl || '';
   bgImageSize.value = settings.common.imageSize || 'auto';
-  bgDimmer.value = settings.common.dimmer || '0';
-  bgDimmerValue.textContent = settings.common.dimmer || '34';
+  bgImageScroll.checked = settings.common.imageScroll ?? true;
+  bgImageFlow.checked = settings.common.imageFlow ?? true;
+  bgDimmer.value = settings.common.imageDimmer ?? '34';
+  bgDimmerValue.textContent = settings.common.imageDimmer ?? '34';
 
   setImageFileName(settings.common.imageFileName);
 }
@@ -187,10 +196,14 @@ function saveSettings() {
     gradientColor1: gradientColor1.value,
     gradientColor2: gradientColor2.value,
     gradientAngle: gradientAngle.value,
+    gradientDimmer: bgGradientDimmer.value,
+    gradientScroll: bgGradientScroll.checked,
     // Image
     imageUrl: bgImageUrl.value,
     imageSize: bgImageSize.value,
-    dimmer: bgDimmer.value,
+    imageScroll: bgImageScroll.checked,
+    imageFlow: bgImageFlow.checked,
+    imageDimmer: bgDimmer.value,
     imageFileName: bgImageFileName.textContent,
   };
 
@@ -198,7 +211,7 @@ function saveSettings() {
   if (file) {
     uploadImageFile(file, settings);
   } else {
-    uploadCommonSettings(settings);
+    uploadCommonSettings(settings)
   }
 }
 
@@ -208,19 +221,31 @@ function clearImageUrlInput() {
 }
 
 // Update dimmer value on wheel event
-function wheelUpdateDimmerValue(e) {
+function wheelUpdateDimmerValue(e, dimmerEl, dimmerValueDisplay) {
   e.preventDefault();
   if (e.deltaY < 0) {
-    bgDimmer.valueAsNumber += 1;
+    dimmerEl.valueAsNumber += 2;
   } else {
-    bgDimmer.valueAsNumber -= 1;
+    dimmerEl.valueAsNumber -= 2;
   }
-  bgDimmerValue.textContent = bgDimmer.value;
+  dimmerValueDisplay.textContent = dimmerEl.value;
 }
 
-// Update dimmer value on input event
-function inputUpdateDimmerValue(e) {
+function wheelImageDimmerUpdate(e) {
+    wheelUpdateDimmerValue(e, bgDimmer, bgDimmerValue);
+}
+
+function wheelGradientDimmerUpdate(e) {
+    wheelUpdateDimmerValue(e, bgGradientDimmer, bgGradientDimmerValue);
+}
+
+// Update image dimmer value on input event
+function inputUpdateDimmerValue() {
   bgDimmerValue.textContent = bgDimmer.value;
+}
+// Update gradient dimmer value on input event
+function inputUpdateGradientDimmerValue() {
+  bgGradientDimmerValue.textContent = bgGradientDimmer.value;
 }
 
 // --- Event Listeners ---
@@ -228,7 +253,9 @@ bgType.addEventListener('change', () => showHidePanels(false));
 gradientSettings.addEventListener('change', showHideGradientControls);
 saveButton.addEventListener('click', saveSettings);
 clearImageUrlBtn.addEventListener('click', clearImageUrlInput);
-bgDimmer.addEventListener('wheel', wheelUpdateDimmerValue);
+bgGradientDimmer.addEventListener('wheel', wheelGradientDimmerUpdate);
+bgGradientDimmer.addEventListener('input', inputUpdateGradientDimmerValue);
+bgDimmer.addEventListener('wheel', wheelImageDimmerUpdate);
 bgDimmer.addEventListener('input', inputUpdateDimmerValue);
 
 // --- Initialization ---
