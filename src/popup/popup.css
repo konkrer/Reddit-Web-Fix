@@ -103,6 +103,10 @@ h3 {
   font-weight: 900;
 }
 
+.fs-08rem {
+  font-size: 0.8rem;
+}
+
 /* ============================================
    LAYOUT UTILITIES
    ============================================ */
@@ -132,9 +136,18 @@ h3 {
   width: 100%;
 }
 
+.float-right {
+  float: right;
+}
+
+.pos-relative {
+  position: relative;
+}
+
 .mt-10 {
   margin-top: 10px;
 }
+
 .mb-5 {
   margin-bottom: 5px;
 }
@@ -145,6 +158,9 @@ h3 {
   margin-bottom: 15px;
 }
 
+.mr-5{
+    margin-right: 5px;
+}
 .mr-10 {
   margin-right: 10px;
 }
@@ -152,6 +168,9 @@ h3 {
   margin-right: 15px;
 }
 
+.ml-5 {
+  margin-left: 5px;
+}
 .ml-10 {
   margin-left: 10px;
 }
@@ -200,10 +219,6 @@ label {
   color: var(--text-color);
 }
 
-.input-row-item {
-  font-size: 0.8rem;
-}
-
 /* ============================================
    BUTTONS
    ============================================ */
@@ -233,7 +248,7 @@ button[type='submit'] {
   text-shadow: rgba(0, 0, 0, 0.722) 0 30px 50px;
 }
 
-button[type='reset'] {
+button.btn-sm {
   font-size: x-small;
   width: 40px;
   height: 16px;
@@ -245,7 +260,7 @@ button[type='reset'] {
   font-weight: 500;
 }
 
-button[type='reset']:hover {
+button.btn-sm:hover {
   background-color: #0a3549;
 }
 
@@ -278,11 +293,14 @@ input[type='number'] {
   width: 47px;
   height: 24px;
   color: black;
+  padding-left: 6px;
+}
+input[type='number']:disabled {
+  color: rgba(0, 0, 0, 0.46);
 }
 
 /* Text input */
 input[type='text'] {
-  /* width: 95%; */
   color: var(--text-color);
 }
 
@@ -480,8 +498,8 @@ option::checkmark {
   bottom: 3px;
 }
 
-#bg-gradient-dimmer{
-    width: 130px;
+#bg-gradient-dimmer {
+  width: 130px;
 }
 
 #save-icon {
@@ -490,6 +508,53 @@ option::checkmark {
 
 #apply-icon {
   margin-left: 1px;
+}
+
+#history-popup {
+  display: none;
+  position: absolute;
+  top: 67px;
+  left: 29px;
+  width: 260px;
+  max-height: 200px;
+  background-color: white;
+  z-index: 1000;
+  border-radius: 5px;
+}
+#history-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0px;
+  border-radius: inherit;
+}
+#history-list >  button {
+  width: inherit;
+  height: 25px;
+  border-radius: 0px;
+  text-align: left;
+  padding-left: 8px;
+  overflow: hidden;
+  background-color: var(--text-color);
+}
+
+#history-list >  button:first-of-type {
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+
+#history-list >  button:last-of-type {
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+
+#history-list >  button:nth-child(odd) {
+  background-color: white;
+}
+
+#history-list >  button:hover {
+  background-color: #0a3549;
+  color: var(--text-color);
 }
 
 .bg-dimmer-value {

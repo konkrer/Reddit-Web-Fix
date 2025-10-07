@@ -90,22 +90,22 @@
 
         <!-- GRADIENT INPUT GROUP 2 -->
         <div class="control-group flex-row mb-15">
-          <span class="input-row-item">
+          <span class="fs-08rem">
             <label for="gradient-color-1" class="fw-300">Color 1:</label>
             <input type="color" id="gradient-color-1" value="#2c1111" />
           </span>
-          <span class="input-row-item">
+          <span class="fs-08rem">
             <label for="gradient-color-2" class="fw-300">Color 2:</label>
             <input type="color" id="gradient-color-2" value="#212245" />
           </span>
-          <div id="gradient-angle-settings" class="input-row-item">
+          <div id="gradient-angle-settings" class="fs-08rem">
             <label for="gradient-angle" class="fw-300">Angle:</label>
             <input type="number" id="gradient-angle" value="90" disabled />
           </div>
         </div>
 
         <!-- GRADIENT Dimmer -->
-        <div class="input-row-item flex-row justify-center">
+        <div class="fs-08rem flex-row justify-center">
           <label for="bg-gradient-dimmer" class="bg-dimmer-label fw-400"
             >Dimmer:</label
           >
@@ -131,24 +131,34 @@
       </div>
 
       <!-- IMAGE INPUT GROUP -->
-      <div id="image-settings" class="settings-panel" style="display: none">
+      <div id="image-settings" class="settings-panel pos-relative" style="display: none">
         <!-- Image from URL -->
         <span>
-          <label for="bg-image-url" class="input-row-item mr-10 fw-400"
+          <label for="bg-image-url" class="fs-08rem mr-10 fw-400"
             >Image URL:</label
           >
-          <button type="reset" class="fw-300">Clear</button>
+          <span class="float-right">
+            <button type="reset" class="fw-300 btn-sm ml-5">Clear</button>
+            <button id="history-btn" type="button" class="fw-300 btn-sm ml-10">
+              History
+            </button>
+            <div id="history-popup" class="history-popup">
+              <div id="history-list"></div>
+            </div>
+          </span>
         </span>
+
         <input
           type="text"
           id="bg-image-url"
           placeholder="https://example.com/image.png"
-          value="https://i.etsystatic.com/8384550/r/il/753ef1/5659289347/il_794xN.5659289347_7oz4.jpg"
+          value="https://i.etsystatic.com/8384550/r/il/3148ad/5611202310/il_794xN.5611202310_kzjx.jpg"
+          autocomplete="on"
         />
 
         <!-- Image from file -->
         <div class="flex-row flex-start">
-          <label for="bg-image-file" class="input-row-item mr-10 fw-400"
+          <label for="bg-image-file" class="fs-08rem mr-10 fw-400"
             >Or select a local file:</label
           >
           <span id="image-file-name" class="fw-300"></span>
@@ -158,7 +168,7 @@
         <!-- Image controls -->
         <div class="control-group flex-row justify-between">
           <!-- Image size -->
-          <span class="input-row-item">
+          <span class="fs-08rem">
             <label for="bg-image-size" class="fw-400">Size:</label>
             <select id="bg-image-size">
               <button>
@@ -177,13 +187,13 @@
           </span>
 
           <!-- Scroll Lock: -->
-          <div class="input-row-item flex-row checkbox-row-item">
+          <div class="fs-08rem flex-row checkbox-row-item">
             <label for="bg-image-scroll" class="fw-400">Scroll:</label>
             <input type="checkbox" id="bg-image-scroll" checked />
           </div>
 
           <!-- Flow Effect: -->
-          <div class="input-row-item flex-row checkbox-row-item">
+          <div class="fs-08rem flex-row checkbox-row-item">
             <label for="bg-image-flow" class="fw-400">Flow:</label>
             <input type="checkbox" id="bg-image-flow" checked />
           </div>
@@ -191,7 +201,7 @@
 
         <!-- Image dimmer -->
         <div class="">
-          <label for="bg-dimmer" class="fw-400 input-row-item bg-dimmer-label"
+          <label for="bg-dimmer" class="fw-400 fs-08rem bg-dimmer-label"
             >Dimmer:</label
           >
           <input type="range" id="bg-dimmer" min="0" max="100" value="34" />

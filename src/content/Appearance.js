@@ -72,7 +72,7 @@ export default class Appearance {
         this._clearBackground(bgOverlay);
         break;
       case 'color':
-        this._applyColorBackground(bgOverlay);
+        this._applyColorBackground(gridContainer, bgOverlay);
         break;
       case 'gradient':
         this._applyGradientBackground(gridContainer, bgOverlay);
@@ -84,8 +84,9 @@ export default class Appearance {
   };
 
   // Apply the color background to the target element
-  _applyColorBackground = targetEl => {
-    targetEl.style.background = this.settings.color;
+  _applyColorBackground = (gridContainer, bgOverlay) => {
+    gridContainer.style.background = 'none';
+    bgOverlay.style.background = this.settings.color;
   };
 
   // Apply the gradient background to the target element
@@ -118,7 +119,9 @@ export default class Appearance {
     target.style.background = '';
     target.style.backgroundSize = this.settings.imageSize;
     target.style.backgroundRepeat = 'repeat';
-    target.style.backgroundPosition = this.settings.imageScroll ? 'top' : 'center';
+    target.style.backgroundPosition = this.settings.imageScroll
+      ? 'top'
+      : 'center';
     target.style.backgroundImage = `${dimmerOverlay}, ${imageUrl}`;
   };
 

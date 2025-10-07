@@ -1,4 +1,7 @@
 'use strict';
+
+import HistoryLRU from './HistoryLRU.js';
+
 // --- Element Cache ---
 const bgType = document.getElementById('bg-type');
 const blankSettings = document.getElementById('blank-settings');
@@ -16,10 +19,13 @@ const gradientColor1 = document.getElementById('gradient-color-1');
 const gradientColor2 = document.getElementById('gradient-color-2');
 const gradientAngle = document.getElementById('gradient-angle');
 const bgGradientDimmer = document.getElementById('bg-gradient-dimmer');
-const bgGradientDimmerValue = document.getElementById('bg-gradient-dimmer-value');
+const bgGradientDimmerValue = document.getElementById(
+  'bg-gradient-dimmer-value'
+);
 const bgGradientScroll = document.getElementById('bg-gradient-scroll');
 // Image settings
 const clearImageUrlBtn = document.querySelector('button[type="reset"]');
+const historyBtn = document.querySelector('#history-btn');
 const bgImageUrl = document.getElementById('bg-image-url');
 const bgImageFile = document.getElementById('bg-image-file');
 const bgImageFileName = document.getElementById('image-file-name');
@@ -28,6 +34,9 @@ const bgImageScroll = document.getElementById('bg-image-scroll');
 const bgImageFlow = document.getElementById('bg-image-flow');
 const bgDimmer = document.getElementById('bg-dimmer');
 const bgDimmerValue = document.getElementById('bg-dimmer-value');
+
+// History LRU
+const historyLRU = new HistoryLRU();
 
 // --- Functions ---
 
@@ -136,14 +145,20 @@ function uploadCommonSettings(settings) {
       () => console.log('Background settings saved.')
     );
 
-  if (settings.imageUrl) {
+  // If image url is set, clear the image file name
+  if (settings.imageUrl && settings.type === 'image') {
     settings.imageFileName = '';
     bgImageFileName.textContent = '';
     bgImageFileName.style.display = 'none';
+    // Use history LRU class object to store the image url
+    historyLRU.add(settings.imageUrl);
   }
+  // If image file name is not set, set the image data url to null
   if (!settings.imageFileName) {
+    blankPanelMessageUpdate();
     setSettings(null);
   } else {
+    // If image file name is set, get the image data url from the background settings
     chrome.storage.local.get('backgroundSettings', data => {
       const settings = data.backgroundSettings;
       if (!settings) return;
@@ -186,7 +201,6 @@ function showHidePanels(initial = false) {
 
 // Save settings to chrome.storage.local
 function saveSettings() {
-  blankPanelMessageUpdate();
   const settings = {
     type: bgType.value,
     // Color
@@ -211,7 +225,7 @@ function saveSettings() {
   if (file) {
     uploadImageFile(file, settings);
   } else {
-    uploadCommonSettings(settings)
+    uploadCommonSettings(settings);
   }
 }
 
@@ -231,12 +245,14 @@ function wheelUpdateDimmerValue(e, dimmerEl, dimmerValueDisplay) {
   dimmerValueDisplay.textContent = dimmerEl.value;
 }
 
+// Update image dimmer value on wheel event
 function wheelImageDimmerUpdate(e) {
-    wheelUpdateDimmerValue(e, bgDimmer, bgDimmerValue);
+  wheelUpdateDimmerValue(e, bgDimmer, bgDimmerValue);
 }
 
+// Update gradient dimmer value on wheel event
 function wheelGradientDimmerUpdate(e) {
-    wheelUpdateDimmerValue(e, bgGradientDimmer, bgGradientDimmerValue);
+  wheelUpdateDimmerValue(e, bgGradientDimmer, bgGradientDimmerValue);
 }
 
 // Update image dimmer value on input event
@@ -248,6 +264,37 @@ function inputUpdateGradientDimmerValue() {
   bgGradientDimmerValue.textContent = bgGradientDimmer.value;
 }
 
+// Show history popup
+function showHistory(e) {
+  e.stopPropagation();
+  const historyPopup = document.querySelector('#history-popup');
+  const historyList = document.querySelector('#history-list');
+  
+  // populate history popup with historyLRU
+  historyList.innerHTML = '';
+  historyLRU.getHistory().forEach(url => createHistoryItem(url, historyList));
+  historyPopup.style.display = 'block';
+}
+
+// Hide history popup
+function hideHistory() {
+  const historyPopup = document.querySelector('#history-popup');
+  historyPopup.style.display = 'none';
+}
+
+// Create a history item
+function createHistoryItem(url, historyList) {
+    const li = document.createElement('button');
+    li.classList.add('btn-sm');
+    const iconSpan = document.createElement('span');
+    iconSpan.classList.add('mr-5');
+    iconSpan.textContent = historyLRU.getMarker(url);
+    li.appendChild(iconSpan);
+    li.append(url.slice(0, 50));
+    li.addEventListener('click', () => bgImageUrl.value = url);
+    historyList.appendChild(li);
+}
+
 // --- Event Listeners ---
 bgType.addEventListener('change', () => showHidePanels(false));
 gradientSettings.addEventListener('change', showHideGradientControls);
@@ -257,6 +304,8 @@ bgGradientDimmer.addEventListener('wheel', wheelGradientDimmerUpdate);
 bgGradientDimmer.addEventListener('input', inputUpdateGradientDimmerValue);
 bgDimmer.addEventListener('wheel', wheelImageDimmerUpdate);
 bgDimmer.addEventListener('input', inputUpdateDimmerValue);
+historyBtn.addEventListener('click', showHistory);
+document.querySelector('body').addEventListener('click', hideHistory);
 
 // --- Initialization ---
 chrome.storage.local.get('backgroundSettings', loadSettings);
