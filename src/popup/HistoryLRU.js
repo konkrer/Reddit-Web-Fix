@@ -52,12 +52,7 @@ export default class HistoryLRU {
       this.urlToMarker[item] = this.markerPool.pop();
     }
     // Save to chrome.storage.local
-    chrome.storage.local.set({
-      historyLRU: {
-        history: this.history,
-        urlToMarker: this.urlToMarker,
-      },
-    });
+    this.save();
 
     console.log('History LRU updated:', this.history);
   }
@@ -65,6 +60,21 @@ export default class HistoryLRU {
   // Get the history cache
   getHistory() {
     return this.history;
+  }
+
+  // Remove an item from the history cache
+  remove(item) {
+    this.history.splice(this.history.indexOf(item), 1);
+    this.markerPool.unshift(this.urlToMarker[item]);
+    delete this.urlToMarker[item];
+    this.save();
+  }
+
+  // Save to chrome.storage.local
+  save() {
+    chrome.storage.local.set({
+      historyLRU: { history: this.history, urlToMarker: this.urlToMarker },
+    });
   }
 
   // Clear the history cache

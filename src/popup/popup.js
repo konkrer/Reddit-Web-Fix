@@ -284,14 +284,25 @@ function hideHistory() {
 
 // Create a history item
 function createHistoryItem(url, historyList) {
-    const li = document.createElement('button');
-    li.classList.add('btn-sm');
+    const li = document.createElement('div');
     const iconSpan = document.createElement('span');
+    const btn = document.createElement('button');
+    const deleteBtn = document.createElement('button');
+
     iconSpan.classList.add('mr-5');
     iconSpan.textContent = historyLRU.getMarker(url);
-    li.appendChild(iconSpan);
-    li.append(url.slice(0, 50));
-    li.addEventListener('click', () => bgImageUrl.value = url);
+    btn.classList.add('btn-sm');
+    deleteBtn.classList.add('btn-sm', 'deleteBtn');
+    deleteBtn.textContent = '❌';
+
+    btn.appendChild(iconSpan);
+    btn.append(url.slice(0, 45) + '…');
+    li.appendChild(btn);
+    li.appendChild(deleteBtn);
+
+    btn.addEventListener('click', () => bgImageUrl.value = url);
+    deleteBtn.addEventListener('click', () => historyLRU.remove(url));
+
     historyList.appendChild(li);
 }
 
