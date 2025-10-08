@@ -8,7 +8,7 @@ export default class Appearance {
     this.imageDataUrl = null;
     this.loadSettings();
 
-    // Listen for background settings changes
+    // Listen for background settings changes and update background
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace === 'local' && changes.backgroundSettings) {
         this.coordinator.log('Background settings changed, reloading.');
@@ -44,12 +44,6 @@ export default class Appearance {
     this._clearBackground(gridContainer);
   };
 
-  // Clear the background and reset the transition
-  _clearBackground = targetEl => {
-    targetEl.style.background = 'none';
-    targetEl.style.transition = 'revert-layer';
-  };
-
   // Apply the background style to the target element, called externally
   applyBackground = () => {
     if (!this.settings) {
@@ -60,61 +54,86 @@ export default class Appearance {
       this.coordinator.log('Grid container not found.');
       return;
     }
-    const bgOverlay = this.addChildOverlay(gridContainer);
+    const bgUnderlay = this.addChildUnderlay(gridContainer);
 
-    gridContainer.style.transition = this.settings.imageFlow
-      ? '0.8s cubic-bezier(0.18, 0.89, 0.39, 1)'
-      : 'revert-layer';
+    this._setGridContainerTransition(gridContainer);
+    this._applyBackground(gridContainer, bgUnderlay);
+  };
 
+  // Set the transition for the grid container
+  _setGridContainerTransition = gridContainer => {
+    if (this.settings.imageFlow) {
+      const bgTransition =
+        'background 0.8s cubic-bezier(0.18, 0.89, 0.39, 1) 300ms';
+      const gridTransition =
+        'grid-template-columns 0.8s cubic-bezier(0.18, 0.89, 0.39, 1)';
+      gridContainer.willChange = 'grid-template-columns, background';
+      gridContainer.style.transition = `${gridTransition}, ${bgTransition}`;
+    } else {
+      gridContainer.willChange = 'revert-layer';
+      gridContainer.style.transition = 'revert-layer';
+    }
+  };
+
+  _applyBackground = (gridContainer, bgUnderlay) => {
+    // Apply the background
     switch (this.settings.type) {
       case 'none':
         this._clearBackground(gridContainer);
-        this._clearBackground(bgOverlay);
+        this._clearBackground(bgUnderlay);
         break;
       case 'color':
-        this._applyColorBackground(gridContainer, bgOverlay);
+        this._applyColorBackground(gridContainer, bgUnderlay);
         break;
       case 'gradient':
-        this._applyGradientBackground(gridContainer, bgOverlay);
+        this._applyGradientBackground(gridContainer, bgUnderlay);
         break;
       case 'image':
-        this._applyImageBackground(gridContainer, bgOverlay);
+        this._applyImageBackground(gridContainer, bgUnderlay);
         break;
     }
+  };
+
+  // Clear the background and reset the transition
+  _clearBackground = targetEl => {
+    targetEl.style.background = 'none';
+    targetEl.style.transition = 'revert-layer';
   };
 
   // Apply the color background to the target element
-  _applyColorBackground = (gridContainer, bgOverlay) => {
+  _applyColorBackground = (gridContainer, bgUnderlay) => {
     gridContainer.style.background = 'none';
-    bgOverlay.style.background = this.settings.color;
+    bgUnderlay.style.background = this.settings.color;
   };
 
   // Apply the gradient background to the target element
-  _applyGradientBackground = (gridContainer, bgOverlay) => {
+  _applyGradientBackground = (gridContainer, bgUnderlay) => {
     if (this.settings.gradientScroll) {
-      this._clearBackground(bgOverlay);
+      this._clearBackground(bgUnderlay);
       var target = gridContainer;
     } else {
       gridContainer.style.background = 'none';
-      var target = bgOverlay;
+      var target = bgUnderlay;
     }
     const gradientCss = this._createGradientCss();
-    const dimmerOverlay = this._createDimmerGradient(
+    const dimmerUnderlay = this._createDimmerGradient(
       this.settings.gradientDimmer
     );
-    target.style.background = `${dimmerOverlay}, ${gradientCss}`;
+    target.style.background = `${dimmerUnderlay}, ${gradientCss}`;
   };
 
   // Apply the image background to the target element
-  _applyImageBackground = (gridContainer, bgOverlay) => {
+  _applyImageBackground = (gridContainer, bgUnderlay) => {
     if (this.settings.imageScroll) {
-      this._clearBackground(bgOverlay);
+      this._clearBackground(bgUnderlay);
       var target = gridContainer;
     } else {
       gridContainer.style.background = 'none';
-      var target = bgOverlay;
+      var target = bgUnderlay;
     }
-    const dimmerOverlay = this._createDimmerGradient(this.settings.imageDimmer);
+    const dimmerUnderlay = this._createDimmerGradient(
+      this.settings.imageDimmer
+    );
     const imageUrl = this._createImageUrl();
     target.style.background = '';
     target.style.backgroundSize = this.settings.imageSize;
@@ -122,7 +141,7 @@ export default class Appearance {
     target.style.backgroundPosition = this.settings.imageScroll
       ? 'top'
       : 'center';
-    target.style.backgroundImage = `${dimmerOverlay}, ${imageUrl}`;
+    target.style.backgroundImage = `${dimmerUnderlay}, ${imageUrl}`;
   };
 
   // Create the dimmer gradient
@@ -151,16 +170,16 @@ export default class Appearance {
     return imageUrl;
   }
 
-  // Add the child overlay to the node
-  addChildOverlay(node) {
-    if (node.firstChild?.id === 'bg-overlay') {
+  // Add the child underlay to the node
+  addChildUnderlay(node) {
+    if (node.firstChild?.id === 'bg-underlay') {
       return node.firstChild;
     }
-    if (node.querySelector('#bg-overlay')) {
-      console.warn('bg-overlay misplaced in DOM');
+    if (node.querySelector('#bg-underlay')) {
+      console.warn('bg-underlay misplaced in DOM');
     }
     const child = document.createElement('div');
-    child.setAttribute('id', 'bg-overlay');
+    child.setAttribute('id', 'bg-underlay');
     child.setAttribute(
       'style',
       'position: fixed; top: 56; left: 0; width: 100%; height: 100%; z-index: -1;'
@@ -169,9 +188,9 @@ export default class Appearance {
     return child;
   }
 
-  // Remove the child overlay from the node
-  removeChildOverlay(node) {
-    const children = node.querySelectorAll('#bg-overlay');
+  // Remove the child underlay from the node
+  removeChildUnderlay(node) {
+    const children = node.querySelectorAll('#bg-underlay');
     if (children) {
       children.forEach(child => child.remove());
     }

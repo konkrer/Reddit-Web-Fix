@@ -547,7 +547,7 @@ option::checkmark {
   color: inherit;
 }
 
-#history-list >  div:first-of-type {
+#history-list > div:first-of-type {
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
 }
@@ -585,15 +585,14 @@ option::checkmark {
 }
 
 .deleteBtn {
-    width: 20px;
-    height: 28px !important;
-    padding-right: 5px !important;
-    float: right;
-    border-radius: 5px;
+  width: 20px;
+  height: 28px !important;
+  padding-right: 5px !important;
+  float: right;
+  border-radius: 5px;
 }
 .deleteBtn:hover {
-    background-color: #a1a1a1 !important;
-    border-top-right-radius: inherit !important;
-    border-bottom-right-radius: inherit !important;
+  background-color: #a1a1a1 !important;
+  border-top-right-radius: inherit !important;
+  border-bottom-right-radius: inherit !important;
 }
-
