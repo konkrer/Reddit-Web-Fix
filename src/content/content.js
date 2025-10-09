@@ -67,7 +67,9 @@ class RedditFixCoordinator {
     this.hrefObserver?.startHrefPoller();
   }
   applyBackground() {
-    this.appearance?.applyBackground();
+    setTimeout(() => {
+      this.appearance?.applyBackground();
+    }, 0);
   }
   clearBackground() {
     this.appearance?.clearBackground();

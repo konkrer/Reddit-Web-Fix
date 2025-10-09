@@ -6,6 +6,7 @@ export default class Appearance {
     this.coordinator = coordinator;
     this.settings = null;
     this.imageDataUrl = null;
+    this.initialLoad = true;
     this.loadSettings();
 
     // Listen for background settings changes and update background
@@ -25,8 +26,13 @@ export default class Appearance {
 
   // Load settings from chrome.storage.local
   async loadSettings() {
-    const settings = await browser.storage.local.get('backgroundSettings');
-    if (settings.backgroundSettings) {
+    let settings;
+    try {
+      settings = await browser.storage.local.get('backgroundSettings');
+    } catch (err) {
+      console.error('Appearance.js: browser-storage access fail', err);
+    }
+    if (settings?.backgroundSettings) {
       this.settings = settings.backgroundSettings.common;
       this.imageDataUrl = settings.backgroundSettings.imageDataUrl;
       this.coordinator.log('Background settings loaded:', this.settings);
@@ -63,16 +69,20 @@ export default class Appearance {
   // Set the transition for the grid container
   _setGridContainerTransition = gridContainer => {
     if (this.settings.imageFlow) {
-      const bgTransition =
-        'background 0.8s cubic-bezier(0.18, 0.89, 0.39, 1) 300ms';
+      const delay = this.settings.imageScroll ? '90ms' : '0ms';
+      const duration = this.settings.imageScroll ? '400ms' : '400ms';
+      const bgTransition = this.initialLoad
+        ? ''
+        : `, background ${duration} ease-in-out ${delay}`;
       const gridTransition =
         'grid-template-columns 0.8s cubic-bezier(0.18, 0.89, 0.39, 1)';
       gridContainer.willChange = 'grid-template-columns, background';
-      gridContainer.style.transition = `${gridTransition}, ${bgTransition}`;
+      gridContainer.style.transition = `${gridTransition}${bgTransition}`;
     } else {
       gridContainer.willChange = 'revert-layer';
       gridContainer.style.transition = 'revert-layer';
     }
+    this.initialLoad = false;
   };
 
   _applyBackground = (gridContainer, bgUnderlay) => {
@@ -152,10 +162,16 @@ export default class Appearance {
 
   // Create the gradient css
   _createGradientCss = () => {
+    const color1 = this.settings.gradientColor1;
+    const color2 = this.settings.gradientColor2;
+    const color3 = this.settings.gradientColor3;
+    const dist1 = this.settings.gradientDist1;
+    const dist2 = this.settings.gradientDist2;
     if (this.settings.gradientType === 'linear') {
-      return `linear-gradient(${this.settings.gradientAngle}deg, ${this.settings.gradientColor1}, ${this.settings.gradientColor2})`;
+      const angle = this.settings.gradientAngle;
+      return `linear-gradient(${angle}deg, ${color1}, ${dist1}%, ${color2}, ${dist2}%, ${color3})`;
     } else {
-      return `radial-gradient(${this.settings.gradientColor1}, ${this.settings.gradientColor2})`;
+      return `radial-gradient(${color1}, ${dist1}%, ${color2}, ${dist2}%, ${color3})`;
     }
   };
 

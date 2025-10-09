@@ -12,6 +12,11 @@
     <title>Popup Page — Reddit Web Fix</title>
     <link rel="stylesheet" href="popup.css" />
     <script type="module" src="../polyfill/browser-polyfill.min.js"></script>
+    <script
+      defer
+      type="module"
+      src="../vendor/vanilla-colorful/inline-module.js"
+    ></script>
     <script defer type="module" src="popup.js"></script>
   </head>
   <body>
@@ -24,7 +29,7 @@
       <h3 class="fw-100">Customize Appearance</h3>
 
       <!-- BACKGROUND TYPE SELECTOR -->
-      <div class="control-group">
+      <div class="control-group align-start">
         <label for="bg-type" class="fw-200 panel-control">Background:</label>
         <select id="bg-type">
           <button>
@@ -58,55 +63,68 @@
       <!-- SOLID COLOR INPUT GROUP -->
       <div id="color-settings" class="settings-panel" style="display: none">
         <label for="bg-color" class="fw-300 mb-15">Background Color:</label>
-        <div class="flex-row">
-          <input type="color" id="bg-color" value="#2c1111" />
+        <div class="control-group justify-around">
+          <button type="button" class="color-picker-btn" data-target="bg-color">
+            <span class="color-preview" data-color="#2c1111ff" style="background-color: #2c1111ff;"></span>
+            <span class="color-hex-display">#2c1111ff</span>
+          </button>
         </div>
       </div>
 
       <!-- GRADIENT INPUT GROUP 1 -->
       <div id="gradient-settings" class="settings-panel" style="display: none">
         <div for="gradient-type" class="fw-300">Gradient Type:</div>
-        <div class="flex-row flex-start mb-15">
+        <div class="control-group justify-start">
           <span>
-            <input
-              type="radio"
-              id="linear"
-              name="gradient-type"
-              value="linear"
-              checked
-            />
-            <label for="linear">Linear</label></span
+            <label for="linear"
+              ><input
+                type="radio"
+                id="linear"
+                name="gradient-type"
+                value="linear"
+                checked
+              />
+              Linear</label
+            ></span
           >
           <span>
-            <input
-              type="radio"
-              id="radial"
-              name="gradient-type"
-              value="radial"
-            />
-            <label for="radial">Radial</label></span
+            <label for="radial"
+              ><input
+                type="radio"
+                id="radial"
+                name="gradient-type"
+                value="radial"
+              />
+              Radial</label
+            ></span
           >
         </div>
 
         <!-- GRADIENT INPUT GROUP 2 -->
-        <div class="control-group flex-row mb-15">
-          <span class="fs-08rem">
-            <label for="gradient-color-1" class="fw-300">Color 1:</label>
-            <input type="color" id="gradient-color-1" value="#2c1111" />
+        <div class="control-group justify-around mb-15 gap-0">
+          <span class="fs-08rem flex-col">
+            <label for="gradient-color-1" class="fw-300">Color 1</label>
+            <button type="button" class="color-picker-btn color-picker-btn-sm" data-target="gradient-color-1">
+              <span class="color-preview" data-color="#511111ff" style="background-color: #511111ff;"></span>
+            </button>
           </span>
-          <span class="fs-08rem">
-            <label for="gradient-color-2" class="fw-300">Color 2:</label>
-            <input type="color" id="gradient-color-2" value="#212245" />
+          <span class="fs-08rem flex-col">
+            <label for="gradient-color-2" class="fw-300">Color 2</label>
+            <button type="button" class="color-picker-btn color-picker-btn-sm" data-target="gradient-color-2">
+              <span class="color-preview" data-color="#212246ff" style="background-color: #212246ff;"></span>
+            </button>
           </span>
-          <div id="gradient-angle-settings" class="fs-08rem">
-            <label for="gradient-angle" class="fw-300">Angle:</label>
-            <input type="number" id="gradient-angle" value="90" disabled />
-          </div>
+          <span class="fs-08rem flex-col">
+            <label for="gradient-color-3" class="fw-300">Color 3</label>
+            <button type="button" class="color-picker-btn color-picker-btn-sm" data-target="gradient-color-3">
+              <span class="color-preview" data-color="#024851ff" style="background-color: #024851ff;"></span>
+            </button>
+          </span>
         </div>
 
         <!-- GRADIENT Dimmer -->
-        <div class="fs-08rem flex-row justify-center">
-          <label for="bg-gradient-dimmer" class="bg-dimmer-label fw-400"
+        <div class="fs-08rem text-center">
+          <label for="bg-gradient-dimmer" class="bg-dimmer-label fw-300"
             >Dimmer:</label
           >
           <input
@@ -121,12 +139,52 @@
           </div>
         </div>
 
-        <!-- Gradient scroll lock -->
-        <div class="flex-row mt-10">
-          <span>
-            <label for="bg-gradient-scroll" class="fw-400">Scroll:</label>
+        <!-- Gradient Angle, Distance 1, Distance 2, Scroll -->
+        <div class="control-group mt-5 fs-08rem ml-5" id="gradient-dist-row">
+          <!-- <span class=""> -->
+          <label for="gradient-angle" class="fw-300 min-content"
+            >Angle
+            <input
+              type="number"
+              id="gradient-angle"
+              value="90"
+              disabled
+              min="0"
+              max="360"
+              step="2"
+          /></label>
+          <!-- </span> -->
+          <!-- <span> -->
+          <label for="gradient-dist-1" class="fw-300 min-content"
+            >Dist 1
+            <input
+              type="number"
+              id="gradient-dist-1"
+              value="33"
+              min="0"
+              max="100"
+              step="2"
+          /></label>
+          <!-- </span> -->
+          <!-- <span> -->
+          <label for="gradient-dis-2" class="fw-300 min-content"
+            >Dist 2
+            <input
+              type="number"
+              id="gradient-dis-2"
+              value="67"
+              min="0"
+              max="100"
+              step="2"
+          /></label>
+          <!-- </span> -->
+
+          <div class="flex-col">
+            <label for="bg-gradient-scroll" class="fw-300 min-content d-block"
+              >Scroll</label
+            >
             <input type="checkbox" id="bg-gradient-scroll" checked />
-          </span>
+          </div>
         </div>
       </div>
 
@@ -137,7 +195,7 @@
         style="display: none"
       >
         <!-- Image from URL -->
-        <span>
+        <div>
           <label for="bg-image-url" class="fs-08rem mr-10 fw-400"
             >Image URL:</label
           >
@@ -150,7 +208,7 @@
               <div id="history-list"></div>
             </div>
           </span>
-        </span>
+        </div>
 
         <input
           type="text"
@@ -161,7 +219,7 @@
         />
 
         <!-- Image from file -->
-        <div class="flex-row flex-start">
+        <div class="control-group justify-start mt-5">
           <label for="bg-image-file" class="fs-08rem mr-10 fw-400"
             >Or select a local file:</label
           >
@@ -170,7 +228,7 @@
         <input type="file" id="bg-image-file" accept="image/*" />
 
         <!-- Image controls -->
-        <div class="control-group flex-row justify-between">
+        <div class="control-group justify-between mt-5">
           <!-- Image size -->
           <span class="fs-08rem">
             <label for="bg-image-size" class="fw-400">Size:</label>
@@ -191,28 +249,30 @@
           </span>
 
           <!-- Scroll Lock: -->
-          <div class="fs-08rem flex-row checkbox-row-item">
-            <label for="bg-image-scroll" class="fw-400">Scroll:</label>
-            <input type="checkbox" id="bg-image-scroll" checked />
+          <div class="fs-08rem control-group justify-around checkbox-row-item">
+            <label for="bg-image-scroll" class="fw-400"
+              >Scroll: <input type="checkbox" id="bg-image-scroll" checked
+            /></label>
           </div>
 
           <!-- Flow Effect: -->
-          <div class="fs-08rem flex-row checkbox-row-item">
-            <label for="bg-image-flow" class="fw-400">Flow:</label>
-            <input type="checkbox" id="bg-image-flow" checked />
+          <div class="fs-08rem control-group justify-around checkbox-row-item">
+            <label for="bg-image-flow" class="fw-400"
+              >Flow: <input type="checkbox" id="bg-image-flow"
+            /></label>
           </div>
         </div>
 
         <!-- Image dimmer -->
-        <div class="">
+        <div class="mt-5">
           <label for="bg-dimmer" class="fw-400 fs-08rem bg-dimmer-label"
             >Dimmer:</label
           >
-          <input type="range" id="bg-dimmer" min="0" max="100" value="34" />
-          <div class="bg-dimmer-value fw-200" id="bg-dimmer-value">34</div>
+          <input type="range" id="bg-dimmer" min="0" max="100" value="89" />
+          <div class="bg-dimmer-value fw-200" id="bg-dimmer-value">89</div>
         </div>
 
-        <!-- <div class="control-group flex-row justify-between mt-10">
+        <!-- <div class="control-group justify-between mt-10">
           <span class="fs-08rem">
             <label for="bg-image-position" class="fw-400">Position:</label>
             <select id="bg-image-position">
@@ -244,6 +304,26 @@
         <span id="save-icon">💾</span> Save and Apply
         <span id="apply-icon">🔧</span>
       </button>
+    </div>
+
+    <!-- Color Picker Modal -->
+    <div id="color-picker-modal" class="color-modal">
+      <div class="color-modal-content">
+        <div class="color-modal-header">
+          <h3 class="fw-300">Pick a Color</h3>
+          <button type="button" id="close-color-modal" class="close-btn">✕</button>
+        </div>
+        <div class="color-modal-body">
+          <rgba-color-picker id="modal-color-picker"></rgba-color-picker>
+          <div class="color-input-row">
+            <label for="hex-input" class="fw-300">Hex:</label>
+            <input type="text" id="hex-input" class="hex-input" maxlength="9" pattern="^#[0-9A-Fa-f]{6,8}$" placeholder="#RRGGBBAA" />
+          </div>
+        </div>
+        <div class="color-modal-footer">
+          <button type="button" id="apply-color-btn" class="apply-color-btn fw-300">Apply</button>
+        </div>
+      </div>
     </div>
   </body>
 </html>

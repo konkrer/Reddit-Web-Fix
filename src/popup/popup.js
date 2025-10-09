@@ -1,28 +1,30 @@
 'use strict';
 
 import HistoryLRU from './HistoryLRU.js';
+import ColorPickerModal from './colorPickerModal.js';
 
 // --- Element Cache ---
+// Background type selector / Save button
 const bgType = document.getElementById('bg-type');
+const saveButton = document.getElementById('save-settings');
+
+// Settings panels
 const blankSettings = document.getElementById('blank-settings');
 const colorSettings = document.getElementById('color-settings');
 const gradientSettings = document.getElementById('gradient-settings');
 const imageSettings = document.getElementById('image-settings');
-const saveButton = document.getElementById('save-settings');
-
-// Color settings
-const bgColor = document.getElementById('bg-color');
 
 // Gradient settings
 const gradientType = document.getElementsByName('gradient-type');
-const gradientColor1 = document.getElementById('gradient-color-1');
-const gradientColor2 = document.getElementById('gradient-color-2');
 const gradientAngle = document.getElementById('gradient-angle');
 const bgGradientDimmer = document.getElementById('bg-gradient-dimmer');
 const bgGradientDimmerValue = document.getElementById(
   'bg-gradient-dimmer-value'
 );
+const gradientDist1 = document.getElementById('gradient-dist-1');
+const gradientDist2 = document.getElementById('gradient-dis-2');
 const bgGradientScroll = document.getElementById('bg-gradient-scroll');
+
 // Image settings
 const clearImageUrlBtn = document.querySelector('button[type="reset"]');
 const historyBtn = document.querySelector('#history-btn');
@@ -35,8 +37,6 @@ const bgImageFlow = document.getElementById('bg-image-flow');
 const bgDimmer = document.getElementById('bg-dimmer');
 const bgDimmerValue = document.getElementById('bg-dimmer-value');
 
-// History LRU
-const historyLRU = new HistoryLRU();
 
 // --- Functions ---
 
@@ -85,19 +85,31 @@ function loadSettings(data) {
 // Set values to elements based on settings
 function setValuesToElements(settings) {
   bgType.value = settings.common.type || 'none';
-  bgColor.value = settings.common.color || '#2c1111';
+  ColorPickerModal.updateColorButton('bg-color', settings.common.color || '#2c1111ff');
   setGradientType(settings.common.gradientType || 'linear');
-  gradientColor1.value = settings.common.gradientColor1 || '#2d0101';
-  gradientColor2.value = settings.common.gradientColor2 || '#212245';
-  gradientAngle.value = settings.common.gradientAngle || '90';
+  ColorPickerModal.updateColorButton(
+    'gradient-color-1',
+    settings.common.gradientColor1 || '#2d0101ff'
+  );
+  ColorPickerModal.updateColorButton(
+    'gradient-color-2',
+    settings.common.gradientColor2 || '#212245ff'
+  );
+  ColorPickerModal.updateColorButton(
+    'gradient-color-3',
+    settings.common.gradientColor3 || '#024851ff'
+  );
   bgGradientDimmer.value = settings.common.gradientDimmer ?? '0';
   bgGradientDimmerValue.textContent = settings.common.gradientDimmer ?? '0';
+  gradientAngle.value = settings.common.gradientAngle || '90';
+  gradientDist1.value = settings.common.gradientDist1 ?? '33';
+  gradientDist2.value = settings.common.gradientDist2 ?? '67';
   bgGradientScroll.checked = settings.common.gradientScroll ?? true;
   bgImageUrl.value = settings.common.imageUrl || '';
   bgImageSize.value = settings.common.imageSize || 'auto';
   bgImageScroll.checked = settings.common.imageScroll ?? true;
-  bgImageFlow.checked = settings.common.imageFlow ?? true;
-  bgDimmer.value = settings.common.imageDimmer ?? '34';
+  bgImageFlow.checked = settings.common.imageFlow ?? false;
+  bgDimmer.value = settings.common.imageDimmer ?? '89';
   bgDimmerValue.textContent = settings.common.imageDimmer ?? '34';
 
   setImageFileName(settings.common.imageFileName);
@@ -204,13 +216,16 @@ function saveSettings() {
   const settings = {
     type: bgType.value,
     // Color
-    color: bgColor.value,
+    color: ColorPickerModal.getColorFromButton('bg-color'),
     // Gradient
     gradientType: getGradientType(),
-    gradientColor1: gradientColor1.value,
-    gradientColor2: gradientColor2.value,
-    gradientAngle: gradientAngle.value,
+    gradientColor1: ColorPickerModal.getColorFromButton('gradient-color-1'),
+    gradientColor2: ColorPickerModal.getColorFromButton('gradient-color-2'),
+    gradientColor3: ColorPickerModal.getColorFromButton('gradient-color-3'),
     gradientDimmer: bgGradientDimmer.value,
+    gradientAngle: gradientAngle.value,
+    gradientDist1: gradientDist1.value,
+    gradientDist2: gradientDist2.value,
     gradientScroll: bgGradientScroll.checked,
     // Image
     imageUrl: bgImageUrl.value,
@@ -268,6 +283,10 @@ function inputUpdateGradientDimmerValue() {
 function showHistory(e) {
   e.stopPropagation();
   const historyPopup = document.querySelector('#history-popup');
+  if (historyPopup.style.display === 'block') {
+    historyPopup.style.display = 'none';
+    return;
+  }
   const historyList = document.querySelector('#history-list');
 
   // populate history popup with historyLRU
@@ -296,7 +315,7 @@ function createHistoryItem(url, historyList) {
   deleteBtn.textContent = '❌';
 
   btn.appendChild(iconSpan);
-  btn.append(url.slice(0, 45) + '…');
+  btn.append(url.slice(0, 43) + '…');
   li.appendChild(btn);
   li.appendChild(deleteBtn);
 
@@ -306,17 +325,24 @@ function createHistoryItem(url, historyList) {
   historyList.appendChild(li);
 }
 
+
+
 // --- Event Listeners ---
 bgType.addEventListener('change', () => showHidePanels(false));
-gradientSettings.addEventListener('change', showHideGradientControls);
 saveButton.addEventListener('click', saveSettings);
-clearImageUrlBtn.addEventListener('click', clearImageUrlInput);
+gradientSettings.addEventListener('change', showHideGradientControls);
+
+// Dimmers
 bgGradientDimmer.addEventListener('wheel', wheelGradientDimmerUpdate);
 bgGradientDimmer.addEventListener('input', inputUpdateGradientDimmerValue);
 bgDimmer.addEventListener('wheel', wheelImageDimmerUpdate);
 bgDimmer.addEventListener('input', inputUpdateDimmerValue);
+// Image URL: History button / Clear button (clears text input)
 historyBtn.addEventListener('click', showHistory);
 document.querySelector('body').addEventListener('click', hideHistory);
+clearImageUrlBtn.addEventListener('click', clearImageUrlInput);
 
 // --- Initialization ---
+const historyLRU = new HistoryLRU();
+ColorPickerModal.init();
 chrome.storage.local.get('backgroundSettings', loadSettings);
