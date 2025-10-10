@@ -118,7 +118,11 @@ export default class Appearance {
 
   // Apply the gradient background to the target element
   _applyGradientBackground = (gridContainer, bgUnderlay) => {
-    if (this.settings.gradientScroll) {
+    if (
+      (this.settings.gradientType == 'linear' &&
+        this.settings.gradientScrollL) ||
+      (this.settings.gradientType == 'radial' && this.settings.gradientScrollR)
+    ) {
       this._clearBackground(bgUnderlay);
       var target = gridContainer;
     } else {
@@ -127,7 +131,9 @@ export default class Appearance {
     }
     const gradientCss = this._createGradientCss();
     const dimmerUnderlay = this._createDimmerGradient(
-      this.settings.gradientDimmer
+      this.settings.gradientType === 'linear'
+        ? this.settings.gradientDimmerL
+        : this.settings.gradientDimmerR
     );
     target.style.background = `${dimmerUnderlay}, ${gradientCss}`;
   };
@@ -162,15 +168,21 @@ export default class Appearance {
 
   // Create the gradient css
   _createGradientCss = () => {
-    const color1 = this.settings.gradientColor1;
-    const color2 = this.settings.gradientColor2;
-    const color3 = this.settings.gradientColor3;
-    const dist1 = this.settings.gradientDist1;
-    const dist2 = this.settings.gradientDist2;
-    if (this.settings.gradientType === 'linear') {
+    const gradientType = this.settings.gradientType;
+    if (gradientType === 'linear') {
+      const color1 = this.settings.gradientColor1L;
+      const color2 = this.settings.gradientColor2L;
+      const color3 = this.settings.gradientColor3L;
+      const dist1 = this.settings.gradientDist1L;
+      const dist2 = this.settings.gradientDist2L;
       const angle = this.settings.gradientAngle;
       return `linear-gradient(${angle}deg, ${color1}, ${dist1}%, ${color2}, ${dist2}%, ${color3})`;
     } else {
+      const color1 = this.settings.gradientColor1R;
+      const color2 = this.settings.gradientColor2R;
+      const color3 = this.settings.gradientColor3R;
+      const dist1 = this.settings.gradientDist1R;
+      const dist2 = this.settings.gradientDist2R;
       return `radial-gradient(${color1}, ${dist1}%, ${color2}, ${dist2}%, ${color3})`;
     }
   };

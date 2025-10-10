@@ -14,16 +14,26 @@ const colorSettings = document.getElementById('color-settings');
 const gradientSettings = document.getElementById('gradient-settings');
 const imageSettings = document.getElementById('image-settings');
 
-// Gradient settings
+// Gradient settings - Common
 const gradientType = document.getElementsByName('gradient-type');
 const gradientAngle = document.getElementById('gradient-angle');
-const bgGradientDimmer = document.getElementById('bg-gradient-dimmer');
-const bgGradientDimmerValue = document.getElementById(
-  'bg-gradient-dimmer-value'
-);
-const gradientDist1 = document.getElementById('gradient-dist-1');
-const gradientDist2 = document.getElementById('gradient-dis-2');
-const bgGradientScroll = document.getElementById('bg-gradient-scroll');
+const gradientAngleR = document.getElementById('gradient-angle-R'); // dummy copy
+const linearGradientControls = document.getElementById('linear-gradient-controls');
+const radialGradientControls = document.getElementById('radial-gradient-controls');
+
+// Gradient settings - Linear
+const bgGradientDimmerL = document.getElementById('bg-gradient-dimmerL');
+const bgGradientDimmerValueL = document.getElementById('bg-gradient-dimmer-valueL');
+const gradientDist1L = document.getElementById('gradient-dist-1L');
+const gradientDist2L = document.getElementById('gradient-dis-2L');
+const bgGradientScrollL = document.getElementById('bg-gradient-scrollL');
+
+// Gradient settings - Radial
+const bgGradientDimmerR = document.getElementById('bg-gradient-dimmerR');
+const bgGradientDimmerValueR = document.getElementById('bg-gradient-dimmer-valueR');
+const gradientDist1R = document.getElementById('gradient-dist-1R');
+const gradientDist2R = document.getElementById('gradient-dis-2R');
+const bgGradientScrollR = document.getElementById('bg-gradient-scrollR');
 
 // Image settings
 const clearImageUrlBtn = document.querySelector('button[type="reset"]');
@@ -67,9 +77,11 @@ function setGradientType(type) {
 function showHideGradientControls() {
   const currGradientType = getGradientType();
   if (currGradientType === 'linear') {
-    gradientAngle.disabled = false;
+    linearGradientControls.style.display = 'block';
+    radialGradientControls.style.display = 'none';
   } else {
-    gradientAngle.disabled = true;
+    linearGradientControls.style.display = 'none';
+    radialGradientControls.style.display = 'block';
   }
 }
 
@@ -80,6 +92,7 @@ function loadSettings(data) {
 
   setValuesToElements(settings);
   showHidePanels(true);
+  showHideGradientControls();
 }
 
 // Set values to elements based on settings
@@ -87,24 +100,48 @@ function setValuesToElements(settings) {
   bgType.value = settings.common.type || 'none';
   ColorPickerModal.updateColorButton('bg-color', settings.common.color || '#2c1111ff');
   setGradientType(settings.common.gradientType || 'linear');
+  
+  // Linear gradient settings
   ColorPickerModal.updateColorButton(
-    'gradient-color-1',
-    settings.common.gradientColor1 || '#2d0101ff'
+    'gradient-color-1L',
+    settings.common.gradientColor1L || '#511111ff'
   );
   ColorPickerModal.updateColorButton(
-    'gradient-color-2',
-    settings.common.gradientColor2 || '#212245ff'
+    'gradient-color-2L',
+    settings.common.gradientColor2L || '#212246ff'
   );
   ColorPickerModal.updateColorButton(
-    'gradient-color-3',
-    settings.common.gradientColor3 || '#024851ff'
+    'gradient-color-3L',
+    settings.common.gradientColor3L || '#024851ff'
   );
-  bgGradientDimmer.value = settings.common.gradientDimmer ?? '0';
-  bgGradientDimmerValue.textContent = settings.common.gradientDimmer ?? '0';
+  bgGradientDimmerL.value = settings.common.gradientDimmerL ?? '0';
+  bgGradientDimmerValueL.textContent = settings.common.gradientDimmerL ?? '0';
   gradientAngle.value = settings.common.gradientAngle || '90';
-  gradientDist1.value = settings.common.gradientDist1 ?? '33';
-  gradientDist2.value = settings.common.gradientDist2 ?? '67';
-  bgGradientScroll.checked = settings.common.gradientScroll ?? true;
+  gradientDist1L.value = settings.common.gradientDist1L ?? '33';
+  gradientDist2L.value = settings.common.gradientDist2L ?? '67';
+  bgGradientScrollL.checked = settings.common.gradientScrollL ?? true;
+  
+  // Radial gradient settings
+  ColorPickerModal.updateColorButton(
+    'gradient-color-1R',
+    settings.common.gradientColor1R || '#511111ff'
+  );
+  ColorPickerModal.updateColorButton(
+    'gradient-color-2R',
+    settings.common.gradientColor2R || '#212246ff'
+  );
+  ColorPickerModal.updateColorButton(
+    'gradient-color-3R',
+    settings.common.gradientColor3R || '#024851ff'
+  );
+  bgGradientDimmerR.value = settings.common.gradientDimmerR ?? '0';
+  bgGradientDimmerValueR.textContent = settings.common.gradientDimmerR ?? '0';
+  gradientAngleR.value = settings.common.gradientAngle || '90';
+  gradientDist1R.value = settings.common.gradientDist1R ?? '33';
+  gradientDist2R.value = settings.common.gradientDist2R ?? '67';
+  bgGradientScrollR.checked = settings.common.gradientScrollR ?? true;
+  
+  // Image settings
   bgImageUrl.value = settings.common.imageUrl || '';
   bgImageSize.value = settings.common.imageSize || 'auto';
   bgImageScroll.checked = settings.common.imageScroll ?? true;
@@ -199,7 +236,9 @@ function showHidePanels(initial = false) {
       break;
     case 'gradient':
       gradientSettings.style.display = 'flex';
-      showHideGradientControls();
+      if (!initial) {
+        showHideGradientControls();
+      }
       break;
     case 'image':
       imageSettings.style.display = 'flex';
@@ -217,16 +256,25 @@ function saveSettings() {
     type: bgType.value,
     // Color
     color: ColorPickerModal.getColorFromButton('bg-color'),
-    // Gradient
+    // Gradient - Common
     gradientType: getGradientType(),
-    gradientColor1: ColorPickerModal.getColorFromButton('gradient-color-1'),
-    gradientColor2: ColorPickerModal.getColorFromButton('gradient-color-2'),
-    gradientColor3: ColorPickerModal.getColorFromButton('gradient-color-3'),
-    gradientDimmer: bgGradientDimmer.value,
     gradientAngle: gradientAngle.value,
-    gradientDist1: gradientDist1.value,
-    gradientDist2: gradientDist2.value,
-    gradientScroll: bgGradientScroll.checked,
+    // Gradient - Linear
+    gradientColor1L: ColorPickerModal.getColorFromButton('gradient-color-1L'),
+    gradientColor2L: ColorPickerModal.getColorFromButton('gradient-color-2L'),
+    gradientColor3L: ColorPickerModal.getColorFromButton('gradient-color-3L'),
+    gradientDimmerL: bgGradientDimmerL.value,
+    gradientDist1L: gradientDist1L.value,
+    gradientDist2L: gradientDist2L.value,
+    gradientScrollL: bgGradientScrollL.checked,
+    // Gradient - Radial
+    gradientColor1R: ColorPickerModal.getColorFromButton('gradient-color-1R'),
+    gradientColor2R: ColorPickerModal.getColorFromButton('gradient-color-2R'),
+    gradientColor3R: ColorPickerModal.getColorFromButton('gradient-color-3R'),
+    gradientDimmerR: bgGradientDimmerR.value,
+    gradientDist1R: gradientDist1R.value,
+    gradientDist2R: gradientDist2R.value,
+    gradientScrollR: bgGradientScrollR.checked,
     // Image
     imageUrl: bgImageUrl.value,
     imageSize: bgImageSize.value,
@@ -242,6 +290,7 @@ function saveSettings() {
   } else {
     uploadCommonSettings(settings);
   }
+  gradientAngleR.value = gradientAngle.value;
 }
 
 // Clear image URL input
@@ -265,18 +314,27 @@ function wheelImageDimmerUpdate(e) {
   wheelUpdateDimmerValue(e, bgDimmer, bgDimmerValue);
 }
 
-// Update gradient dimmer value on wheel event
-function wheelGradientDimmerUpdate(e) {
-  wheelUpdateDimmerValue(e, bgGradientDimmer, bgGradientDimmerValue);
+// Update gradient dimmer value on wheel event - Linear
+function wheelGradientDimmerUpdateL(e) {
+  wheelUpdateDimmerValue(e, bgGradientDimmerL, bgGradientDimmerValueL);
+}
+
+// Update gradient dimmer value on wheel event - Radial
+function wheelGradientDimmerUpdateR(e) {
+  wheelUpdateDimmerValue(e, bgGradientDimmerR, bgGradientDimmerValueR);
 }
 
 // Update image dimmer value on input event
 function inputUpdateDimmerValue() {
   bgDimmerValue.textContent = bgDimmer.value;
 }
-// Update gradient dimmer value on input event
-function inputUpdateGradientDimmerValue() {
-  bgGradientDimmerValue.textContent = bgGradientDimmer.value;
+// Update gradient dimmer value on input event - Linear
+function inputUpdateGradientDimmerValueL() {
+  bgGradientDimmerValueL.textContent = bgGradientDimmerL.value;
+}
+// Update gradient dimmer value on input event - Radial
+function inputUpdateGradientDimmerValueR() {
+  bgGradientDimmerValueR.textContent = bgGradientDimmerR.value;
 }
 
 // Show history popup
@@ -330,11 +388,17 @@ function createHistoryItem(url, historyList) {
 // --- Event Listeners ---
 bgType.addEventListener('change', () => showHidePanels(false));
 saveButton.addEventListener('click', saveSettings);
-gradientSettings.addEventListener('change', showHideGradientControls);
+gradientType.forEach(radio => {
+  radio.addEventListener('change', showHideGradientControls);
+});
 
-// Dimmers
-bgGradientDimmer.addEventListener('wheel', wheelGradientDimmerUpdate);
-bgGradientDimmer.addEventListener('input', inputUpdateGradientDimmerValue);
+// Dimmers - Linear
+bgGradientDimmerL.addEventListener('wheel', wheelGradientDimmerUpdateL);
+bgGradientDimmerL.addEventListener('input', inputUpdateGradientDimmerValueL);
+// Dimmers - Radial
+bgGradientDimmerR.addEventListener('wheel', wheelGradientDimmerUpdateR);
+bgGradientDimmerR.addEventListener('input', inputUpdateGradientDimmerValueR);
+// Dimmers - Image
 bgDimmer.addEventListener('wheel', wheelImageDimmerUpdate);
 bgDimmer.addEventListener('input', inputUpdateDimmerValue);
 // Image URL: History button / Clear button (clears text input)
@@ -344,5 +408,5 @@ clearImageUrlBtn.addEventListener('click', clearImageUrlInput);
 
 // --- Initialization ---
 const historyLRU = new HistoryLRU();
-ColorPickerModal.init();
+ColorPickerModal.init(null, saveSettings);
 chrome.storage.local.get('backgroundSettings', loadSettings);

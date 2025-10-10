@@ -323,7 +323,7 @@ input[type='checkbox'] {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 10px;
+  padding: 8px 14px;
   background-color: var(--accent-color);
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -342,8 +342,8 @@ input[type='checkbox'] {
 }
 
 .color-preview {
-  width: 28px;
-  height: 22px;
+  width: 160px;
+  height: 80px;
   border: 2px solid #fff;
   border-radius: 4px;
   display: inline-block;
@@ -353,12 +353,6 @@ input[type='checkbox'] {
 .color-picker-btn-sm .color-preview {
   width: 45px;
   height: 20px;
-}
-
-.color-hex-display {
-  font-family: monospace;
-  font-weight: 400;
-  font-size: 0.9rem;
 }
 
 /* Color Picker Modal */
@@ -461,6 +455,24 @@ input[type='checkbox'] {
 .color-modal-footer {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-save-apply-btn {
+  padding: 10px 15px;
+  background-color: #020720;
+  color: var(--text-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: white 0px 0px 2px;
+  transition: 0.2s;
+  font-size: 0.9rem;
+}
+
+.modal-save-apply-btn:hover {
+  background-color: #0a3549;
+  box-shadow: white 1px 0px 5px;
 }
 
 .apply-color-btn {
@@ -473,6 +485,7 @@ input[type='checkbox'] {
   box-shadow: white 0px 0px 2px;
   transition: 0.2s;
   font-size: 0.95rem;
+  min-width: 79px;
 }
 
 .apply-color-btn:hover {
@@ -690,7 +703,8 @@ option::checkmark {
   bottom: 3px;
 }
 
-#bg-gradient-dimmer {
+#bg-gradient-dimmerL,
+#bg-gradient-dimmerR {
   width: 149px;
 }
 
@@ -788,7 +802,7 @@ option::checkmark {
   border-top-right-radius: inherit !important;
   border-bottom-right-radius: inherit !important;
 }
-#gradient-dist-row {
+.gradient-dist-row {
   gap: 0px;
   justify-content: space-around;
   align-items: start;

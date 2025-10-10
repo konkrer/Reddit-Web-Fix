@@ -65,8 +65,11 @@
         <label for="bg-color" class="fw-300 mb-15">Background Color:</label>
         <div class="control-group justify-around">
           <button type="button" class="color-picker-btn" data-target="bg-color">
-            <span class="color-preview" data-color="#2c1111ff" style="background-color: #2c1111ff;"></span>
-            <span class="color-hex-display">#2c1111ff</span>
+            <span
+              class="color-preview"
+              data-color="#2c1111ff"
+              style="background-color: #2c1111ff"
+            ></span>
           </button>
         </div>
       </div>
@@ -100,90 +103,215 @@
           >
         </div>
 
-        <!-- GRADIENT INPUT GROUP 2 -->
-        <div class="control-group justify-around mb-15 gap-0">
-          <span class="fs-08rem flex-col">
-            <label for="gradient-color-1" class="fw-300">Color 1</label>
-            <button type="button" class="color-picker-btn color-picker-btn-sm" data-target="gradient-color-1">
-              <span class="color-preview" data-color="#511111ff" style="background-color: #511111ff;"></span>
-            </button>
-          </span>
-          <span class="fs-08rem flex-col">
-            <label for="gradient-color-2" class="fw-300">Color 2</label>
-            <button type="button" class="color-picker-btn color-picker-btn-sm" data-target="gradient-color-2">
-              <span class="color-preview" data-color="#212246ff" style="background-color: #212246ff;"></span>
-            </button>
-          </span>
-          <span class="fs-08rem flex-col">
-            <label for="gradient-color-3" class="fw-300">Color 3</label>
-            <button type="button" class="color-picker-btn color-picker-btn-sm" data-target="gradient-color-3">
-              <span class="color-preview" data-color="#024851ff" style="background-color: #024851ff;"></span>
-            </button>
-          </span>
-        </div>
+        <!-- LINEAR GRADIENT CONTROLS -->
+        <div id="linear-gradient-controls">
+          <!-- GRADIENT INPUT GROUP 2 - Linear -->
+          <div class="control-group justify-around mb-15 gap-0">
+            <span class="fs-08rem flex-col">
+              <label for="gradient-color-1L" class="fw-300">Color 1</label>
+              <button
+                type="button"
+                class="color-picker-btn color-picker-btn-sm"
+                data-target="gradient-color-1L"
+              >
+                <span
+                  class="color-preview"
+                  data-color="#511111ff"
+                  style="background-color: #511111ff"
+                ></span>
+              </button>
+            </span>
+            <span class="fs-08rem flex-col">
+              <label for="gradient-color-2L" class="fw-300">Color 2</label>
+              <button
+                type="button"
+                class="color-picker-btn color-picker-btn-sm"
+                data-target="gradient-color-2L"
+              >
+                <span
+                  class="color-preview"
+                  data-color="#212246ff"
+                  style="background-color: #212246ff"
+                ></span>
+              </button>
+            </span>
+            <span class="fs-08rem flex-col">
+              <label for="gradient-color-3L" class="fw-300">Color 3</label>
+              <button
+                type="button"
+                class="color-picker-btn color-picker-btn-sm"
+                data-target="gradient-color-3L"
+              >
+                <span
+                  class="color-preview"
+                  data-color="#024851ff"
+                  style="background-color: #024851ff"
+                ></span>
+              </button>
+            </span>
+          </div>
 
-        <!-- GRADIENT Dimmer -->
-        <div class="fs-08rem text-center">
-          <label for="bg-gradient-dimmer" class="bg-dimmer-label fw-300"
-            >Dimmer:</label
-          >
-          <input
-            type="range"
-            id="bg-gradient-dimmer"
-            min="0"
-            max="100"
-            value="0"
-          />
-          <div class="bg-dimmer-value fw-200" id="bg-gradient-dimmer-value">
-            0
+          <!-- GRADIENT Dimmer - Linear -->
+          <div class="fs-08rem text-center">
+            <label for="bg-gradient-dimmerL" class="bg-dimmer-label fw-300"
+              >Dimmer:</label
+            >
+            <input
+              type="range"
+              id="bg-gradient-dimmerL"
+              min="0"
+              max="100"
+              value="0"
+            />
+            <div class="bg-dimmer-value fw-200" id="bg-gradient-dimmer-valueL">
+              0
+            </div>
+          </div>
+
+          <!-- Gradient Angle, Distance 1, Distance 2, Scroll - Linear -->
+          <div class="control-group mt-5 fs-08rem ml-5 gradient-dist-row">
+            <label for="gradient-angle" class="fw-300 min-content"
+              >Angle
+              <input
+                type="number"
+                id="gradient-angle"
+                value="90"
+                min="0"
+                max="360"
+                step="2"
+            /></label>
+            <label for="gradient-dist-1L" class="fw-300 min-content"
+              >Dist 1
+              <input
+                type="number"
+                id="gradient-dist-1L"
+                value="33"
+                min="0"
+                max="100"
+                step="2"
+            /></label>
+            <label for="gradient-dis-2L" class="fw-300 min-content"
+              >Dist 2
+              <input
+                type="number"
+                id="gradient-dis-2L"
+                value="67"
+                min="0"
+                max="100"
+                step="2"
+            /></label>
+
+            <div class="flex-col">
+              <label for="bg-gradient-scrollL" class="fw-300 min-content d-block"
+                >Scroll</label
+              >
+              <input type="checkbox" id="bg-gradient-scrollL" checked />
+            </div>
           </div>
         </div>
 
-        <!-- Gradient Angle, Distance 1, Distance 2, Scroll -->
-        <div class="control-group mt-5 fs-08rem ml-5" id="gradient-dist-row">
-          <!-- <span class=""> -->
-          <label for="gradient-angle" class="fw-300 min-content"
-            >Angle
-            <input
-              type="number"
-              id="gradient-angle"
-              value="90"
-              disabled
-              min="0"
-              max="360"
-              step="2"
-          /></label>
-          <!-- </span> -->
-          <!-- <span> -->
-          <label for="gradient-dist-1" class="fw-300 min-content"
-            >Dist 1
-            <input
-              type="number"
-              id="gradient-dist-1"
-              value="33"
-              min="0"
-              max="100"
-              step="2"
-          /></label>
-          <!-- </span> -->
-          <!-- <span> -->
-          <label for="gradient-dis-2" class="fw-300 min-content"
-            >Dist 2
-            <input
-              type="number"
-              id="gradient-dis-2"
-              value="67"
-              min="0"
-              max="100"
-              step="2"
-          /></label>
-          <!-- </span> -->
+        <!-- RADIAL GRADIENT CONTROLS -->
+        <div id="radial-gradient-controls" style="display: none">
+          <!-- GRADIENT INPUT GROUP 2 - Radial -->
+          <div class="control-group justify-around mb-15 gap-0">
+            <span class="fs-08rem flex-col">
+              <label for="gradient-color-1R" class="fw-300">Color 1</label>
+              <button
+                type="button"
+                class="color-picker-btn color-picker-btn-sm"
+                data-target="gradient-color-1R"
+              >
+                <span
+                  class="color-preview"
+                  data-color="#511111ff"
+                  style="background-color: #511111ff"
+                ></span>
+              </button>
+            </span>
+            <span class="fs-08rem flex-col">
+              <label for="gradient-color-2R" class="fw-300">Color 2</label>
+              <button
+                type="button"
+                class="color-picker-btn color-picker-btn-sm"
+                data-target="gradient-color-2R"
+              >
+                <span
+                  class="color-preview"
+                  data-color="#212246ff"
+                  style="background-color: #212246ff"
+                ></span>
+              </button>
+            </span>
+            <span class="fs-08rem flex-col">
+              <label for="gradient-color-3R" class="fw-300">Color 3</label>
+              <button
+                type="button"
+                class="color-picker-btn color-picker-btn-sm"
+                data-target="gradient-color-3R"
+              >
+                <span
+                  class="color-preview"
+                  data-color="#024851ff"
+                  style="background-color: #024851ff"
+                ></span>
+              </button>
+            </span>
+          </div>
 
-          <div class="flex-col">
-            <label for="bg-gradient-scroll" class="fw-300 min-content d-block"
-              >Scroll</label
+          <!-- GRADIENT Dimmer - Radial -->
+          <div class="fs-08rem text-center">
+            <label for="bg-gradient-dimmerR" class="bg-dimmer-label fw-300"
+              >Dimmer:</label
             >
-            <input type="checkbox" id="bg-gradient-scroll" checked />
+            <input
+              type="range"
+              id="bg-gradient-dimmerR"
+              min="0"
+              max="100"
+              value="0"
+            />
+            <div class="bg-dimmer-value fw-200" id="bg-gradient-dimmer-valueR">
+              0
+            </div>
+          </div>
+
+          <!-- Distance 1, Distance 2, Scroll - Radial -->
+          <div class="control-group mt-5 fs-08rem ml-5 gradient-dist-row">
+            <label for="gradient-angle-R" class="fw-300 min-content"
+              >Angle
+              <input
+                type="number"
+                id="gradient-angle-R"
+                value="90"
+                disabled
+            /></label>
+            <label for="gradient-dist-1R" class="fw-300 min-content"
+              >Dist 1
+              <input
+                type="number"
+                id="gradient-dist-1R"
+                value="33"
+                min="0"
+                max="100"
+                step="2"
+            /></label>
+            <label for="gradient-dis-2R" class="fw-300 min-content"
+              >Dist 2
+              <input
+                type="number"
+                id="gradient-dis-2R"
+                value="67"
+                min="0"
+                max="100"
+                step="2"
+            /></label>
+
+            <div class="flex-col">
+              <label for="bg-gradient-scrollR" class="fw-300 min-content d-block"
+                >Scroll</label
+              >
+              <input type="checkbox" id="bg-gradient-scrollR" checked />
+            </div>
           </div>
         </div>
       </div>
@@ -311,17 +439,39 @@
       <div class="color-modal-content">
         <div class="color-modal-header">
           <h3 class="fw-300">Pick a Color</h3>
-          <button type="button" id="close-color-modal" class="close-btn">✕</button>
+          <button type="button" id="close-color-modal" class="close-btn">
+            ✕
+          </button>
         </div>
         <div class="color-modal-body">
           <rgba-color-picker id="modal-color-picker"></rgba-color-picker>
           <div class="color-input-row">
             <label for="hex-input" class="fw-300">Hex:</label>
-            <input type="text" id="hex-input" class="hex-input" maxlength="9" pattern="^#[0-9A-Fa-f]{6,8}$" placeholder="#RRGGBBAA" />
+            <input
+              type="text"
+              id="hex-input"
+              class="hex-input"
+              maxlength="9"
+              pattern="^#[0-9A-Fa-f]{6,8}$"
+              placeholder="#RRGGBBAA"
+            />
           </div>
         </div>
         <div class="color-modal-footer">
-          <button type="button" id="apply-color-btn" class="apply-color-btn fw-300">Apply</button>
+          <button
+            type="button"
+            id="modal-save-apply-btn"
+            class="modal-save-apply-btn fw-300"
+          >
+            💾 Save and Apply 🔧
+          </button>
+          <button
+            type="button"
+            id="apply-color-btn"
+            class="apply-color-btn fw-300"
+          >
+            Pick
+          </button>
         </div>
       </div>
     </div>

@@ -10,11 +10,13 @@ const colorModal = document.getElementById('color-picker-modal');
 const modalColorPicker = document.getElementById('modal-color-picker');
 const hexInput = document.getElementById('hex-input');
 const applyColorBtn = document.getElementById('apply-color-btn');
+const modalSaveApplyBtn = document.getElementById('modal-save-apply-btn');
 const closeModalBtn = document.getElementById('close-color-modal');
 
 // State
 let currentColorTarget = null;
 let onColorApplied = null; // Callback for when color is applied
+let onSaveAndApply = null; // Callback for when save and apply is clicked
 
 // --- Color Conversion Functions ---
 
@@ -126,14 +128,10 @@ function updateColorButton(targetId, color) {
   }
 
   const preview = btn.querySelector('.color-preview');
-  const hexDisplay = btn.querySelector('.color-hex-display');
 
   if (preview) {
     preview.style.backgroundColor = color;
     preview.setAttribute('data-color', color);
-  }
-  if (hexDisplay) {
-    hexDisplay.textContent = color;
   }
 }
 
@@ -164,6 +162,8 @@ function openColorModal(targetId, currentColor) {
 function closeColorModal() {
   colorModal.classList.remove('active');
   currentColorTarget = null;
+  // Reset button text when closing modal
+  applyColorBtn.textContent = 'Pick';
 }
 
 /**
@@ -219,6 +219,11 @@ function handleColorPickerChange(e) {
   // Handle both hex string and rgba object formats
   const hexValue = typeof colorValue === 'string' ? colorValue : rgbaToHex(colorValue);
   hexInput.value = hexValue.toUpperCase();
+  
+  // Reset "Pick" button text when color changes
+  if (applyColorBtn.textContent === 'Close') {
+    applyColorBtn.textContent = 'Pick';
+  }
 }
 
 /**
@@ -255,11 +260,32 @@ function attachColorPickerButtonListeners() {
 }
 
 /**
+ * Handle save and apply button click
+ */
+function handleSaveAndApply() {
+  if (!currentColorTarget) return;
+
+  // Update the color button with the current selection
+  const newColor = modalColorPicker.color;
+  const hexColor = typeof newColor === 'string' ? newColor : rgbaToHex(newColor);
+  updateColorButton(currentColorTarget, hexColor);
+  
+  // Call the save and apply callback if provided
+  if (onSaveAndApply) {
+    onSaveAndApply();
+  }
+  
+  // Change "Pick" button text to "Close"
+  applyColorBtn.textContent = 'Close';
+}
+
+/**
  * Attach event listeners to modal controls
  */
 function attachModalEventListeners() {
   closeModalBtn.addEventListener('click', closeColorModal);
   applyColorBtn.addEventListener('click', applyColor);
+  modalSaveApplyBtn.addEventListener('click', handleSaveAndApply);
   colorModal.addEventListener('click', handleModalBackgroundClick);
 }
 
@@ -275,9 +301,11 @@ function attachColorInputListeners() {
 /**
  * Initialize color picker modal and attach all event listeners
  * @param {Function} callback - Optional callback function called when color is applied
+ * @param {Function} saveCallback - Optional callback function called when save and apply is clicked
  */
-function initColorPickerModal(callback) {
+function initColorPickerModal(callback, saveCallback) {
   onColorApplied = callback;
+  onSaveAndApply = saveCallback;
   
   attachColorPickerButtonListeners();
   attachModalEventListeners();
