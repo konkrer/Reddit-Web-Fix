@@ -14,23 +14,34 @@ const colorSettings = document.getElementById('color-settings');
 const gradientSettings = document.getElementById('gradient-settings');
 const imageSettings = document.getElementById('image-settings');
 
+// Blank settings message
+const blankSettingsMessage = document.getElementById('blank-settings-message');
+
 // Gradient settings - Common
 const gradientType = document.getElementsByName('gradient-type');
 const gradientAngle = document.getElementById('gradient-angle');
 const gradientAngleR = document.getElementById('gradient-angle-R'); // dummy copy
-const linearGradientControls = document.getElementById('linear-gradient-controls');
-const radialGradientControls = document.getElementById('radial-gradient-controls');
+const linearGradientControls = document.getElementById(
+  'linear-gradient-controls'
+);
+const radialGradientControls = document.getElementById(
+  'radial-gradient-controls'
+);
 
 // Gradient settings - Linear
 const bgGradientDimmerL = document.getElementById('bg-gradient-dimmerL');
-const bgGradientDimmerValueL = document.getElementById('bg-gradient-dimmer-valueL');
+const bgGradientDimmerValueL = document.getElementById(
+  'bg-gradient-dimmer-valueL'
+);
 const gradientDist1L = document.getElementById('gradient-dist-1L');
 const gradientDist2L = document.getElementById('gradient-dis-2L');
 const bgGradientScrollL = document.getElementById('bg-gradient-scrollL');
 
 // Gradient settings - Radial
 const bgGradientDimmerR = document.getElementById('bg-gradient-dimmerR');
-const bgGradientDimmerValueR = document.getElementById('bg-gradient-dimmer-valueR');
+const bgGradientDimmerValueR = document.getElementById(
+  'bg-gradient-dimmer-valueR'
+);
 const gradientDist1R = document.getElementById('gradient-dist-1R');
 const gradientDist2R = document.getElementById('gradient-dis-2R');
 const bgGradientScrollR = document.getElementById('bg-gradient-scrollR');
@@ -47,15 +58,14 @@ const bgImageFlow = document.getElementById('bg-image-flow');
 const bgDimmer = document.getElementById('bg-dimmer');
 const bgDimmerValue = document.getElementById('bg-dimmer-value');
 
-
 // --- Functions ---
 
 // Update blank panel message based on background type
 function blankPanelMessageUpdate() {
   if (bgType.value === 'none') {
-    blankSettings.firstElementChild.textContent = 'Ahhh — very zen.';
+    blankSettingsMessage.textContent = 'Ahhh — very zen.';
   } else {
-    blankSettings.firstElementChild.textContent = 'Maybe less is more…?';
+    blankSettingsMessage.textContent = 'Maybe less is more…?';
   }
 }
 
@@ -88,19 +98,20 @@ function showHideGradientControls() {
 // Load settings from chrome.storage.local
 function loadSettings(data) {
   const settings = data.backgroundSettings;
-  if (!settings) return;
-
-  setValuesToElements(settings);
-  showHidePanels(true);
+  if (settings) setValuesToElements(settings);
   showHideGradientControls();
+  showHidePanels(true);
 }
 
 // Set values to elements based on settings
 function setValuesToElements(settings) {
   bgType.value = settings.common.type || 'none';
-  ColorPickerModal.updateColorButton('bg-color', settings.common.color || '#2c1111ff');
+  ColorPickerModal.updateColorButton(
+    'bg-color',
+    settings.common.color || '#2c1111ff'
+  );
   setGradientType(settings.common.gradientType || 'linear');
-  
+
   // Linear gradient settings
   ColorPickerModal.updateColorButton(
     'gradient-color-1L',
@@ -120,7 +131,7 @@ function setValuesToElements(settings) {
   gradientDist1L.value = settings.common.gradientDist1L ?? '33';
   gradientDist2L.value = settings.common.gradientDist2L ?? '67';
   bgGradientScrollL.checked = settings.common.gradientScrollL ?? true;
-  
+
   // Radial gradient settings
   ColorPickerModal.updateColorButton(
     'gradient-color-1R',
@@ -140,14 +151,14 @@ function setValuesToElements(settings) {
   gradientDist1R.value = settings.common.gradientDist1R ?? '33';
   gradientDist2R.value = settings.common.gradientDist2R ?? '67';
   bgGradientScrollR.checked = settings.common.gradientScrollR ?? true;
-  
+
   // Image settings
   bgImageUrl.value = settings.common.imageUrl || '';
   bgImageSize.value = settings.common.imageSize || 'auto';
   bgImageScroll.checked = settings.common.imageScroll ?? true;
   bgImageFlow.checked = settings.common.imageFlow ?? false;
-  bgDimmer.value = settings.common.imageDimmer ?? '89';
-  bgDimmerValue.textContent = settings.common.imageDimmer ?? '34';
+  bgDimmer.value = settings.common.imageDimmer ?? '66';
+  bgDimmerValue.textContent = settings.common.imageDimmer ?? '66';
 
   setImageFileName(settings.common.imageFileName);
 }
@@ -220,31 +231,50 @@ function uploadCommonSettings(settings) {
 // Show/hide panels based on background type selection
 function showHidePanels(initial = false) {
   blankSettings.style.display = 'none';
+  blankSettings.firstElementChild.style.opacity = '0';
   colorSettings.style.display = 'none';
+  colorSettings.firstElementChild.style.opacity = '0';
   gradientSettings.style.display = 'none';
+  gradientSettings.firstElementChild.style.opacity = '0';
   imageSettings.style.display = 'none';
+  imageSettings.firstElementChild.style.opacity = '0';
 
   switch (bgType.value) {
     case 'none':
       blankSettings.style.display = 'block';
-      blankSettings.firstElementChild.textContent = initial
+      blankSettingsMessage.textContent = initial
         ? "C'mon do something…"
         : 'Maybe less is more…?';
+      setTimeout(() => {
+        blankSettings.firstElementChild.style.opacity = '1';
+      }, 0);
       break;
     case 'color':
       colorSettings.style.display = 'flex';
+      setTimeout(() => {
+        colorSettings.firstElementChild.style.opacity = '1';
+      }, 0);
       break;
     case 'gradient':
       gradientSettings.style.display = 'flex';
       if (!initial) {
         showHideGradientControls();
       }
+      setTimeout(() => {
+        gradientSettings.firstElementChild.style.opacity = '1';
+      }, 0);
       break;
     case 'image':
       imageSettings.style.display = 'flex';
+      setTimeout(() => {
+        imageSettings.firstElementChild.style.opacity = '1';
+      }, 0);
       break;
     default:
       blankSettings.style.display = 'block';
+      setTimeout(() => {
+        blankSettings.firstElementChild.style.opacity = '1';
+      }, 0);
       break;
   }
   console.log('showHidePanels', bgType.value);
@@ -383,8 +413,6 @@ function createHistoryItem(url, historyList) {
   historyList.appendChild(li);
 }
 
-
-
 // --- Event Listeners ---
 bgType.addEventListener('change', () => showHidePanels(false));
 saveButton.addEventListener('click', saveSettings);
@@ -409,4 +437,5 @@ clearImageUrlBtn.addEventListener('click', clearImageUrlInput);
 // --- Initialization ---
 const historyLRU = new HistoryLRU();
 ColorPickerModal.init(null, saveSettings);
-chrome.storage.local.get('backgroundSettings', loadSettings);
+chrome.storage?.local.get('backgroundSettings', loadSettings);
+if (!chrome.storage?.local) showHidePanels(true);  // dev only raw html load

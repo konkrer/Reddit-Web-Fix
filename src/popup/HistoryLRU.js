@@ -13,7 +13,7 @@ export default class HistoryLRU {
       .reverse();
     this.urlToMarker = {};
 
-    chrome.storage.local.get('historyLRU', result => {
+    chrome.storage?.local.get('historyLRU', result => {
       this.history = result.historyLRU?.history || [];
       this.urlToMarker = result.historyLRU?.urlToMarker || {};
       // Remove markers from pool that are already in use
