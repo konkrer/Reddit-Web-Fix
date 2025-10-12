@@ -115,27 +115,27 @@ function setValuesToElements(settings) {
   // Linear gradient settings
   ColorPickerModal.updateColorButton(
     'gradient-color-1L',
-    settings.common.gradientColor1L || '#511111ff'
+    settings.common.gradientColor1L || '#1E003BFF'
   );
   ColorPickerModal.updateColorButton(
     'gradient-color-2L',
-    settings.common.gradientColor2L || '#212246ff'
+    settings.common.gradientColor2L || '#00F5FFFF'
   );
   ColorPickerModal.updateColorButton(
     'gradient-color-3L',
     settings.common.gradientColor3L || '#024851ff'
   );
-  bgGradientDimmerL.value = settings.common.gradientDimmerL ?? '0';
-  bgGradientDimmerValueL.textContent = settings.common.gradientDimmerL ?? '0';
-  gradientAngle.value = settings.common.gradientAngle || '90';
-  gradientDist1L.value = settings.common.gradientDist1L ?? '33';
-  gradientDist2L.value = settings.common.gradientDist2L ?? '67';
-  bgGradientScrollL.checked = settings.common.gradientScrollL ?? true;
+  bgGradientDimmerL.value = settings.common.gradientDimmerL ?? '67';
+  bgGradientDimmerValueL.textContent = settings.common.gradientDimmerL ?? '67';
+  gradientAngle.value = settings.common.gradientAngle || '107';
+  gradientDist1L.value = settings.common.gradientDist1L ?? '42';
+  gradientDist2L.value = settings.common.gradientDist2L ?? '48';
+  bgGradientScrollL.checked = settings.common.gradientScrollL ?? false;
 
   // Radial gradient settings
   ColorPickerModal.updateColorButton(
     'gradient-color-1R',
-    settings.common.gradientColor1R || '#511111ff'
+    settings.common.gradientColor1R || '#540000FF'
   );
   ColorPickerModal.updateColorButton(
     'gradient-color-2R',
@@ -143,20 +143,20 @@ function setValuesToElements(settings) {
   );
   ColorPickerModal.updateColorButton(
     'gradient-color-3R',
-    settings.common.gradientColor3R || '#024851ff'
+    settings.common.gradientColor3R || '#540000FF'
   );
-  bgGradientDimmerR.value = settings.common.gradientDimmerR ?? '0';
-  bgGradientDimmerValueR.textContent = settings.common.gradientDimmerR ?? '0';
-  gradientAngleR.value = settings.common.gradientAngle || '90';
-  gradientDist1R.value = settings.common.gradientDist1R ?? '33';
-  gradientDist2R.value = settings.common.gradientDist2R ?? '67';
-  bgGradientScrollR.checked = settings.common.gradientScrollR ?? true;
+  bgGradientDimmerR.value = settings.common.gradientDimmerR ?? '57';
+  bgGradientDimmerValueR.textContent = settings.common.gradientDimmerR ?? '57';
+  gradientAngleR.value = settings.common.gradientAngle || '107';
+  gradientDist1R.value = settings.common.gradientDist1R ?? '22';
+  gradientDist2R.value = settings.common.gradientDist2R ?? '96';
+  bgGradientScrollR.checked = settings.common.gradientScrollR ?? false;
 
   // Image settings
   bgImageUrl.value = settings.common.imageUrl || '';
   bgImageSize.value = settings.common.imageSize || 'auto';
   bgImageScroll.checked = settings.common.imageScroll ?? true;
-  bgImageFlow.checked = settings.common.imageFlow ?? false;
+  bgImageFlow.checked = settings.common.imageFlow ?? true;
   bgDimmer.value = settings.common.imageDimmer ?? '66';
   bgDimmerValue.textContent = settings.common.imageDimmer ?? '66';
 

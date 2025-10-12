@@ -7,7 +7,7 @@ body {
   font-optical-sizing: auto;
   font-weight: 300;
   font-style: normal;
-  width: 300px;
+  width: 298px;
   padding: 18px;
   margin: 0;
   background: linear-gradient(#530404, 80%, #3b0000f5);
@@ -39,22 +39,22 @@ body {
   background-color: #2c1111ff;
 }
 .linear-bg-preview-1 {
-  background-color: #511111ff;
+  background-color: #1E003BFF;
 }
 .linear-bg-preview-2 {
-  background-color: #212246ff;
+  background-color: #00F5FFFF;
 }
 .linear-bg-preview-3 {
   background-color: #024851ff;
 }
 .radial-bg-preview-1 {
-  background-color: #511111ff;
+  background-color: #540000FF;
 }
 .radial-bg-preview-2 {
   background-color: #212246ff;
 }
 .radial-bg-preview-3 {
-  background-color: #024851ff;
+  background-color: #540000FF;
 }
 
 /* ============================================
@@ -256,7 +256,7 @@ h3 {
   color: rgb(201, 200, 200);
   min-height: 215px;
   margin-top: 5px;
-  box-shadow: inset #472828 0px 0px 6px 1px;
+  box-shadow: rgba(193, 175, 175, 0.42) 0px 0px 2px 0px inset;
 }
 
 .settings-panel > .panel-inner {
@@ -297,7 +297,7 @@ button {
   cursor: pointer;
   box-shadow: white 0px 0px 2px;
   border: 1px solid transparent;
-  transition: background-color 0.3s, box-shadow 0.4s, border 0.4s;
+  transition: background-color 0.2s, box-shadow 0.4s, border 0.4s;
 }
 
 button:hover {
@@ -307,7 +307,7 @@ button:hover {
 
 button:active {
   box-shadow: rgb(173, 173, 173) 0px 0px 13px !important;
-  border: 1px solid rgb(216, 141, 1);
+  border: 1px solid rgb(216, 141, 1) !important;
   transition: border 0s, box-shadow 0s;
 }
 
@@ -334,6 +334,7 @@ button.btn-sm:hover {
 button.btn-sm:active {
   box-shadow: none !important;
 }
+
 
 /* ============================================
    INPUT TYPES
@@ -505,7 +506,6 @@ input[type='checkbox'] {
   padding: 10px 15px;
   background-color: #020720;
   color: var(--text-color);
-  border: none;
   border-radius: 5px;
   cursor: pointer;
   box-shadow: white 0px 0px 2px;
@@ -519,16 +519,15 @@ input[type='checkbox'] {
 }
 
 .apply-color-btn {
-  padding: 10px 20px;
+  padding: 10px 15px;
   background-color: #020720;
   color: var(--text-color);
-  border: none;
   border-radius: 5px;
   cursor: pointer;
   box-shadow: white 0px 0px 2px;
   transition: 0.2s;
   font-size: 0.95rem;
-  min-width: 79px;
+  min-width: 71px;
 }
 
 .apply-color-btn:hover {
