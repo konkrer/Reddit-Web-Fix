@@ -52,6 +52,7 @@ const historyBtn = document.querySelector('#history-btn');
 const bgImageUrl = document.getElementById('bg-image-url');
 const bgImageFile = document.getElementById('bg-image-file');
 const bgImageFileName = document.getElementById('image-file-name');
+const enableFileUploadBtn = document.getElementById('enable-file-upload-btn');
 const bgImageSize = document.getElementById('bg-image-size');
 const bgImageScroll = document.getElementById('bg-image-scroll');
 const bgImageFlow = document.getElementById('bg-image-flow');
@@ -189,8 +190,7 @@ function uploadImageFile(file, settings) {
         console.log('Background settings saved with local image.');
       }
     );
-    bgImageFileName.textContent = file.name;
-    bgImageFileName.style.display = 'inline';
+    setImageFileName(file.name);
     bgImageUrl.value = '';
     bgImageFile.value = '';
   };
@@ -208,14 +208,12 @@ function uploadCommonSettings(settings) {
   // If image url is set, clear the image file name
   if (settings.imageUrl && settings.type === 'image') {
     settings.imageFileName = '';
-    bgImageFileName.textContent = '';
-    bgImageFileName.style.display = 'none';
+    setImageFileName('');
     // Use history LRU class object to store the image url
     historyLRU.add(settings.imageUrl);
   }
   // If image file name is not set, set the image data url to null
   if (!settings.imageFileName) {
-    blankPanelMessageUpdate();
     setSettings(null);
   } else {
     // If image file name is set, get the image data url from the background settings
@@ -225,6 +223,7 @@ function uploadCommonSettings(settings) {
       setSettings(settings.imageDataUrl);
     });
   }
+  blankPanelMessageUpdate();
 }
 
 //  --- Event Handlers --- //
@@ -438,4 +437,77 @@ clearImageUrlBtn.addEventListener('click', clearImageUrlInput);
 const historyLRU = new HistoryLRU();
 ColorPickerModal.init(null, saveSettings);
 chrome.storage?.local.get('backgroundSettings', loadSettings);
-if (!chrome.storage?.local) showHidePanels(true);  // dev only raw html load
+
+// Check if Firefox for file input alternative UI
+const isFirefox =
+  typeof InstallTrigger !== 'undefined' ||
+  navigator.userAgent.includes('Firefox');
+
+// Check if we're in a reopened window (via URL parameter)
+const urlParams = new URLSearchParams(window.location.search);
+const isReopenedWindow = urlParams.get('fileupload') === 'true';
+
+if (isFirefox) {
+  if (isReopenedWindow) {
+    // In reopened window: hide button
+    enableFileUploadBtn.classList.add('d-none');
+  } else {
+    // In normal popup: show button, hide file input
+    enableFileUploadBtn.classList.remove('d-none');
+    bgImageFile.classList.add('d-none');
+  }
+
+  // Add click handler to enable button
+  enableFileUploadBtn.addEventListener('click', e => {
+    const popupUrl = chrome.runtime.getURL(
+      'src/popup/popup.html?fileupload=true'
+    );
+
+    // Calculate position near the click event
+    const windowWidth = 350;
+    const windowHeight = 525;
+
+    // Get click position relative to screen
+    const clickX = e.screenX;
+    const clickY = e.screenY;
+
+    // Offset the window slightly to the right and down from the click
+    const offsetX = -160;
+    const offsetY = -220;
+
+    let left = clickX + offsetX;
+    let top = clickY + offsetY;
+
+    // Ensure window doesn't go off-screen (if screen info is available)
+    if (screen.availWidth && screen.availHeight) {
+      // Keep window within screen bounds
+      if (left + windowWidth > screen.availWidth) {
+        left = screen.availWidth - windowWidth - 10;
+      }
+      if (top + windowHeight > screen.availHeight) {
+        top = screen.availHeight - windowHeight - 10;
+      }
+      // Ensure minimum distance from screen edges
+      left = Math.max(10, left);
+      top = Math.max(10, top);
+    }
+
+    chrome.windows.create(
+      {
+        url: popupUrl,
+        type: 'popup',
+        width: windowWidth,
+        height: windowHeight,
+        left: Math.round(left),
+        top: Math.round(top),
+        focused: true,
+      },
+      () => {
+        // Optionally close the original popup
+        // window.close();
+      }
+    );
+  });
+}
+
+if (!chrome.storage?.local) showHidePanels(true); // dev only raw html load

@@ -373,14 +373,24 @@
             title="Enter image URL"
           />
 
-          <!-- Image from file -->
-          <div class="control-group justify-start mt-5">
-            <label for="bg-image-file" class="fs-08rem mr-10 fw-400"
-              >Or select a local file:</label
+          <!-- Image from file CHROME / EDGE ONLY -->
+          <div class="width-100">
+            <div class="control-group justify-between mt-5">
+              <label for="bg-image-file" class="fs-08rem mr-10 fw-400"
+                >Or select a local file:</label
+              >
+              <span id="image-file-name" class="fw-300 image-file-name"></span>
+            </div>
+            <input type="file" id="bg-image-file" accept="image/*" class="width-100 mt-5" />
+
+            <button
+              type="button"
+              id="enable-file-upload-btn"
+              class="enable-file-upload-btn d-none"
             >
-            <span id="image-file-name" class="fw-300"></span>
+              📁 Enable File Upload
+            </button>
           </div>
-          <input type="file" id="bg-image-file" accept="image/*" />
 
           <!-- Image controls -->
           <div class="control-group justify-between mt-5">
