@@ -75,9 +75,9 @@ class RedditFixCoordinator {
     this.appearance?.clearBackground();
   }
 
-  log(message) {
+  log(message, data='') {
     if (this.verbose) {
-      console.debug(message);
+      console.debug(message, data);
     }
   }
 }

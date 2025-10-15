@@ -136,7 +136,7 @@ function setValuesToElements(settings) {
   // Radial gradient settings
   ColorPickerModal.updateColorButton(
     'gradient-color-1R',
-    settings.common.gradientColor1R || '#540000FF'
+    settings.common.gradientColor1R || '#540000C2'
   );
   ColorPickerModal.updateColorButton(
     'gradient-color-2R',
@@ -144,13 +144,13 @@ function setValuesToElements(settings) {
   );
   ColorPickerModal.updateColorButton(
     'gradient-color-3R',
-    settings.common.gradientColor3R || '#540000FF'
+    settings.common.gradientColor3R || '#5400007D'
   );
-  bgGradientDimmerR.value = settings.common.gradientDimmerR ?? '57';
-  bgGradientDimmerValueR.textContent = settings.common.gradientDimmerR ?? '57';
+  bgGradientDimmerR.value = settings.common.gradientDimmerR ?? '32';
+  bgGradientDimmerValueR.textContent = settings.common.gradientDimmerR ?? '32';
   gradientAngleR.value = settings.common.gradientAngle || '107';
   gradientDist1R.value = settings.common.gradientDist1R ?? '22';
-  gradientDist2R.value = settings.common.gradientDist2R ?? '96';
+  gradientDist2R.value = settings.common.gradientDist2R ?? '94';
   bgGradientScrollR.checked = settings.common.gradientScrollR ?? false;
 
   // Image settings
