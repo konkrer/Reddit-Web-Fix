@@ -26,7 +26,7 @@
       <h1 class="bungee-spice-regular">Reddit Web Fix</h1>
 
       <!-- SUBTITLE -->
-      <h3 class="fw-100">Customize Appearance</h3>
+      <h3 class="fw-100">Customize Experience</h3>
 
       <!-- BACKGROUND TYPE SELECTOR -->
       <div class="control-group align-start">
@@ -57,8 +57,8 @@
 
       <!-- BLANK PANEL -->
       <div id="blank-settings" class="settings-panel">
-        <div class="panel-inner">
-          <p class="fw-800" id="blank-settings-message">C'mon do something…</p>
+        <div class="panel-inner mt-5">
+          <p class="fw-400" id="blank-settings-message">C'mon do something…</p>
         </div>
       </div>
 
@@ -68,7 +68,7 @@
           <label for="bg-color" class="fw-300 mb-15 ml-5"
             >Background Color:</label
           >
-          <div class="control-group justify-around mt-10">
+          <div class="control-group justify-around mb-10">
             <button
               type="button"
               class="color-picker-btn"
@@ -80,6 +80,11 @@
                 data-color="#2c1111ff"
               ></span>
             </button>
+          </div>
+          <div class="control-group justify-center mt-15">
+            <label for="bg-color-flow" class="fw-300"
+              >Flow: <input type="checkbox" id="bg-color-flow" checked />
+            </label>
           </div>
         </div>
       </div>
@@ -223,6 +228,14 @@
                 >
                 <input type="checkbox" id="bg-gradient-scrollL" />
               </div>
+              <div class="flex-col">
+                <label
+                  for="bg-gradient-flow-L"
+                  class="fw-300 min-content d-block"
+                  >Flow</label
+                >
+                <input type="checkbox" id="bg-gradient-flow-L" />
+              </div>
             </div>
           </div>
 
@@ -329,6 +342,14 @@
                 >
                 <input type="checkbox" id="bg-gradient-scrollR" />
               </div>
+              <div class="flex-col">
+                <label
+                  for="bg-gradient-flow-R"
+                  class="fw-300 min-content d-block"
+                  >Flow</label
+                >
+                <input type="checkbox" id="bg-gradient-flow-R" />
+              </div>
             </div>
           </div>
         </div>
@@ -381,7 +402,12 @@
               >
               <span id="image-file-name" class="fw-300 image-file-name"></span>
             </div>
-            <input type="file" id="bg-image-file" accept="image/*" class="width-100 mt-5" />
+            <input
+              type="file"
+              id="bg-image-file"
+              accept="image/*"
+              class="width-100 mt-5"
+            />
 
             <button
               type="button"
@@ -467,6 +493,13 @@
           </span>
         </div> -->
         </div>
+      </div>
+
+      <div class="control-group align-start">
+        <label for="sidebar-flow" class="fw-200 panel-control"
+          >Sidebar Flow:
+          <input type="checkbox" id="sidebar-flow" class="ml-15" checked
+        /></label>
       </div>
 
       <button

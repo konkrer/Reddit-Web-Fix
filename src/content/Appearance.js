@@ -1,10 +1,16 @@
 'use strict';
 
+// Transition settings for sidebar flow
+const SIDEBAR_EXPAND_DURATION = 500; // ms
+const SIDEBAR_COLLAPSE_DURATION = 650; // ms
+const SIDEBAR_EXPAND_CURVE = 'cubic-bezier(0.4, 0, 0.2, 1)';
+const SIDEBAR_COLLAPSE_CURVE = 'cubic-bezier(0.39, 0, 0.42, 1.6)';
+
 // Transition settings for background when flow is enabled
 const IMAGE_DELAY = 0; // ms
 const IMAGE_DURATION = 300; // ms
-const GRADIENT_DELAY = 0; // ms
-const GRADIENT_DURATION = 200; // ms
+const COLOR_DELAY = 0; // ms
+const COLOR_DURATION = 200; // ms
 
 // Class to manage page appearance customizations, like background
 export default class Appearance {
@@ -78,40 +84,78 @@ export default class Appearance {
     this._applyBackground(gridContainer, bgUnderlay);
   };
 
-  // Set the grid and background transitions for the grid container
+  // Set transition delays and curves for the grid container
   _setGridContainerTransition = gridContainer => {
-    if (this.settings.imageFlow) {
-      // grid transition (controls sidebar open/close animation)
-      gridContainer.style.setProperty('--expand-duration', '500ms');
-      gridContainer.style.setProperty('--collapse-duration', '700ms');
-      gridContainer.style.setProperty(
-        '--expand-curve',
-        'cubic-bezier(0.4, 0, 0.2, 1)'
-      );
-      gridContainer.style.setProperty(
-        '--collapse-curve',
-        'cubic-bezier(0.39, 0, 0.42, 1.6)'
-      );
+    if (this.settings.sidebarFlow) {
+      this._applyGridContainerTransition(gridContainer);
     } else {
-      gridContainer.style = '';
+      this._removeGridContainerTransition(gridContainer);
     }
   };
 
-  // Set the background transition (controls image resizing and fade-in on new page load)
+  // Apply grid transition settings (controls sidebar open/close animation)
+  _applyGridContainerTransition = gridContainer => {
+    gridContainer.style.setProperty(
+      '--expand-duration',
+      SIDEBAR_EXPAND_DURATION + 'ms'
+    );
+    gridContainer.style.setProperty(
+      '--collapse-duration',
+      SIDEBAR_COLLAPSE_DURATION + 'ms'
+    );
+    gridContainer.style.setProperty('--expand-curve', SIDEBAR_EXPAND_CURVE);
+    gridContainer.style.setProperty('--collapse-curve', SIDEBAR_COLLAPSE_CURVE);
+  };
+
+  // Remove grid transition settings
+  _removeGridContainerTransition = gridContainer => {
+    gridContainer.style.removeProperty('--expand-duration');
+    gridContainer.style.removeProperty('--collapse-duration');
+    gridContainer.style.removeProperty('--expand-curve');
+    gridContainer.style.removeProperty('--collapse-curve');
+  };
+
+  _getColorFlowCondition = () => {
+    return this.settings.type === 'color' && this.settings.colorFlow;
+  };
+
+  _getGradientFlowCondition = () => {
+    return (
+      (this.settings.type === 'gradient' &&
+        this.settings.gradientType === 'linear' &&
+        this.settings.gradientFlowL) ||
+      (this.settings.type === 'gradient' &&
+        this.settings.gradientType === 'radial' &&
+        this.settings.gradientFlowR)
+    );
+  };
+
+  _getFlowCondition = () => {
+    const imageFlow = this.settings.type === 'image' && this.settings.imageFlow;
+    const colorFlow = this._getColorFlowCondition();
+    const gradientFlow = this._getGradientFlowCondition();
+    return imageFlow || colorFlow || gradientFlow;
+  };
+
+  // Set the background transition on or off (controls image resizing and fade-in on new page load)
   _setBgUnderlayTransition = bgUnderlay => {
-    if (this.settings.imageFlow) {
-      const gradient = this.settings.type === 'gradient';
-      const duration = gradient ? GRADIENT_DURATION : IMAGE_DURATION;
-      const delay = gradient ? GRADIENT_DELAY : IMAGE_DELAY;
+    // should flow transitions be set on the bg underlay?
+    if (this._getFlowCondition()) {
+      // these flow transitions use quicker transitions than images
+      const quick =
+        this._getColorFlowCondition() || this._getGradientFlowCondition();
+      const duration = quick ? COLOR_DURATION : IMAGE_DURATION;
+      const delay = quick ? COLOR_DELAY : IMAGE_DELAY;
 
       // slow fade-in for images to gloss over size-transition jitter on load
-      const opacityTransitionStr = `opacity ${gradient ? duration : duration * 1.5}ms ease-in ${delay}ms`;
+      const adjustedDuration = quick ? duration : duration * 1.5;
+      const opacityTransitionStr = `opacity ${adjustedDuration}ms ease-in ${delay}ms`;
       const bgTransitionStr = `background ${duration}ms ease-in-out ${delay}ms`;
-      
-      if (this.initialLoad){
+
+      if (this.initialLoad) {
         bgUnderlay.style.willChange = 'opacity';
-        this._addTransitionProperties(bgUnderlay, opacityTransitionStr);}
-      else{
+        this._addTransitionProperties(bgUnderlay, opacityTransitionStr);
+      } else {
         bgUnderlay.style.willChange = 'opacity, background';
         this._addTransitionProperties(
           bgUnderlay,
@@ -143,6 +187,8 @@ export default class Appearance {
     switch (this.settings.type) {
       case 'none':
         this._clearBackground(bgUnderlay);
+        gridContainer.style.background = 'revert-layer';
+        gridContainer.style.position = 'revert-layer';
         break;
       case 'color':
         this._applyColorBackground(bgUnderlay);
@@ -194,7 +240,6 @@ export default class Appearance {
   _applyImageBackground = bgUnderlay => {
     if (this.settings.imageScroll) {
       bgUnderlay.style.position = 'absolute';
-
     } else {
       bgUnderlay.style.position = 'fixed';
     }
