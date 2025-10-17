@@ -1,5 +1,11 @@
 'use strict';
 
+// Transition settings for background when flow is enabled
+const IMAGE_DELAY = 0; // ms
+const IMAGE_DURATION = 300; // ms
+const GRADIENT_DELAY = 0; // ms
+const GRADIENT_DURATION = 200; // ms
+
 // Class to manage page appearance customizations, like background
 export default class Appearance {
   constructor(coordinator) {
@@ -47,7 +53,12 @@ export default class Appearance {
       this.coordinator.log('Grid container not found.');
       return;
     }
-    this._clearBackground(gridContainer);
+    const bgUnderlay = this.getChildUnderlay(gridContainer);
+    if (!bgUnderlay) {
+      this.coordinator.log('bg-underlay not found in DOM.');
+      return;
+    }
+    this._clearBackground(bgUnderlay);
   };
 
   // Apply the background style to the target element, called externally
@@ -63,43 +74,84 @@ export default class Appearance {
     const bgUnderlay = this.addChildUnderlay(gridContainer);
 
     this._setGridContainerTransition(gridContainer);
+    this._setBgUnderlayTransition(bgUnderlay);
     this._applyBackground(gridContainer, bgUnderlay);
   };
 
-  // Set the transition for the grid container
+  // Set the grid and background transitions for the grid container
   _setGridContainerTransition = gridContainer => {
     if (this.settings.imageFlow) {
-      const delay = this.settings.imageScroll ? '90ms' : '0ms';
-      const duration = this.settings.imageScroll ? '400ms' : '400ms';
-      const bgTransition = this.initialLoad
-        ? ''
-        : `, background ${duration} ease-in-out ${delay}`;
-      const gridTransition =
-        'grid-template-columns 0.8s cubic-bezier(0.18, 0.89, 0.39, 1)';
-      gridContainer.willChange = 'grid-template-columns, background';
-      gridContainer.style.transition = `${gridTransition}${bgTransition}`;
+      // grid transition (controls sidebar open/close animation)
+      gridContainer.style.setProperty('--expand-duration', '500ms');
+      gridContainer.style.setProperty('--collapse-duration', '700ms');
+      gridContainer.style.setProperty(
+        '--expand-curve',
+        'cubic-bezier(0.4, 0, 0.2, 1)'
+      );
+      gridContainer.style.setProperty(
+        '--collapse-curve',
+        'cubic-bezier(0.39, 0, 0.42, 1.6)'
+      );
     } else {
-      gridContainer.willChange = 'revert-layer';
-      gridContainer.style.transition = 'revert-layer';
+      gridContainer.style = '';
+    }
+  };
+
+  // Set the background transition (controls image resizing and fade-in on new page load)
+  _setBgUnderlayTransition = bgUnderlay => {
+    if (this.settings.imageFlow) {
+      const gradient = this.settings.type === 'gradient';
+      const duration = gradient ? GRADIENT_DURATION : IMAGE_DURATION;
+      const delay = gradient ? GRADIENT_DELAY : IMAGE_DELAY;
+
+      // slow fade-in for images to gloss over size-transition jitter on load
+      const opacityTransitionStr = `opacity ${gradient ? duration : duration * 1.5}ms ease-in ${delay}ms`;
+      const bgTransitionStr = `background ${duration}ms ease-in-out ${delay}ms`;
+      
+      if (this.initialLoad){
+        bgUnderlay.style.willChange = 'opacity';
+        this._addTransitionProperties(bgUnderlay, opacityTransitionStr);}
+      else{
+        bgUnderlay.style.willChange = 'opacity, background';
+        this._addTransitionProperties(
+          bgUnderlay,
+          opacityTransitionStr,
+          bgTransitionStr
+        );
+      }
+    } else {
+      bgUnderlay.style.willChange = 'none';
+      bgUnderlay.style.transition = 'none';
     }
     this.initialLoad = false;
   };
 
+  _addTransitionProperties(element, transitionString1, transitionString2) {
+    const currentTransition = window.getComputedStyle(element).transition;
+    if (transitionString2) {
+      element.style.transition = `${transitionString1}, ${transitionString2}`;
+    } else {
+      element.style.transition = transitionString1;
+    }
+  }
+
   _applyBackground = (gridContainer, bgUnderlay) => {
+    gridContainer.style.background = 'none';
+    gridContainer.style.position = 'relative';
+
     // Apply the background
     switch (this.settings.type) {
       case 'none':
-        this._clearBackground(gridContainer);
         this._clearBackground(bgUnderlay);
         break;
       case 'color':
-        this._applyColorBackground(gridContainer, bgUnderlay);
+        this._applyColorBackground(bgUnderlay);
         break;
       case 'gradient':
-        this._applyGradientBackground(gridContainer, bgUnderlay);
+        this._applyGradientBackground(bgUnderlay);
         break;
       case 'image':
-        this._applyImageBackground(gridContainer, bgUnderlay);
+        this._applyImageBackground(bgUnderlay);
         break;
     }
   };
@@ -107,57 +159,55 @@ export default class Appearance {
   // Clear the background and reset the transition
   _clearBackground = targetEl => {
     targetEl.style.background = 'none';
-    targetEl.style.transition = 'revert-layer';
+    targetEl.style.transition = 'none';
+    targetEl.style.willChange = 'none';
   };
 
   // Apply the color background to the target element
-  _applyColorBackground = (gridContainer, bgUnderlay) => {
-    gridContainer.style.background = 'none';
+  _applyColorBackground = bgUnderlay => {
     bgUnderlay.style.background = this.settings.color;
+    bgUnderlay.style.opacity = '1';
   };
 
   // Apply the gradient background to the target element
-  _applyGradientBackground = (gridContainer, bgUnderlay) => {
+  _applyGradientBackground = bgUnderlay => {
     if (
       (this.settings.gradientType == 'linear' &&
         this.settings.gradientScrollL) ||
       (this.settings.gradientType == 'radial' && this.settings.gradientScrollR)
     ) {
-      this._clearBackground(bgUnderlay);
-      var target = gridContainer;
+      bgUnderlay.style.position = 'absolute';
     } else {
-      gridContainer.style.background = 'none';
-      var target = bgUnderlay;
+      bgUnderlay.style.position = 'fixed';
     }
     const gradientCss = this._createGradientCss();
-    const dimmerUnderlay = this._createDimmerGradient(
+    const dimmerOverlay = this._createDimmerGradient(
       this.settings.gradientType === 'linear'
         ? this.settings.gradientDimmerL
         : this.settings.gradientDimmerR
     );
-    target.style.background = `${dimmerUnderlay}, ${gradientCss}`;
+    bgUnderlay.style.background = `${dimmerOverlay}, ${gradientCss}`;
+    bgUnderlay.style.opacity = '1';
   };
 
   // Apply the image background to the target element
-  _applyImageBackground = (gridContainer, bgUnderlay) => {
+  _applyImageBackground = bgUnderlay => {
     if (this.settings.imageScroll) {
-      this._clearBackground(bgUnderlay);
-      var target = gridContainer;
+      bgUnderlay.style.position = 'absolute';
+
     } else {
-      gridContainer.style.background = 'none';
-      var target = bgUnderlay;
+      bgUnderlay.style.position = 'fixed';
     }
-    const dimmerUnderlay = this._createDimmerGradient(
-      this.settings.imageDimmer
-    );
+    const dimmerOverlay = this._createDimmerGradient(this.settings.imageDimmer);
     const imageUrl = this._createImageUrl();
-    target.style.background = '';
-    target.style.backgroundSize = this.settings.imageSize;
-    target.style.backgroundRepeat = 'repeat';
-    target.style.backgroundPosition = this.settings.imageScroll
+    bgUnderlay.style.background = '';
+    bgUnderlay.style.backgroundSize = this.settings.imageSize;
+    bgUnderlay.style.backgroundRepeat = 'repeat';
+    bgUnderlay.style.backgroundPosition = this.settings.imageScroll
       ? 'top'
       : 'center';
-    target.style.backgroundImage = `${dimmerUnderlay}, ${imageUrl}`;
+    bgUnderlay.style.backgroundImage = `${dimmerOverlay}, ${imageUrl}`;
+    bgUnderlay.style.opacity = '1';
   };
 
   // Create the dimmer gradient
@@ -210,10 +260,14 @@ export default class Appearance {
     child.setAttribute('id', 'bg-underlay');
     child.setAttribute(
       'style',
-      'position: fixed; top: 56; left: 0; width: 100%; height: 100%; z-index: -1;'
+      'position: fixed; top: 56; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0;'
     );
     node.prepend(child);
     return child;
+  }
+
+  getChildUnderlay(node) {
+    return node.querySelector('#bg-underlay');
   }
 
   // Remove the child underlay from the node
