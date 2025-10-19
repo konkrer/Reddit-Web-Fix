@@ -64,17 +64,29 @@ const bgDimmerValue = document.getElementById('bg-dimmer-value');
 // Common
 const sidebarFlow = document.getElementById('sidebar-flow');
 
-// --- Functions ---
+// --- Misc Functions ---
 
-// Update blank panel message based on background type
-function blankPanelMessageUpdate() {
-  if (bgType.value === 'none') {
-    blankSettingsMessage.textContent = 'Ahhh — very zen.';
-  } else {
-    blankSettingsMessage.textContent = 'Maybe less is more…?';
+// Update blank panel message based on action
+function blankPanelMessageUpdate({ initial = false, save = false } = {}) {
+  if (bgType.value !== 'none') return;
+
+  switch (save) {
+    case false:
+      if (initial) {
+        blankSettingsMessage.textContent = "C'mon do something…";
+      } else {
+        blankSettingsMessage.textContent = 'Maybe less is more…?';
+      }
+      break;
+    case true:
+      blankSettingsMessage.textContent = 'Ahhh — very zen.';
+      break;
   }
 }
 
+//  --- Event Handler Functions and Helpers --- //
+
+// --- Gradient Type Functions --- //
 // Get gradient type from gradient type buttons
 function getGradientType() {
   for (let btn of gradientType) {
@@ -101,38 +113,14 @@ function showHideGradientControls() {
   }
 }
 
-// Load settings from chrome.storage.local
-function loadSettings(data) {
-  const settings = data.backgroundSettings;
-  if (settings) setValuesToElements(settings);
-  showHideGradientControls();
-  showHidePanels(true);
-}
+// --- Load Settings From Storage Functions --- //
 
 // Set values to elements based on settings
 function setValuesToElements(settings) {
   bgType.value = settings.common.type || 'none';
-  ColorPickerModal.updateColorButton(
-    'bg-color',
-    settings.common.color || '#2c1111ff'
-  );
   bgColorFlow.checked = settings.common.colorFlow ?? true;
-
   setGradientType(settings.common.gradientType || 'linear');
-
   // Linear gradient settings
-  ColorPickerModal.updateColorButton(
-    'gradient-color-1L',
-    settings.common.gradientColor1L || '#1E003BFF'
-  );
-  ColorPickerModal.updateColorButton(
-    'gradient-color-2L',
-    settings.common.gradientColor2L || '#00F5FFFF'
-  );
-  ColorPickerModal.updateColorButton(
-    'gradient-color-3L',
-    settings.common.gradientColor3L || '#024851ff'
-  );
   bgGradientDimmerL.value = settings.common.gradientDimmerL ?? '67';
   bgGradientDimmerValueL.textContent = settings.common.gradientDimmerL ?? '67';
   gradientAngle.value = settings.common.gradientAngle || '107';
@@ -141,18 +129,6 @@ function setValuesToElements(settings) {
   bgGradientScrollL.checked = settings.common.gradientScrollL ?? false;
   bgGradientFlowL.checked = settings.common.gradientFlowL ?? true;
   // Radial gradient settings
-  ColorPickerModal.updateColorButton(
-    'gradient-color-1R',
-    settings.common.gradientColor1R || '#540000C2'
-  );
-  ColorPickerModal.updateColorButton(
-    'gradient-color-2R',
-    settings.common.gradientColor2R || '#212246ff'
-  );
-  ColorPickerModal.updateColorButton(
-    'gradient-color-3R',
-    settings.common.gradientColor3R || '#5400007D'
-  );
   bgGradientDimmerR.value = settings.common.gradientDimmerR ?? '32';
   bgGradientDimmerValueR.textContent = settings.common.gradientDimmerR ?? '32';
   gradientAngleR.value = settings.common.gradientAngle || '107';
@@ -167,12 +143,111 @@ function setValuesToElements(settings) {
   bgImageFlow.checked = settings.common.imageFlow ?? true;
   bgDimmer.value = settings.common.imageDimmer ?? '66';
   bgDimmerValue.textContent = settings.common.imageDimmer ?? '66';
-
   setImageFileName(settings.common.imageFileName);
   // Common
   sidebarFlow.checked = settings.common.sidebarFlow ?? true;
+  // Set color picker values
+  setColorPickerValues(settings);
 }
 
+// Get default color settings from CSS variables
+function getDefaultCssColor(name) {
+  return document.documentElement.style.getPropertyValue(name);
+}
+
+// Set color picker button values based on settings
+// or default CSS variable values
+function setColorPickerValues(settings) {
+  ColorPickerModal.updateColorButton(
+    'bg-color',
+    settings.common.color || getDefaultCssColor('--solid-bg-default')
+  );
+  ColorPickerModal.updateColorButton(
+    'gradient-color-1L',
+    settings.common.gradientColor1L ||
+      getDefaultCssColor('--linear-bg-default-1')
+  );
+  ColorPickerModal.updateColorButton(
+    'gradient-color-2L',
+    settings.common.gradientColor2L ||
+      getDefaultCssColor('--linear-bg-default-2')
+  );
+  ColorPickerModal.updateColorButton(
+    'gradient-color-3L',
+    settings.common.gradientColor3L ||
+      getDefaultCssColor('--linear-bg-default-3')
+  );
+  ColorPickerModal.updateColorButton(
+    'gradient-color-1R',
+    settings.common.gradientColor1R ||
+      getDefaultCssColor('--radial-bg-default-1')
+  );
+  ColorPickerModal.updateColorButton(
+    'gradient-color-2R',
+    settings.common.gradientColor2R ||
+      getDefaultCssColor('--radial-bg-default-2')
+  );
+  ColorPickerModal.updateColorButton(
+    'gradient-color-3R',
+    settings.common.gradientColor3R ||
+      getDefaultCssColor('--radial-bg-default-3')
+  );
+}
+
+// Load settings from chrome.storage.local
+function loadSettings(data) {
+  const settings = data.backgroundSettings;
+  if (settings) setValuesToElements(settings);
+  showHidePanels(true);
+}
+
+// --- Show/Hide Panels Functions ---  //
+// Clear (hide) all settings panels
+function clearPanels() {
+  blankSettings.style.display = 'none';
+  blankSettings.firstElementChild.style.opacity = '0';
+  colorSettings.style.display = 'none';
+  colorSettings.firstElementChild.style.opacity = '0';
+  gradientSettings.style.display = 'none';
+  gradientSettings.firstElementChild.style.opacity = '0';
+  imageSettings.style.display = 'none';
+  imageSettings.firstElementChild.style.opacity = '0';
+}
+
+// Delayed opacity set for settings-panel inner for fade-in effect
+function delayedOpacitySetPanelInner(element) {
+  setTimeout(() => {
+    element.firstElementChild.style.opacity = '1';
+  }, 0);
+}
+
+// Show/hide panels based on background type selection
+function showHidePanels(initial = false) {
+  clearPanels();
+
+  switch (bgType.value) {
+    case 'none':
+      blankPanelMessageUpdate({ initial });
+      blankSettings.style.display = 'block';
+      delayedOpacitySetPanelInner(blankSettings);
+      break;
+    case 'color':
+      colorSettings.style.display = 'flex';
+      delayedOpacitySetPanelInner(colorSettings);
+      break;
+    case 'gradient':
+      showHideGradientControls();
+      gradientSettings.style.display = 'flex';
+      delayedOpacitySetPanelInner(gradientSettings);
+      break;
+    case 'image':
+      imageSettings.style.display = 'flex';
+      delayedOpacitySetPanelInner(imageSettings);
+      break;
+  }
+}
+
+// --- Save Settings Functions ---  //
 // Set image file name based on settings
 function setImageFileName(fileName) {
   if (fileName) {
@@ -185,7 +260,7 @@ function setImageFileName(fileName) {
 }
 
 // Upload image file and common settings to chrome.storage.local
-function uploadImageFile(file, settings) {
+function uploadSettingsImageFile(file, settings) {
   const reader = new FileReader();
   reader.onload = e => {
     const imageDataUrl = e.target.result;
@@ -207,15 +282,15 @@ function uploadImageFile(file, settings) {
 }
 
 // Upload common settings to chrome.storage.local and pass image data url if needed
-function uploadCommonSettings(settings) {
+function uploadSettingsCommon(settings) {
   const setSettings = dataUrl =>
     chrome.storage.local.set(
       { backgroundSettings: { common: settings, imageDataUrl: dataUrl } },
       () => console.log('Background settings saved.')
     );
 
-  // If image url is set, clear the image file name
-  if (settings.imageUrl && settings.type === 'image') {
+  // If image background and image url is set, clear the image file name
+  if (settings.type === 'image' && settings.imageUrl) {
     settings.imageFileName = '';
     setImageFileName('');
     // Use history LRU class object to store the image url
@@ -232,65 +307,12 @@ function uploadCommonSettings(settings) {
       setSettings(settings.imageDataUrl);
     });
   }
-  blankPanelMessageUpdate();
+  blankPanelMessageUpdate({ save: true });
 }
 
-//  --- Event Handlers --- //
-// Show/hide panels based on background type selection
-function showHidePanels(initial = false) {
-  blankSettings.style.display = 'none';
-  blankSettings.firstElementChild.style.opacity = '0';
-  colorSettings.style.display = 'none';
-  colorSettings.firstElementChild.style.opacity = '0';
-  gradientSettings.style.display = 'none';
-  gradientSettings.firstElementChild.style.opacity = '0';
-  imageSettings.style.display = 'none';
-  imageSettings.firstElementChild.style.opacity = '0';
-
-  switch (bgType.value) {
-    case 'none':
-      blankSettings.style.display = 'block';
-      blankSettingsMessage.textContent = initial
-        ? "C'mon do something…"
-        : 'Maybe less is more…?';
-      setTimeout(() => {
-        blankSettings.firstElementChild.style.opacity = '1';
-      }, 0);
-      break;
-    case 'color':
-      colorSettings.style.display = 'flex';
-      setTimeout(() => {
-        colorSettings.firstElementChild.style.opacity = '1';
-      }, 0);
-      break;
-    case 'gradient':
-      gradientSettings.style.display = 'flex';
-      if (!initial) {
-        showHideGradientControls();
-      }
-      setTimeout(() => {
-        gradientSettings.firstElementChild.style.opacity = '1';
-      }, 0);
-      break;
-    case 'image':
-      imageSettings.style.display = 'flex';
-      setTimeout(() => {
-        imageSettings.firstElementChild.style.opacity = '1';
-      }, 0);
-      break;
-    default:
-      blankSettings.style.display = 'block';
-      setTimeout(() => {
-        blankSettings.firstElementChild.style.opacity = '1';
-      }, 0);
-      break;
-  }
-  console.log('showHidePanels', bgType.value);
-}
-
-// Save settings to chrome.storage.local
-function saveSettings() {
-  const settings = {
+// Create settings object from input values
+function makeSettingsObjectFromInputs() {
+  return {
     type: bgType.value,
     // Color
     color: ColorPickerModal.getColorFromButton('bg-color'),
@@ -326,21 +348,23 @@ function saveSettings() {
     // Common
     sidebarFlow: sidebarFlow.checked,
   };
+}
+
+// Save settings to chrome.storage.local
+function saveSettings() {
+  const settings = makeSettingsObjectFromInputs();
 
   const file = bgImageFile.files[0];
   if (file) {
-    uploadImageFile(file, settings);
+    uploadSettingsImageFile(file, settings);
   } else {
-    uploadCommonSettings(settings);
+    uploadSettingsCommon(settings);
   }
+  // Set disabled, display only gradient-angle-R to match linear gradient angle
   gradientAngleR.value = gradientAngle.value;
 }
 
-// Clear image URL input
-function clearImageUrlInput() {
-  bgImageUrl.value = '';
-}
-
+// --- Dimmer Event Handlers ---  //
 // Update dimmer value on wheel event
 function wheelUpdateDimmerValue(e, dimmerEl, dimmerValueDisplay) {
   e.preventDefault();
@@ -356,12 +380,10 @@ function wheelUpdateDimmerValue(e, dimmerEl, dimmerValueDisplay) {
 function wheelImageDimmerUpdate(e) {
   wheelUpdateDimmerValue(e, bgDimmer, bgDimmerValue);
 }
-
 // Update gradient dimmer value on wheel event - Linear
 function wheelGradientDimmerUpdateL(e) {
   wheelUpdateDimmerValue(e, bgGradientDimmerL, bgGradientDimmerValueL);
 }
-
 // Update gradient dimmer value on wheel event - Radial
 function wheelGradientDimmerUpdateR(e) {
   wheelUpdateDimmerValue(e, bgGradientDimmerR, bgGradientDimmerValueR);
@@ -380,6 +402,7 @@ function inputUpdateGradientDimmerValueR() {
   bgGradientDimmerValueR.textContent = bgGradientDimmerR.value;
 }
 
+// --- History Popup Functions --- //
 // Show history popup
 function showHistory(e) {
   e.stopPropagation();
@@ -407,7 +430,9 @@ function createHistoryItem(url, historyList) {
   const li = document.createElement('div');
   const iconSpan = document.createElement('span');
   const btn = document.createElement('button');
+  btn.type = 'button';
   const deleteBtn = document.createElement('button');
+  deleteBtn.type = 'button';
 
   iconSpan.classList.add('mr-5');
   iconSpan.textContent = historyLRU.getMarker(url);
@@ -426,13 +451,17 @@ function createHistoryItem(url, historyList) {
   historyList.appendChild(li);
 }
 
+// Clear image URL input (Clear button)
+function clearImageUrlInput() {
+  bgImageUrl.value = '';
+}
+
 // --- Event Listeners ---
 bgType.addEventListener('change', () => showHidePanels(false));
 saveButton.addEventListener('click', saveSettings);
 gradientType.forEach(radio => {
   radio.addEventListener('change', showHideGradientControls);
 });
-
 // Dimmers - Linear
 bgGradientDimmerL.addEventListener('wheel', wheelGradientDimmerUpdateL);
 bgGradientDimmerL.addEventListener('input', inputUpdateGradientDimmerValueL);
@@ -452,16 +481,19 @@ const historyLRU = new HistoryLRU();
 ColorPickerModal.init(null, saveSettings);
 chrome.storage?.local.get('backgroundSettings', loadSettings);
 
-// Check if Firefox for file input alternative UI
+// ---------------------------------------------- //
+// --- Firefox file input alternative UI ---
+// Detect Firefox
 const isFirefox =
   typeof InstallTrigger !== 'undefined' ||
   navigator.userAgent.includes('Firefox');
 
-// Check if we're in a reopened window (via URL parameter)
-const urlParams = new URLSearchParams(window.location.search);
-const isReopenedWindow = urlParams.get('fileupload') === 'true';
-
+// If Firefox show file input alternative UI or open new window for file upload
 if (isFirefox) {
+  // Check if we're in a reopened window (via URL parameter)
+  const urlParams = new URLSearchParams(window.location.search);
+  const isReopenedWindow = urlParams.get('fileupload') === 'true';
+
   if (isReopenedWindow) {
     // In reopened window: hide button
     enableFileUploadBtn.classList.add('d-none');
@@ -471,13 +503,13 @@ if (isFirefox) {
     bgImageFile.classList.add('d-none');
   }
 
-  // Add click handler to enable button
+  // Add click handler to enable file upload button
   enableFileUploadBtn.addEventListener('click', e => {
     const popupUrl = chrome.runtime.getURL(
       'src/popup/popup.html?fileupload=true'
     );
 
-    // Calculate position near the click event
+    // Size of popup window to be opened
     const windowWidth = 350;
     const windowHeight = 553;
 
@@ -485,7 +517,7 @@ if (isFirefox) {
     const clickX = e.screenX;
     const clickY = e.screenY;
 
-    // Offset the window slightly to the right and down from the click
+    // Offset the window slightly so new window opens over where old popup wa
     const offsetX = -160;
     const offsetY = -220;
 
@@ -506,22 +538,16 @@ if (isFirefox) {
       top = Math.max(10, top);
     }
 
-    chrome.windows.create(
-      {
-        url: popupUrl,
-        type: 'popup',
-        width: windowWidth,
-        height: windowHeight,
-        left: Math.round(left),
-        top: Math.round(top),
-        focused: true,
-      },
-      () => {
-        // Optionally close the original popup
-        // window.close();
-      }
-    );
+    chrome.windows.create({
+      url: popupUrl,
+      type: 'popup',
+      width: windowWidth,
+      height: windowHeight,
+      left: Math.round(left),
+      top: Math.round(top),
+      focused: true,
+    });
   });
 }
 
-if (!chrome.storage?.local) showHidePanels(true); // dev only raw html load
+if (!chrome.storage?.local) showHidePanels(true); // dev only raw html load helper

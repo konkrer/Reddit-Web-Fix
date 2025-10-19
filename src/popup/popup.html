@@ -20,7 +20,6 @@
     <script defer type="module" src="popup.js"></script>
   </head>
   <body>
-    <!-- CONTAINER -->
     <div class="container">
       <!-- TITLE -->
       <h1 class="bungee-spice-regular">Reddit Web Fix</h1>
@@ -92,6 +91,7 @@
       <!-- GRADIENT PANEL -->
       <div id="gradient-settings" class="settings-panel d-none">
         <div class="panel-inner">
+          <!-- GRADIENT TYPE SELECTOR -->
           <div for="gradient-type" class="fw-300 ml-5">Gradient Type:</div>
           <div class="control-group justify-start">
             <span>
@@ -119,7 +119,7 @@
             >
           </div>
 
-          <!-- LINEAR GRADIENT CONTROLS -->
+          <!-- LINEAR GRADIENT COLOR CONTROLS -->
           <div id="linear-gradient-controls">
             <!-- GRADIENT INPUT GROUP 2 - Linear -->
             <div class="control-group justify-around mb-15 gap-0">
@@ -167,7 +167,7 @@
               </span>
             </div>
 
-            <!-- GRADIENT Dimmer - Linear -->
+            <!-- LINEAR GRADIENT DIMMER -->
             <div class="fs-08rem text-center">
               <label for="bg-gradient-dimmerL" class="bg-dimmer-label fw-300"
                 >Dimmer:</label
@@ -187,7 +187,7 @@
               </div>
             </div>
 
-            <!-- Gradient Angle, Distance 1, Distance 2, Scroll - Linear -->
+            <!-- LINEAR GRADIENT ANGLE, DISTANCE 1, DISTANCE 2, SCROLL, FLOW -->
             <div class="control-group mt-5 fs-08rem ml-5 gradient-dist-row">
               <label for="gradient-angle" class="fw-300 min-content"
                 >Angle
@@ -239,7 +239,7 @@
             </div>
           </div>
 
-          <!-- RADIAL GRADIENT CONTROLS -->
+          <!-- RADIAL GRADIENT COLOR CONTROLS -->
           <div id="radial-gradient-controls" class="d-none">
             <!-- GRADIENT INPUT GROUP 2 - Radial -->
             <div class="control-group justify-around mb-15 gap-0">
@@ -287,7 +287,7 @@
               </span>
             </div>
 
-            <!-- GRADIENT Dimmer - Radial -->
+            <!-- RADIAL GRADIENT DIMMER -->
             <div class="fs-08rem text-center">
               <label for="bg-gradient-dimmerR" class="bg-dimmer-label fw-300"
                 >Dimmer:</label
@@ -307,7 +307,7 @@
               </div>
             </div>
 
-            <!-- Distance 1, Distance 2, Scroll - Radial -->
+            <!-- RADIAL GRADIENT DISTANCE 1, DISTANCE 2, SCROLL, FLOW -->
             <div class="control-group mt-5 fs-08rem ml-5 gradient-dist-row">
               <label for="gradient-angle-R" class="fw-300 min-content"
                 >Angle
@@ -494,12 +494,14 @@
         </div> -->
         </div>
       </div>
-
+      
+      <!-- SIDEBAR FLOW TOGGLE -->
       <div class="control-group align-start">
-        <label for="sidebar-flow" class="fw-200 panel-control"
+        <label for="sidebar-flow" class="fw-200 panel-control switch"
           >Sidebar Flow:
-          <input type="checkbox" id="sidebar-flow" class="ml-15" checked
-        /></label>
+          <input type="checkbox" id="sidebar-flow" class="ml-15" checked />
+          <div class="slider round"></div
+        ></label>
       </div>
 
       <button

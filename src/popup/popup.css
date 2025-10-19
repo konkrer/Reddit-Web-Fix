@@ -32,29 +32,37 @@ body {
   --text-color-disabled: #3b0000f5;
   --text-color-placeholder: rgba(189, 187, 187, 0.397);
   --text-color-shadow: rgb(0, 0, 0);
+
+  --solid-bg-default: #2c1111ff;
+  --linear-bg-default-1: #1e003bff;
+  --linear-bg-default-2: #00f5ffff;
+  --linear-bg-default-3: #024851ff;
+  --radial-bg-default-1: #540000c2;
+  --radial-bg-default-2: #212246ff;
+  --radial-bg-default-3: #5400007d;
 }
 
 /* Color preview styles for default color-picker-btn colors */
 .solid-bg-preview {
-  background-color: #2c1111ff;
+  background-color: var(--solid-bg-default);
 }
 .linear-bg-preview-1 {
-  background-color: #1e003bff;
+  background-color: var(--linear-bg-default-1);
 }
 .linear-bg-preview-2 {
-  background-color: #00f5ffff;
+  background-color: var(--linear-bg-default-2);
 }
 .linear-bg-preview-3 {
-  background-color: #024851ff;
+  background-color: var(--linear-bg-default-3);
 }
 .radial-bg-preview-1 {
-  background-color: #540000C2;
+  background-color: var(--radial-bg-default-1);
 }
 .radial-bg-preview-2 {
-  background-color: #212246ff;
+  background-color: var(--radial-bg-default-2);
 }
 .radial-bg-preview-3 {
-  background-color: #5400007D;
+  background-color: var(--radial-bg-default-3);
 }
 
 /* ============================================
@@ -381,13 +389,103 @@ input[type='checkbox'] {
   margin-right: 5px;
 }
 
-/* Color input */
-/* input[type='color'] {
-  width: 100%;
-  height: 30px;
-  border: 1px solid #ccc;
-  padding: 0;
-} */
+input[type='number'] {
+  width: 40px;
+  height: 24px;
+  color: black;
+  padding-left: 6px;
+}
+input[type='number']:disabled {
+  color: rgba(0, 0, 0, 0.46);
+  background-color: #523737;
+}
+
+/* Text input */
+input[type='text'] {
+  color: var(--text-color);
+}
+
+input[type='text']::placeholder {
+  color: rgba(255, 255, 255, 0.46);
+}
+
+/* File input */
+input[type='file']::file-selector-button {
+  background-color: rgb(119, 119, 119);
+  color: black;
+  padding: 6px 6px;
+  border: none;
+  border-radius: 0px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+input[type='file']::file-selector-button:hover {
+  background-color: #0a3549;
+}
+
+/* Range input */
+input[type='range'] {
+  accent-color: var(--accent-color);
+  width: 175px;
+  margin-left: 8px;
+}
+
+/* ============================================
+   CUSTOM CONTROLS - TOGGLES
+   ============================================ */
+.switch {
+  display: inline-block;
+  height:16px;
+  position: relative;
+  width: 154px;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  background-color: #724949;
+  bottom: -4px;
+  top: 4px;
+  cursor: pointer;
+  left: 106px;
+  position: absolute;
+  right: 0;
+  transition: 0.4s;
+  box-shadow: 0 0 2px rgb(203, 203, 203);
+}
+
+.slider:before {
+  background-color: var(--text-color);
+  bottom: 2px;
+  content: '';
+  height: 13px;
+  width: 13px;
+  left: 4px;
+  position: absolute;
+  transition: 0.4s;
+}
+
+input:checked + .slider {
+  background-color: #06145b;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 10px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* ============================================
+   COLOR PICKER RELATED STYLES
+   ============================================ */
 
 /* Color picker button */
 .color-picker-btn {
@@ -561,47 +659,6 @@ input[type='checkbox'] {
 .apply-color-btn:hover {
   background-color: #0a3549;
   box-shadow: white 1px 0px 5px;
-}
-
-input[type='number'] {
-  width: 40px;
-  height: 24px;
-  color: black;
-  padding-left: 6px;
-}
-input[type='number']:disabled {
-  color: rgba(0, 0, 0, 0.46);
-  background-color: #523737;
-}
-
-/* Text input */
-input[type='text'] {
-  color: var(--text-color);
-}
-
-input[type='text']::placeholder {
-  color: rgba(255, 255, 255, 0.46);
-}
-
-/* File input */
-input[type='file']::file-selector-button {
-  background-color: rgb(119, 119, 119);
-  color: black;
-  padding: 6px 6px;
-  border: none;
-  border-radius: 0px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-input[type='file']::file-selector-button:hover {
-  background-color: #0a3549;
-}
-
-/* Range input */
-input[type='range'] {
-  accent-color: var(--accent-color);
-  width: 175px;
-  margin-left: 8px;
 }
 
 /* ============================================
@@ -845,6 +902,10 @@ option::checkmark {
 #history-list > div:hover {
   background-color: #0a3549;
   color: var(--text-color);
+}
+
+#history-list button:active {
+  border: none !important;
 }
 
 .bg-dimmer-value {

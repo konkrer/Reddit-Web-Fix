@@ -4,13 +4,14 @@
 const SIDEBAR_EXPAND_DURATION = 500; // ms
 const SIDEBAR_COLLAPSE_DURATION = 650; // ms
 const SIDEBAR_EXPAND_CURVE = 'cubic-bezier(0.4, 0, 0.2, 1)';
-const SIDEBAR_COLLAPSE_CURVE = 'cubic-bezier(0.39, 0, 0.42, 1.6)';
+const SIDEBAR_COLLAPSE_CURVE = 'cubic-bezier(0.4, 0, 0.4, 1.3)';
 
 // Transition settings for background when flow is enabled
 const IMAGE_DELAY = 0; // ms
 const IMAGE_DURATION = 300; // ms
 const COLOR_DELAY = 0; // ms
 const COLOR_DURATION = 200; // ms
+const IMAGE_COEFFICIENT = 1.25; // opacity duration coefficient for images
 
 // Class to manage page appearance customizations, like background
 export default class Appearance {
@@ -121,19 +122,23 @@ export default class Appearance {
 
   _getGradientFlowCondition = () => {
     return (
-      (this.settings.type === 'gradient' &&
-        this.settings.gradientType === 'linear' &&
+      this.settings.type === 'gradient' &&
+      ((this.settings.gradientType === 'linear' &&
         this.settings.gradientFlowL) ||
-      (this.settings.type === 'gradient' &&
-        this.settings.gradientType === 'radial' &&
-        this.settings.gradientFlowR)
+        (this.settings.gradientType === 'radial' &&
+          this.settings.gradientFlowR))
     );
   };
 
+  _getImageFlowCondition = () => {
+    return this.settings.type === 'image' && this.settings.imageFlow;
+  };
+
+  // Combined flow condition. True if current background type has flow enabled.
   _getFlowCondition = () => {
-    const imageFlow = this.settings.type === 'image' && this.settings.imageFlow;
     const colorFlow = this._getColorFlowCondition();
     const gradientFlow = this._getGradientFlowCondition();
+    const imageFlow = this._getImageFlowCondition();
     return imageFlow || colorFlow || gradientFlow;
   };
 
@@ -148,9 +153,9 @@ export default class Appearance {
       const delay = quick ? COLOR_DELAY : IMAGE_DELAY;
 
       // slow fade-in for images to gloss over size-transition jitter on load
-      const adjustedDuration = quick ? duration : duration * 1.5;
+      const adjustedDuration = quick ? duration : duration * IMAGE_COEFFICIENT;
       const opacityTransitionStr = `opacity ${adjustedDuration}ms ease-in ${delay}ms`;
-      const bgTransitionStr = `background ${duration}ms ease-in-out ${delay}ms`;
+      const bgTransitionStr = `background ${duration}ms ease-out ${delay}ms`;
 
       if (this.initialLoad) {
         bgUnderlay.style.willChange = 'opacity';
@@ -170,15 +175,14 @@ export default class Appearance {
     this.initialLoad = false;
   };
 
-  _addTransitionProperties(element, transitionString1, transitionString2) {
-    const currentTransition = window.getComputedStyle(element).transition;
-    if (transitionString2) {
-      element.style.transition = `${transitionString1}, ${transitionString2}`;
-    } else {
-      element.style.transition = transitionString1;
-    }
+  // Helper to add multiple transition properties
+  _addTransitionProperties(element, ...args) {
+    // Force reflow to ensure transitions are seen
+    window.getComputedStyle(element).transition;
+    element.style.transition = args.join(', ');
   }
 
+  // Apply the background based on settings
   _applyBackground = (gridContainer, bgUnderlay) => {
     gridContainer.style.background = 'none';
     gridContainer.style.position = 'relative';
@@ -244,7 +248,7 @@ export default class Appearance {
       bgUnderlay.style.position = 'fixed';
     }
     const dimmerOverlay = this._createDimmerGradient(this.settings.imageDimmer);
-    const imageUrl = this._createImageUrl();
+    const imageUrl = this._createImageUrlString();
     bgUnderlay.style.background = '';
     bgUnderlay.style.backgroundSize = this.settings.imageSize;
     bgUnderlay.style.backgroundRepeat = 'repeat';
@@ -283,17 +287,17 @@ export default class Appearance {
   };
 
   // Create the image url
-  _createImageUrl() {
-    let imageUrl = '';
+  _createImageUrlString() {
+    let imageUrlString = '';
     if (this.settings.imageFileName) {
-      imageUrl = `url(${this.imageDataUrl})`;
+      imageUrlString = `url(${this.imageDataUrl})`;
     } else if (this.settings.imageUrl) {
-      imageUrl = `url(${this.settings.imageUrl})`;
+      imageUrlString = `url(${this.settings.imageUrl})`;
     }
-    return imageUrl;
+    return imageUrlString;
   }
 
-  // Add the child underlay to the node
+  // Add the child underlay to the node descendants if not present
   addChildUnderlay(node) {
     if (node.firstChild?.id === 'bg-underlay') {
       return node.firstChild;
@@ -311,11 +315,12 @@ export default class Appearance {
     return child;
   }
 
+  // Get the child underlay from the node descendants
   getChildUnderlay(node) {
     return node.querySelector('#bg-underlay');
   }
 
-  // Remove the child underlay from the node
+  // Remove the child underlay from the node descendants
   removeChildUnderlay(node) {
     const children = node.querySelectorAll('#bg-underlay');
     if (children) {
