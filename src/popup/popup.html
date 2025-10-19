@@ -29,7 +29,7 @@
 
       <!-- BACKGROUND TYPE SELECTOR -->
       <div class="control-group align-start">
-        <label for="bg-type" class="fw-200 panel-control">Background:</label>
+        <label for="bg-type" class="fw-200 fs-095rem">Background:</label>
         <select id="bg-type">
           <button type="button" title="Select background type">
             <selectedcontent></selectedcontent>
@@ -64,7 +64,7 @@
       <!-- SOLID COLOR PANEL -->
       <div id="color-settings" class="settings-panel d-none">
         <div class="panel-inner">
-          <label for="bg-color" class="fw-300 mb-15 ml-5"
+          <label for="bg-color" class="fw-300 fs-09rem mb-15 ml-5"
             >Background Color:</label
           >
           <div class="control-group justify-around mb-10">
@@ -80,10 +80,13 @@
               ></span>
             </button>
           </div>
-          <div class="control-group justify-center mt-15">
-            <label for="bg-color-flow" class="fw-300"
-              >Flow: <input type="checkbox" id="bg-color-flow" checked />
-            </label>
+          <!-- Fade Effect -->
+          <div class="control-group align-center justify-center mt-10">
+            <label for="bg-color-fade" class="fw-300 fs-09rem">Fade:</label>
+            <label for="bg-color-fade" class="switch">
+              <input type="checkbox" id="bg-color-fade" checked />
+              <div class="slider round"></div
+            ></label>
           </div>
         </div>
       </div>
@@ -92,8 +95,10 @@
       <div id="gradient-settings" class="settings-panel d-none">
         <div class="panel-inner">
           <!-- GRADIENT TYPE SELECTOR -->
-          <div for="gradient-type" class="fw-300 ml-5">Gradient Type:</div>
-          <div class="control-group justify-start">
+          <div for="gradient-type" class="fw-300 fs-09rem ml-5 mb-5">
+            Gradient Type:
+          </div>
+          <div class="control-group justify-start fs-085rem ml-5">
             <span>
               <label for="linear"
                 ><input
@@ -121,7 +126,7 @@
 
           <!-- LINEAR GRADIENT COLOR CONTROLS -->
           <div id="linear-gradient-controls">
-            <!-- GRADIENT INPUT GROUP 2 - Linear -->
+            <!-- LINEAR GRADIENT COLOR CONTROLS -->
             <div class="control-group justify-around mb-15 gap-0">
               <span class="fs-08rem flex-col">
                 <label for="gradient-color-1L" class="fw-300">Color 1</label>
@@ -168,7 +173,7 @@
             </div>
 
             <!-- LINEAR GRADIENT DIMMER -->
-            <div class="fs-08rem text-center">
+            <div class="fs-08rem text-center mt-20">
               <label for="bg-gradient-dimmerL" class="bg-dimmer-label fw-300"
                 >Dimmer:</label
               >
@@ -188,7 +193,7 @@
             </div>
 
             <!-- LINEAR GRADIENT ANGLE, DISTANCE 1, DISTANCE 2, SCROLL, FLOW -->
-            <div class="control-group mt-5 fs-08rem ml-5 gradient-dist-row">
+            <div class="control-group mt-10 fs-08rem ml-5 gradient-dist-row">
               <label for="gradient-angle" class="fw-300 min-content"
                 >Angle
                 <input
@@ -220,21 +225,32 @@
                   step="2"
               /></label>
 
-              <div class="flex-col">
-                <label
-                  for="bg-gradient-scrollL"
-                  class="fw-300 min-content d-block"
+              <!-- Scroll Effect -->
+              <div class="fs-08rem">
+                <label for="bg-gradient-scroll-L" class="fw-300 d-block"
                   >Scroll</label
                 >
-                <input type="checkbox" id="bg-gradient-scrollL" />
-              </div>
-              <div class="flex-col">
                 <label
-                  for="bg-gradient-flow-L"
-                  class="fw-300 min-content d-block"
-                  >Flow</label
+                  for="bg-gradient-scroll-L"
+                  class="switch small-switch mt-5"
                 >
-                <input type="checkbox" id="bg-gradient-flow-L" />
+                  <input type="checkbox" id="bg-gradient-scroll-L" checked />
+                  <div class="slider round"></div
+                ></label>
+              </div>
+
+              <!-- Fade Effect -->
+              <div class="fs-08rem">
+                <label for="bg-gradient-fade-L" class="fw-300 d-block"
+                  >Fade</label
+                >
+                <label
+                  for="bg-gradient-fade-L"
+                  class="switch small-switch mt-5"
+                >
+                  <input type="checkbox" id="bg-gradient-fade-L" checked />
+                  <div class="slider round"></div
+                ></label>
               </div>
             </div>
           </div>
@@ -288,7 +304,7 @@
             </div>
 
             <!-- RADIAL GRADIENT DIMMER -->
-            <div class="fs-08rem text-center">
+            <div class="fs-08rem text-center mt-20">
               <label for="bg-gradient-dimmerR" class="bg-dimmer-label fw-300"
                 >Dimmer:</label
               >
@@ -308,7 +324,7 @@
             </div>
 
             <!-- RADIAL GRADIENT DISTANCE 1, DISTANCE 2, SCROLL, FLOW -->
-            <div class="control-group mt-5 fs-08rem ml-5 gradient-dist-row">
+            <div class="control-group mt-10 fs-08rem ml-5 gradient-dist-row">
               <label for="gradient-angle-R" class="fw-300 min-content"
                 >Angle
                 <input type="number" id="gradient-angle-R" value="107" disabled
@@ -334,21 +350,32 @@
                   step="2"
               /></label>
 
-              <div class="flex-col">
-                <label
-                  for="bg-gradient-scrollR"
-                  class="fw-300 min-content d-block"
+              <!-- Scroll Effect -->
+              <div class="fs-08rem">
+                <label for="bg-gradient-scroll-R" class="fw-300 d-block"
                   >Scroll</label
                 >
-                <input type="checkbox" id="bg-gradient-scrollR" />
-              </div>
-              <div class="flex-col">
                 <label
-                  for="bg-gradient-flow-R"
-                  class="fw-300 min-content d-block"
-                  >Flow</label
+                  for="bg-gradient-scroll-R"
+                  class="switch small-switch mt-5"
                 >
-                <input type="checkbox" id="bg-gradient-flow-R" />
+                  <input type="checkbox" id="bg-gradient-scroll-R" checked />
+                  <div class="slider round"></div
+                ></label>
+              </div>
+
+              <!-- Fade Effect -->
+              <div class="fs-08rem">
+                <label for="bg-gradient-fade-R" class="fw-300 d-block"
+                  >Fade</label
+                >
+                <label
+                  for="bg-gradient-fade-R"
+                  class="switch small-switch mt-5"
+                >
+                  <input type="checkbox" id="bg-gradient-fade-R" checked />
+                  <div class="slider round"></div
+                ></label>
               </div>
             </div>
           </div>
@@ -419,10 +446,10 @@
           </div>
 
           <!-- Image controls -->
-          <div class="control-group justify-between mt-5">
+          <div class="control-group justify-between">
             <!-- Image size -->
             <span class="fs-08rem">
-              <label for="bg-image-size" class="fw-400">Size:</label>
+              <label for="bg-image-size" class="fw-300">Size:</label>
               <select id="bg-image-size" class="select-small">
                 <button type="button" title="Select background image size">
                   <selectedcontent></selectedcontent>
@@ -443,27 +470,57 @@
             </span>
 
             <!-- Scroll Lock: -->
-            <div
-              class="fs-08rem control-group justify-around checkbox-row-item"
-            >
-              <label for="bg-image-scroll" class="fw-400"
-                >Scroll: <input type="checkbox" id="bg-image-scroll" checked
-              /></label>
+            <div class="fs-08rem">
+              <label for="bg-image-scroll" class="fw-300 d-block">Scroll</label>
+              <label
+                for="bg-image-scroll"
+                class="fw-200 fs-09rem switch small-switch"
+              >
+                <input
+                  type="checkbox"
+                  id="bg-image-scroll"
+                  class="ml-15"
+                  checked />
+                <div class="slider round"></div
+              ></label>
+            </div>
+
+            <!-- Fade Effect: -->
+            <div class="fs-08rem">
+              <label for="bg-image-fade" class="fw-300 d-block">Fade</label>
+              <label
+                for="bg-image-fade"
+                class="fw-200 fs-09rem switch small-switch"
+              >
+                <input
+                  type="checkbox"
+                  id="bg-image-fade"
+                  class="ml-15"
+                  checked />
+                <div class="slider round"></div
+              ></label>
             </div>
 
             <!-- Flow Effect: -->
-            <div
-              class="fs-08rem control-group justify-around checkbox-row-item"
-            >
-              <label for="bg-image-flow" class="fw-400"
-                >Flow: <input type="checkbox" id="bg-image-flow" checked
-              /></label>
+            <div class="fs-08rem">
+              <label for="bg-image-flow" class="fw-300 d-block">Flow</label>
+              <label
+                for="bg-image-flow"
+                class="fw-200 fs-09rem switch small-switch"
+              >
+                <input
+                  type="checkbox"
+                  id="bg-image-flow"
+                  class="ml-15"
+                  checked />
+                <div class="slider round"></div
+              ></label>
             </div>
           </div>
 
           <!-- Image dimmer -->
           <div class="mt-5">
-            <label for="bg-dimmer" class="fw-400 fs-08rem bg-dimmer-label"
+            <label for="bg-dimmer" class="fw-300 fs-08rem bg-dimmer-label"
               >Dimmer:</label
             >
             <input type="range" id="bg-dimmer" min="0" max="100" value="66" />
@@ -494,12 +551,12 @@
         </div> -->
         </div>
       </div>
-      
+
       <!-- SIDEBAR FLOW TOGGLE -->
-      <div class="control-group align-start">
-        <label for="sidebar-flow" class="fw-200 panel-control switch"
-          >Sidebar Flow:
-          <input type="checkbox" id="sidebar-flow" class="ml-15" checked />
+      <div class="control-group align-center justify-start mb-5">
+        <label for="sidebar-flow" class="fw-200 fs-095rem">Sidebar Flow:</label>
+        <label for="sidebar-flow" class="switch ml-5">
+          <input type="checkbox" id="sidebar-flow" checked />
           <div class="slider round"></div
         ></label>
       </div>

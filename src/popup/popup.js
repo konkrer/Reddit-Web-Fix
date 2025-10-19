@@ -18,7 +18,7 @@ const imageSettings = document.getElementById('image-settings');
 const blankSettingsMessage = document.getElementById('blank-settings-message');
 
 // Color settings
-const bgColorFlow = document.getElementById('bg-color-flow');
+const bgColorFade = document.getElementById('bg-color-fade');
 
 // Gradient settings - Common
 const gradientType = document.getElementsByName('gradient-type');
@@ -37,8 +37,8 @@ const bgGradientDimmerValueL = document.getElementById(
 );
 const gradientDist1L = document.getElementById('gradient-dist-1L');
 const gradientDist2L = document.getElementById('gradient-dis-2L');
-const bgGradientScrollL = document.getElementById('bg-gradient-scrollL');
-const bgGradientFlowL = document.getElementById('bg-gradient-flow-L');
+const bgGradientScrollL = document.getElementById('bg-gradient-scroll-L');
+const bgGradientFadeL = document.getElementById('bg-gradient-fade-L');
 // Gradient settings - Radial
 const gradientAngleR = document.getElementById('gradient-angle-R'); // dummy copy
 const bgGradientDimmerR = document.getElementById('bg-gradient-dimmerR');
@@ -47,8 +47,8 @@ const bgGradientDimmerValueR = document.getElementById(
 );
 const gradientDist1R = document.getElementById('gradient-dist-1R');
 const gradientDist2R = document.getElementById('gradient-dis-2R');
-const bgGradientScrollR = document.getElementById('bg-gradient-scrollR');
-const bgGradientFlowR = document.getElementById('bg-gradient-flow-R');
+const bgGradientScrollR = document.getElementById('bg-gradient-scroll-R');
+const bgGradientFadeR = document.getElementById('bg-gradient-fade-R');
 // Image settings
 const clearImageUrlBtn = document.querySelector('button[type="reset"]');
 const historyBtn = document.querySelector('#history-btn');
@@ -58,6 +58,7 @@ const bgImageFileName = document.getElementById('image-file-name');
 const enableFileUploadBtn = document.getElementById('enable-file-upload-btn');
 const bgImageSize = document.getElementById('bg-image-size');
 const bgImageScroll = document.getElementById('bg-image-scroll');
+const bgImageFade = document.getElementById('bg-image-fade');
 const bgImageFlow = document.getElementById('bg-image-flow');
 const bgDimmer = document.getElementById('bg-dimmer');
 const bgDimmerValue = document.getElementById('bg-dimmer-value');
@@ -118,7 +119,7 @@ function showHideGradientControls() {
 // Set values to elements based on settings
 function setValuesToElements(settings) {
   bgType.value = settings.common.type || 'none';
-  bgColorFlow.checked = settings.common.colorFlow ?? true;
+  bgColorFade.checked = settings.common.colorFade ?? true;
   setGradientType(settings.common.gradientType || 'linear');
   // Linear gradient settings
   bgGradientDimmerL.value = settings.common.gradientDimmerL ?? '67';
@@ -127,7 +128,7 @@ function setValuesToElements(settings) {
   gradientDist1L.value = settings.common.gradientDist1L ?? '42';
   gradientDist2L.value = settings.common.gradientDist2L ?? '48';
   bgGradientScrollL.checked = settings.common.gradientScrollL ?? false;
-  bgGradientFlowL.checked = settings.common.gradientFlowL ?? true;
+  bgGradientFadeL.checked = settings.common.gradientFadeL ?? true;
   // Radial gradient settings
   bgGradientDimmerR.value = settings.common.gradientDimmerR ?? '32';
   bgGradientDimmerValueR.textContent = settings.common.gradientDimmerR ?? '32';
@@ -135,11 +136,12 @@ function setValuesToElements(settings) {
   gradientDist1R.value = settings.common.gradientDist1R ?? '22';
   gradientDist2R.value = settings.common.gradientDist2R ?? '94';
   bgGradientScrollR.checked = settings.common.gradientScrollR ?? false;
-  bgGradientFlowR.checked = settings.common.gradientFlowR ?? true;
+  bgGradientFadeR.checked = settings.common.gradientFadeR ?? true;
   // Image settings
   bgImageUrl.value = settings.common.imageUrl || '';
   bgImageSize.value = settings.common.imageSize || 'auto';
   bgImageScroll.checked = settings.common.imageScroll ?? true;
+  bgImageFade.checked = settings.common.imageFade ?? true;
   bgImageFlow.checked = settings.common.imageFlow ?? true;
   bgDimmer.value = settings.common.imageDimmer ?? '66';
   bgDimmerValue.textContent = settings.common.imageDimmer ?? '66';
@@ -316,7 +318,7 @@ function makeSettingsObjectFromInputs() {
     type: bgType.value,
     // Color
     color: ColorPickerModal.getColorFromButton('bg-color'),
-    colorFlow: bgColorFlow.checked,
+    colorFade: bgColorFade.checked,
     // Gradient - Common
     gradientType: getGradientType(),
     gradientAngle: gradientAngle.value,
@@ -328,7 +330,7 @@ function makeSettingsObjectFromInputs() {
     gradientDist1L: gradientDist1L.value,
     gradientDist2L: gradientDist2L.value,
     gradientScrollL: bgGradientScrollL.checked,
-    gradientFlowL: bgGradientFlowL.checked,
+    gradientFadeL: bgGradientFadeL.checked,
     // Gradient - Radial
     gradientColor1R: ColorPickerModal.getColorFromButton('gradient-color-1R'),
     gradientColor2R: ColorPickerModal.getColorFromButton('gradient-color-2R'),
@@ -337,11 +339,12 @@ function makeSettingsObjectFromInputs() {
     gradientDist1R: gradientDist1R.value,
     gradientDist2R: gradientDist2R.value,
     gradientScrollR: bgGradientScrollR.checked,
-    gradientFlowR: bgGradientFlowR.checked,
+    gradientFadeR: bgGradientFadeR.checked,
     // Image
     imageUrl: bgImageUrl.value,
     imageSize: bgImageSize.value,
     imageScroll: bgImageScroll.checked,
+    imageFade: bgImageFade.checked,
     imageFlow: bgImageFlow.checked,
     imageDimmer: bgDimmer.value,
     imageFileName: bgImageFileName.textContent,

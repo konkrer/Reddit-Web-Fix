@@ -6,12 +6,13 @@ const SIDEBAR_COLLAPSE_DURATION = 650; // ms
 const SIDEBAR_EXPAND_CURVE = 'cubic-bezier(0.4, 0, 0.2, 1)';
 const SIDEBAR_COLLAPSE_CURVE = 'cubic-bezier(0.4, 0, 0.4, 1.3)';
 
-// Transition settings for background when flow is enabled
-const IMAGE_DELAY = 0; // ms
-const IMAGE_DURATION = 300; // ms
-const COLOR_DELAY = 0; // ms
-const COLOR_DURATION = 200; // ms
-const IMAGE_COEFFICIENT = 1.25; // opacity duration coefficient for images
+// Background Transition timings for when flow is enabled
+const BG_FLOW_DELAY = 0; // ms
+const BG_FLOW_DURATION = 200; // ms
+const IMG_FLOW_DELAY = 0; // ms
+const IMG_FLOW_DURATION = 300; // ms
+const IMG_FLOW_OPACITY_COEF = 1.25; // opacity duration coefficient for images
+const IMG_FLOW_OPACITY_DELAY_OFFSET = 50; // ms to offset opacity transition from background transition
 
 // Class to manage page appearance customizations, like background
 export default class Appearance {
@@ -116,51 +117,67 @@ export default class Appearance {
     gridContainer.style.removeProperty('--collapse-curve');
   };
 
-  _getColorFlowCondition = () => {
-    return this.settings.type === 'color' && this.settings.colorFlow;
-  };
-
-  _getGradientFlowCondition = () => {
-    return (
-      this.settings.type === 'gradient' &&
-      ((this.settings.gradientType === 'linear' &&
-        this.settings.gradientFlowL) ||
-        (this.settings.gradientType === 'radial' &&
-          this.settings.gradientFlowR))
-    );
-  };
-
   _getImageFlowCondition = () => {
     return this.settings.type === 'image' && this.settings.imageFlow;
   };
 
-  // Combined flow condition. True if current background type has flow enabled.
+  // Combined flow condition.
   _getFlowCondition = () => {
-    const colorFlow = this._getColorFlowCondition();
-    const gradientFlow = this._getGradientFlowCondition();
-    const imageFlow = this._getImageFlowCondition();
-    return imageFlow || colorFlow || gradientFlow;
+    return this._getImageFlowCondition();
+  };
+
+  _getColorFadeCondition = () => {
+    return this.settings.type === 'color' && this.settings.colorFade;
+  };
+  _getGradientFadeCondition = () => {
+    return (
+      this.settings.type === 'gradient' &&
+      ((this.settings.gradientType === 'linear' &&
+        this.settings.gradientFadeL) ||
+        (this.settings.gradientType === 'radial' &&
+          this.settings.gradientFadeR))
+    );
+  };
+  _getImageFadeCondition = () => {
+    return this.settings.type === 'image' && this.settings.imageFade;
+  };
+
+  _getFadeCondition = () => {
+    const colorFade = this._getColorFadeCondition();
+    const gradientFade = this._getGradientFadeCondition();
+    const imageFade = this._getImageFadeCondition();
+    return imageFade || colorFade || gradientFade;
   };
 
   // Set the background transition on or off (controls image resizing and fade-in on new page load)
   _setBgUnderlayTransition = bgUnderlay => {
     // should flow transitions be set on the bg underlay?
-    if (this._getFlowCondition()) {
-      // these flow transitions use quicker transitions than images
-      const quick =
-        this._getColorFlowCondition() || this._getGradientFlowCondition();
-      const duration = quick ? COLOR_DURATION : IMAGE_DURATION;
-      const delay = quick ? COLOR_DELAY : IMAGE_DELAY;
-
-      // slow fade-in for images to gloss over size-transition jitter on load
-      const adjustedDuration = quick ? duration : duration * IMAGE_COEFFICIENT;
-      const opacityTransitionStr = `opacity ${adjustedDuration}ms ease-in ${delay}ms`;
+    if (this._getFlowCondition() || this._getFadeCondition()) {
+      // if image flow, use image flow timings
+      if (this._getImageFlowCondition()) {
+        var delay = IMG_FLOW_DELAY;
+        var duration = IMG_FLOW_DURATION;
+        var opacityDuration = duration * IMG_FLOW_OPACITY_COEF;
+        var opacityDelay = delay + IMG_FLOW_OPACITY_DELAY_OFFSET;
+      } else {
+        var delay = BG_FLOW_DELAY;
+        var duration = BG_FLOW_DURATION;
+        var opacityDuration = duration;
+        var opacityDelay = delay;
+      }
+      const opacityTransitionStr = `opacity ${opacityDuration}ms ease-in ${opacityDelay}ms`;
       const bgTransitionStr = `background ${duration}ms ease-out ${delay}ms`;
 
-      if (this.initialLoad) {
+      if (this.initialLoad || !this._getFlowCondition()) {
+        // initial load or no flow, so only opacity transition
         bgUnderlay.style.willChange = 'opacity';
         this._addTransitionProperties(bgUnderlay, opacityTransitionStr);
+      } else if (!this._getFadeCondition()) {
+        // no fade, so only background transition
+        bgUnderlay.style.willChange = 'background';
+        this._addTransitionProperties(bgUnderlay, bgTransitionStr);
       } else {
+        // fade and flow, so opacity and background transitions
         bgUnderlay.style.willChange = 'opacity, background';
         this._addTransitionProperties(
           bgUnderlay,
@@ -169,6 +186,7 @@ export default class Appearance {
         );
       }
     } else {
+      // no flow, so no transitions
       bgUnderlay.style.willChange = 'none';
       bgUnderlay.style.transition = 'none';
     }

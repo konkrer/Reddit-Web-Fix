@@ -143,6 +143,14 @@ h3 {
   font-size: 0.85rem;
 }
 
+.fs-09rem {
+  font-size: 0.9rem;
+}
+
+.fs-095rem {
+  font-size: 0.95rem;
+}
+
 /* ============================================
    LAYOUT UTILITIES
    ============================================ */
@@ -227,6 +235,9 @@ h3 {
 .mt-15 {
   margin-top: 15px;
 }
+.mt-20 {
+  margin-top: 20px;
+}
 
 .mb-5 {
   margin-bottom: 5px;
@@ -272,10 +283,6 @@ h3 {
   display: none;
 }
 
-.panel-control {
-  font-size: 0.9rem;
-}
-
 .settings-panel {
   background-color: rgba(99, 47, 47, 0.658);
   padding: 10px;
@@ -294,7 +301,6 @@ h3 {
   gap: 5px;
   transition: opacity 0.6s ease-out;
   opacity: 0;
-  /* transition: 0.6s; */
 }
 
 #blank-settings-message {
@@ -435,9 +441,10 @@ input[type='range'] {
    ============================================ */
 .switch {
   display: inline-block;
-  height:16px;
+  height: 16px;
   position: relative;
-  width: 154px;
+  width: 48px;
+  top: -1px;
 }
 
 .switch input {
@@ -446,10 +453,10 @@ input[type='range'] {
 
 .slider {
   background-color: #724949;
-  bottom: -4px;
-  top: 4px;
+  bottom: -3px;
+  top: 2px;
   cursor: pointer;
-  left: 106px;
+  left: 0px;
   position: absolute;
   right: 0;
   transition: 0.4s;
@@ -468,19 +475,37 @@ input[type='range'] {
 }
 
 input:checked + .slider {
-  background-color: #06145b;
+  background-color: #020f47d8;
 }
-
 input:checked + .slider:before {
   transform: translateX(26px);
 }
-
 .slider.round {
   border-radius: 10px;
 }
-
 .slider.round:before {
   border-radius: 50%;
+}
+
+/* Small toggle switch styles */
+.switch.small-switch {
+  height: 15px;
+  width: 31px;
+}
+.small-switch .slider {
+  left: 0px;
+  bottom: 0px;
+  top: 1px;
+  box-shadow: none;
+}
+.small-switch .slider:before {
+  height: 10px;
+  width: 10px;
+  left: 2px;
+  bottom: 2px;
+}
+.small-switch input:checked + .slider:before {
+  transform: translateX(16px);
 }
 
 /* ============================================
@@ -920,10 +945,6 @@ option::checkmark {
   position: relative;
   top: -3px;
   display: inline-block;
-}
-
-.checkbox-row-item {
-  padding-bottom: 5px;
 }
 
 .deleteBtn {
