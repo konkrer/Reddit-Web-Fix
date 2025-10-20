@@ -150,6 +150,15 @@ function setValuesToElements(settings) {
   sidebarFlow.checked = settings.common.sidebarFlow ?? true;
   // Set color picker values
   setColorPickerValues(settings);
+
+  // Remove no-transition class after a brief delay (toggle switches)
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.slider').forEach(slider => {
+        slider.classList.remove('no-transition');
+      });
+    });
+  });
 }
 
 // Get default color settings from CSS variables

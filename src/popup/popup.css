@@ -477,6 +477,11 @@ input[type='range'] {
   transition: 0.4s;
 }
 
+.slider.no-transition,
+.slider.no-transition:before {
+  transition: none !important;
+}
+
 input:checked + .slider {
   background-color: #020f47d8;
 }
