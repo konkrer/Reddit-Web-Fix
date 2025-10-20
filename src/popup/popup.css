@@ -338,7 +338,7 @@ button {
   border: none;
   background-color: #020720;
   color: var(--text-color);
-  /* border-radius: 5px; */
+  border-radius: 5px;
   cursor: pointer;
   box-shadow: white 0px 0px 2px;
   border: 1px solid transparent;
@@ -358,7 +358,7 @@ button:active {
 }
 
 button[type='submit'] {
-  font-size: large;
+  font-size: 1.07rem;
   text-shadow: rgba(0, 0, 0, 0.722) 0 30px 50px;
 }
 
