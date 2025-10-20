@@ -83,7 +83,7 @@
           <!-- Fade Effect -->
           <div class="control-group align-center justify-center mt-10">
             <label for="bg-color-fade" class="fw-300 fs-09rem">Fade:</label>
-            <label for="bg-color-fade" class="switch">
+            <label for="bg-color-fade" class="switch medium-switch mt-5">
               <input type="checkbox" id="bg-color-fade" checked />
               <div class="slider round"></div
             ></label>
@@ -95,9 +95,9 @@
       <div id="gradient-settings" class="settings-panel d-none">
         <div class="panel-inner">
           <!-- GRADIENT TYPE SELECTOR -->
-          <div for="gradient-type" class="fw-300 fs-09rem ml-5 mb-5">
+          <label for="gradient-type" class="fw-300 fs-09rem ml-5 mb-5">
             Gradient Type:
-          </div>
+          </label>
           <div class="control-group justify-start fs-085rem ml-5">
             <span>
               <label for="linear"
@@ -232,7 +232,7 @@
                 >
                 <label
                   for="bg-gradient-scroll-L"
-                  class="switch small-switch mt-5"
+                  class="switch medium-switch mt-5"
                 >
                   <input type="checkbox" id="bg-gradient-scroll-L" checked />
                   <div class="slider round"></div
@@ -246,7 +246,7 @@
                 >
                 <label
                   for="bg-gradient-fade-L"
-                  class="switch small-switch mt-5"
+                  class="switch medium-switch mt-5"
                 >
                   <input type="checkbox" id="bg-gradient-fade-L" checked />
                   <div class="slider round"></div
@@ -357,7 +357,7 @@
                 >
                 <label
                   for="bg-gradient-scroll-R"
-                  class="switch small-switch mt-5"
+                  class="switch medium-switch mt-5"
                 >
                   <input type="checkbox" id="bg-gradient-scroll-R" checked />
                   <div class="slider round"></div
@@ -371,7 +371,7 @@
                 >
                 <label
                   for="bg-gradient-fade-R"
-                  class="switch small-switch mt-5"
+                  class="switch medium-switch mt-5"
                 >
                   <input type="checkbox" id="bg-gradient-fade-R" checked />
                   <div class="slider round"></div
@@ -386,14 +386,12 @@
       <div id="image-settings" class="settings-panel pos-relative d-none">
         <div class="panel-inner">
           <!-- Image from URL -->
-          <div>
             <label for="bg-image-url" class="fs-08rem mr-10 fw-400"
-              >Image URL:</label
-            >
+              >Image URL:
             <span class="float-right">
               <button
                 type="reset"
-                class="fw-300 btn-sm ml-5"
+                class="fw-300 btn-sm ml-5 image-url-btn"
                 title="Clear image URL"
               >
                 Clear
@@ -401,7 +399,7 @@
               <button
                 id="history-btn"
                 type="button"
-                class="fw-300 btn-sm ml-10"
+                class="fw-300 btn-sm ml-10 image-url-btn"
                 title="View image history"
               >
                 History
@@ -409,8 +407,8 @@
               <div id="history-popup" class="history-popup">
                 <div id="history-list"></div>
               </div>
-            </span>
-          </div>
+            </span></label
+            >
 
           <input
             type="text"
@@ -421,13 +419,13 @@
             title="Enter image URL"
           />
 
-          <!-- Image from file CHROME / EDGE ONLY -->
+          <!-- Image from file -->
           <div class="width-100">
             <div class="control-group justify-between mt-5">
               <label for="bg-image-file" class="fs-08rem mr-10 fw-400"
                 >Or select a local file:</label
               >
-              <span id="image-file-name" class="fw-300 image-file-name"></span>
+              <span id="image-file-name" class="fw-300 image-file-name mr-10"></span>
             </div>
             <input
               type="file"
@@ -435,7 +433,6 @@
               accept="image/*"
               class="width-100 mt-5"
             />
-
             <button
               type="button"
               id="enable-file-upload-btn"
@@ -446,7 +443,7 @@
           </div>
 
           <!-- Image controls -->
-          <div class="control-group justify-between">
+          <div class="control-group justify-between image-controls">
             <!-- Image size -->
             <span class="fs-08rem">
               <label for="bg-image-size" class="fw-300">Size:</label>
@@ -471,7 +468,7 @@
 
             <!-- Scroll Lock: -->
             <div class="fs-08rem">
-              <label for="bg-image-scroll" class="fw-300 d-block">Scroll</label>
+              <label for="bg-image-scroll" class="fw-300 d-block mb-1">Scroll</label>
               <label
                 for="bg-image-scroll"
                 class="fw-200 fs-09rem switch small-switch"
@@ -487,7 +484,7 @@
 
             <!-- Fade Effect: -->
             <div class="fs-08rem">
-              <label for="bg-image-fade" class="fw-300 d-block">Fade</label>
+              <label for="bg-image-fade" class="fw-300 d-block mb-1">Fade</label>
               <label
                 for="bg-image-fade"
                 class="fw-200 fs-09rem switch small-switch"
@@ -503,7 +500,7 @@
 
             <!-- Flow Effect: -->
             <div class="fs-08rem">
-              <label for="bg-image-flow" class="fw-300 d-block">Flow</label>
+              <label for="bg-image-flow" class="fw-300 d-block mb-1">Flow</label>
               <label
                 for="bg-image-flow"
                 class="fw-200 fs-09rem switch small-switch"
@@ -519,7 +516,7 @@
           </div>
 
           <!-- Image dimmer -->
-          <div class="mt-5">
+          <div class="mt-10">
             <label for="bg-dimmer" class="fw-300 fs-08rem bg-dimmer-label"
               >Dimmer:</label
             >

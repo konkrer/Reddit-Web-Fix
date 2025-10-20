@@ -12,7 +12,7 @@ body {
   margin: 0;
   background: linear-gradient(#530404, 80%, #3b0000f5);
   color: rgb(219, 209, 209);
-  box-shadow: inset black 0px 30px 55px;
+  box-shadow: inset black 0px 28px 55px;
   font-size: 100%;
 }
 
@@ -75,7 +75,7 @@ h1 {
   color: black;
   font-size: xx-large;
   font-family: monospace;
-  text-shadow: var(--text-color-shadow) 0px 0px 12px;
+  text-shadow: var(--text-color-shadow) 0px 1px 12px;
   block-size: 35px;
 }
 
@@ -239,6 +239,9 @@ h3 {
   margin-top: 20px;
 }
 
+.mb-1 {
+  margin-bottom: 1px;
+}
 .mb-5 {
   margin-bottom: 5px;
 }
@@ -485,6 +488,27 @@ input:checked + .slider:before {
 }
 .slider.round:before {
   border-radius: 50%;
+}
+
+/* Medium toggle switch styles */
+.switch.medium-switch {
+  height: 18px;
+  width: 34px;
+}
+.medium-switch .slider {
+  left: 0px;
+  bottom: 1px;
+  top: 1px;
+  box-shadow: none;
+}
+.medium-switch .slider:before {
+  height: 12px;
+  width: 12px;
+  left: 3px;
+  bottom: 2px;
+}
+.medium-switch input:checked + .slider:before {
+  transform: translateX(15px);
 }
 
 /* Small toggle switch styles */
@@ -830,12 +854,12 @@ option::checkmark {
 .image-file-name {
   color: black;
   font-size: xx-small;
-  background: antiquewhite;
+  background: #d73f00;
   border-radius: 3px;
   max-width: 125px;
   display: none;
   overflow: clip;
-  font-weight: normal;
+  font-weight: 600;
   text-wrap: nowrap;
   padding: 2px 3px;
 }
@@ -1012,4 +1036,13 @@ option::checkmark {
 
 .enable-file-upload-btn:active {
   background-color: var(--accent-color-active);
+}
+
+.image-url-btn {
+  position: relative;
+  top: -2px;
+}
+
+.image-controls {
+  margin-top: 7px;
 }
