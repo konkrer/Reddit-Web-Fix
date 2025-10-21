@@ -386,8 +386,8 @@
       <div id="image-settings" class="settings-panel pos-relative d-none">
         <div class="panel-inner">
           <!-- Image from URL -->
-            <label for="bg-image-url" class="fs-08rem mr-10 fw-400"
-              >Image URL:
+          <label for="bg-image-url" class="fs-08rem mr-10 fw-400"
+            >Image URL:
             <span class="float-right">
               <button
                 type="reset"
@@ -406,9 +406,8 @@
               </button>
               <div id="history-popup" class="history-popup">
                 <div id="history-list"></div>
-              </div>
-            </span></label
-            >
+              </div> </span
+          ></label>
 
           <input
             type="text"
@@ -425,7 +424,10 @@
               <label for="bg-image-file" class="fs-08rem mr-10 fw-400"
                 >Or select a local file:</label
               >
-              <span id="image-file-name" class="fw-300 image-file-name mr-10"></span>
+              <span
+                id="image-file-name"
+                class="fw-300 image-file-name mr-10"
+              ></span>
             </div>
             <input
               type="file"
@@ -468,7 +470,9 @@
 
             <!-- Scroll Lock: -->
             <div class="fs-08rem">
-              <label for="bg-image-scroll" class="fw-300 d-block mb-1">Scroll</label>
+              <label for="bg-image-scroll" class="fw-300 d-block mb-1"
+                >Scroll</label
+              >
               <label
                 for="bg-image-scroll"
                 class="fw-200 fs-09rem switch small-switch"
@@ -484,7 +488,9 @@
 
             <!-- Fade Effect: -->
             <div class="fs-08rem">
-              <label for="bg-image-fade" class="fw-300 d-block mb-1">Fade</label>
+              <label for="bg-image-fade" class="fw-300 d-block mb-1"
+                >Fade</label
+              >
               <label
                 for="bg-image-fade"
                 class="fw-200 fs-09rem switch small-switch"
@@ -500,7 +506,9 @@
 
             <!-- Flow Effect: -->
             <div class="fs-08rem">
-              <label for="bg-image-flow" class="fw-300 d-block mb-1">Flow</label>
+              <label for="bg-image-flow" class="fw-300 d-block mb-1"
+                >Flow</label
+              >
               <label
                 for="bg-image-flow"
                 class="fw-200 fs-09rem switch small-switch"
@@ -550,10 +558,19 @@
       </div>
 
       <!-- SIDEBAR FLOW TOGGLE -->
-      <div class="control-group align-center justify-between mb-5">
+      <div class="control-group align-center justify-between">
         <label for="sidebar-flow" class="fw-200 fs-095rem">Sidebar Flow:</label>
         <label for="sidebar-flow" class="switch mr-15">
           <input type="checkbox" id="sidebar-flow" checked />
+          <div class="slider no-transition round"></div
+        ></label>
+      </div>
+
+      <!-- DRAG SCROLL TOGGLE -->
+      <div class="control-group align-center justify-between mb-5">
+        <label for="drag-scroll" class="fw-200 fs-095rem">Drag Scroll:</label>
+        <label for="drag-scroll" class="switch mr-15">
+          <input type="checkbox" id="drag-scroll" checked />
           <div class="slider no-transition round"></div
         ></label>
       </div>

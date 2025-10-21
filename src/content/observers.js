@@ -24,6 +24,7 @@ export class MainObserver {
   // Apply the background to the grid container - which is its own "parent".
   _processGridParentNode(node) {
     this.coordinator.applyBackground();
+    this.coordinator.addDragScroll();
     this.coordinator.log('Grid container processed.');
   }
 

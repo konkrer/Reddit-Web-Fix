@@ -64,6 +64,7 @@ const bgDimmer = document.getElementById('bg-dimmer');
 const bgDimmerValue = document.getElementById('bg-dimmer-value');
 // Common
 const sidebarFlow = document.getElementById('sidebar-flow');
+const dragScroll = document.getElementById('drag-scroll');
 
 // --- Misc Functions ---
 
@@ -148,6 +149,7 @@ function setValuesToElements(settings) {
   setImageFileName(settings.common.imageFileName);
   // Common
   sidebarFlow.checked = settings.common.sidebarFlow ?? true;
+  dragScroll.checked = settings.common.dragScroll ?? true;
   // Set color picker values
   setColorPickerValues(settings);
 
@@ -359,6 +361,7 @@ function makeSettingsObjectFromInputs() {
     imageFileName: bgImageFileName.textContent,
     // Common
     sidebarFlow: sidebarFlow.checked,
+    dragScroll: dragScroll.checked,
   };
 }
 
@@ -523,7 +526,7 @@ if (isFirefox) {
 
     // Size of popup window to be opened
     const windowWidth = 350;
-    const windowHeight = 560;
+    const windowHeight = 597;
 
     // Get click position relative to screen
     const clickX = e.screenX;

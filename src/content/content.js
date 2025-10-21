@@ -6,7 +6,7 @@
 const BLOCKED_PREFIXES = ['/settings', '/drafts', '/premium', '/reddit-pro'];
 
 // placeholders for imports and instances
-let VoteSync, MainObserver, HrefObserver, Appearance; // class imports
+let VoteSync, MainObserver, HrefObserver, Appearance, DragScroll; // class imports
 let CO; // instances
 let VERBOSE = false;
 
@@ -16,6 +16,7 @@ class RedditFixCoordinator {
     this.hrefObserver = new HrefObserver(this);
     this.voteSync = null;
     this.mainObserver = null;
+    this.dragScroll = null;
     this.verbose = verbose;
     this.guardedStart();
   }
@@ -39,6 +40,7 @@ class RedditFixCoordinator {
     this.appearance = new Appearance(this);
     this.voteSync = new VoteSync(this);
     this.mainObserver = new MainObserver(this);
+    this.dragScroll = new DragScroll();
     this.mainObserver.startMainObserver();
   }
 
@@ -47,6 +49,7 @@ class RedditFixCoordinator {
     if (this.mainObserver) this.mainObserver.stopMainObserver();
     if (this.hrefObserver) this.hrefObserver.stopHrefPoller();
     if (this.voteSync) this.voteSync.removeHandlersFromPosts();
+    if (this.dragScroll) this.dragScroll.removeDragListener();
     this.log('Reddit Web Fix: shut down.');
   }
 
@@ -74,8 +77,14 @@ class RedditFixCoordinator {
   clearBackground() {
     this.appearance?.clearBackground();
   }
+  addDragScroll() {
+    this.dragScroll?.addDragListener();
+  }
+  removeDragScroll() {
+    this.dragScroll?.removeDragListener();
+  }
 
-  log(message, data='') {
+  log(message, data = '') {
     if (this.verbose) {
       console.debug(message, data);
     }
@@ -170,15 +179,21 @@ async function loadModules() {
   const appearanceProm = import(
     chrome.runtime.getURL('src/content/Appearance.js')
   );
-  const [observerMod, voteSyncMod, appearanceMod] = await Promise.all([
-    observerProm,
-    voteSyncProm,
-    appearanceProm,
-  ]);
+  const dragScrollProm = import(
+    chrome.runtime.getURL('src/content/DragScroll.js')
+  );
+  const [observerMod, voteSyncMod, appearanceMod, dragScrollMod] =
+    await Promise.all([
+      observerProm,
+      voteSyncProm,
+      appearanceProm,
+      dragScrollProm,
+    ]);
   if (voteSyncMod && observerMod && appearanceMod) {
     VoteSync = voteSyncMod.default;
     ({ MainObserver, HrefObserver } = observerMod);
     Appearance = appearanceMod.default;
+    DragScroll = dragScrollMod.default;
   } else {
     throw new Error('Failed to load modules.');
   }
