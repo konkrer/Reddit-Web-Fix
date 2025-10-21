@@ -18,12 +18,12 @@
         "src/polyfill/browser-polyfill.min.js",
         "src/content/constants.js",
         "src/utils/storage.js",
-        "icons/goldenSyncIcon.png",
         "src/content/animation.js",
         "src/content/VoteSync.js",
         "src/content/observers.js",
         "src/content/Appearance.js",
-        "src/content/DragScroll.js"
+        "src/content/DragScroll.js",
+        "icons/goldenSyncIcon.png"
       ],
       "matches": ["https://www.reddit.com/*"]
     }
