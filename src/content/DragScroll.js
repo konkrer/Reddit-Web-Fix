@@ -4,6 +4,9 @@ const DEFAULT_ACTIVE_TIERS = 3; // less tiers (slower speeds) for feed pages wit
 const DEFAULT_TIER_WIDTH = 50; // pixels per scroll control tier for feed pages
 const DETAIL_PAGE_TIER_WIDTH = 20; // pixels per scroll control tier
 const DEAD_ZONE_WIDTH = 100;
+const SCROLLWHEEL_MOVE_THRESHOLD = 2;
+const SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD_DEFAULT = 3; // default threshold for scroll move detection
+let SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD = 1; // small threshold for initial scroll move detection
 
 export default class DragScroll {
   constructor() {
@@ -24,7 +27,9 @@ export default class DragScroll {
     this.scrollLevel = 0;
     this.scrollVelocity = 0; // pixels per second
     this.targetVelocity = 0; // Target velocity we're interpolating towards
-    this.velocityLerpSpeed = 0.05 // How fast to interpolate (0-1, higher = faster transition)
+    this.velocityLerpSpeed = 0.05; // How fast to interpolate (0-1, higher = faster transition)
+    this.scrollWheelLastMove = 0;
+    this.scrollWheelLastMoveCount = 0;
 
     // check browser local storage for drag scroll setting and add drag listener
     this.loadSettings();
@@ -78,6 +83,8 @@ export default class DragScroll {
   }
 
   handleDragStart = event => {
+    event.preventDefault();
+    event.stopPropagation();
     // make sure mouse button one is pressed
     if (event.button !== 0 || this.dragEvent) return;
     if (
@@ -87,8 +94,9 @@ export default class DragScroll {
     ) {
       event.preventDefault();
       event.stopPropagation();
-      this.dragEvent = event;
+      this.dragEvent = event.clientY;
       this.gridContainer.addEventListener('mousemove', this.handleDragMove);
+      this.gridContainer.addEventListener('wheel', this.handleScrollMove);
       this.gridContainer.addEventListener('mouseup', this.handleDragEnd);
       document.addEventListener('keydown', this.handleDragEnd);
       this.gridContainer.style.cursor = 'row-resize';
@@ -100,7 +108,7 @@ export default class DragScroll {
     event.stopPropagation();
     if (!this.dragEvent) return;
 
-    const dragDistance = event.clientY - this.dragEvent.clientY;
+    const dragDistance = event.clientY - this.dragEvent;
     const sign = Math.sign(dragDistance);
 
     const deadZoneEnd =
@@ -111,29 +119,71 @@ export default class DragScroll {
       this.targetVelocity = 0;
       return;
     }
-    // make opposite dead zone wider while mouse is in the original scroll direction
+    this.checkForFirstScrollMove(sign);
+    // set auto-scroll state based on the drag distance
+    this.setScrollStateFromDragDistance(dragDistance);
+  };
+
+  handleScrollMove = event => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.dragEvent) return;
+
+    const scrollDistance = event.deltaY;
+    const sign = Math.sign(scrollDistance);
+    const isMove = this.determineScrollWheelMove(sign);
+
+    if (isMove === false) {
+      return;
+    }
+    this.checkForFirstScrollMove(sign);
+    this.bumpScrollLevel(sign, event);
+    SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD =
+      SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD_DEFAULT;
+  };
+
+  // make opposite dead zone wider while mouse is in the original scroll direction
+  checkForFirstScrollMove = sign => {
     if (!this.scrollWasActivated) {
-      if (sign === 1) this.negDeadZoneWidth = DEAD_ZONE_WIDTH - this.posDeadZoneWidth ;
+      if (sign === 1)
+        this.negDeadZoneWidth = DEAD_ZONE_WIDTH - this.posDeadZoneWidth;
       else this.posDeadZoneWidth = DEAD_ZONE_WIDTH - this.negDeadZoneWidth;
       this.scrollWasActivated = true;
     }
-    // set auto-scroll state based on the drag distance
-    this.setScrollState(dragDistance);
+  };
+
+  determineScrollWheelMove = sign => {
+    if (this.scrollWheelLastMove === sign) {
+      this.scrollWheelLastMoveCount++;
+    } else {
+      this.scrollWheelLastMove = sign;
+      this.scrollWheelLastMoveCount = 0;
+    }
+    // larger threshold for deadzone to make easier to find
+    const threshold =
+      this.scrollLevel === 0
+        ? SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD
+        : SCROLLWHEEL_MOVE_THRESHOLD;
+
+    if (this.scrollWheelLastMoveCount >= threshold) {
+      this.scrollWheelLastMoveCount = 0;
+      SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD =
+        SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD_DEFAULT;
+      return true;
+    }
+    return false;
   };
 
   // set the auto-scroll level based on the drag distance
-  setScrollState = dragDistance => {
+  setScrollStateFromDragDistance = dragDistance => {
     const sign = Math.sign(dragDistance);
-    const fn = sign === 1 ? this.scrollDown : this.scrollUp;
-    const icons = sign === 1 ? DOWN_ICONS : UP_ICONS;
-    const defaultCursor = sign === 1 ? 's-resize' : 'n-resize';
 
-    // iterate over the scroll tiers in reverse order to see if any lower bound is passed
-    // with early exit from loop once the highest tier's lower bound is passed
     const deadZoneEnd =
       sign === 1 ? this.posDeadZoneWidth : this.negDeadZoneWidth;
     const tierAdjustment = this.scrollControlTierWidth - deadZoneEnd;
 
+    // iterate over the scroll tiers in reverse order to see if any lower bound is passed
+    // with early exit from loop once the highest tier's lower bound is passed
     for (let i = this.activeTiers; i > 0; i--) {
       const tierLowerBound = this.scrollControlTierWidth * i - tierAdjustment;
       if (Math.abs(dragDistance) >= tierLowerBound) {
@@ -142,17 +192,48 @@ export default class DragScroll {
         if (this.scrollLevel === newScrollLevel) return;
         this.scrollLevel = newScrollLevel;
 
-        // only set cursor up or down icon coming from stop or opposite direction
-        if (this.scrollVelocity === 0) {
-          this.gridContainer.style.cursor = `url(${
-            icons[i - 1]
-          }), ${defaultCursor}`;
-          setTimeout(() => fn(i), 0); // delay auto-scroll for cursor update to avoid jank
-        } else {
-          fn(i);
-        }
+        this.setCursor_SetScroll(sign, i);
         return;
       }
+    }
+  };
+
+  bumpScrollLevel = (sign, event) => {
+    let newScrollLevel = sign + this.scrollLevel;
+    // clamp the pos/neg scroll level to the active tiers
+    newScrollLevel =
+      sign === 1
+        ? Math.min(newScrollLevel, this.activeTiers)
+        : Math.max(newScrollLevel, -this.activeTiers);
+
+    if (this.scrollLevel === newScrollLevel) return;
+    this.scrollLevel = newScrollLevel;
+
+    if (newScrollLevel === 0) {
+      this.targetVelocity = 0;
+      return;
+    }
+    this.setCursor_SetScroll(
+      Math.sign(newScrollLevel),
+      Math.abs(newScrollLevel)
+    );
+    this.dragEvent =
+      event.clientY - this.scrollControlTierWidth * newScrollLevel;
+  };
+
+  setCursor_SetScroll = (direction, level) => {
+    const fn = direction === 1 ? this.scrollDown : this.scrollUp;
+    const icons = direction === 1 ? DOWN_ICONS : UP_ICONS;
+    const defaultCursor = direction === 1 ? 's-resize' : 'n-resize';
+
+    // only set cursor up or down icon coming from stop or opposite direction
+    if (this.scrollVelocity === 0) {
+      this.gridContainer.style.cursor = `url(${
+        icons[level - 1]
+      }), ${defaultCursor}`;
+      setTimeout(() => fn(level), 0); // delay auto-scroll for cursor update to avoid jank
+    } else {
+      fn(level);
     }
   };
 
@@ -181,58 +262,56 @@ export default class DragScroll {
     if (this.scrollVelocity === 0) {
       this.scrollVelocity = targetVelocity * 0.1;
     }
+
     this.lastScrollTime = performance.now();
+    this.scrollTimer = requestAnimationFrame(this.scrollCallback);
+  };
 
-    const scrollCallback = currentTime => {
-      if (!this.lastScrollTime) this.lastScrollTime = currentTime;
+  scrollCallback = currentTime => {
+    if (!this.lastScrollTime) this.lastScrollTime = currentTime;
 
-      const deltaTime = currentTime - this.lastScrollTime;
-      this.lastScrollTime = currentTime;
+    const deltaTime = currentTime - this.lastScrollTime;
+    this.lastScrollTime = currentTime;
 
-      // Smoothly interpolate current velocity towards target velocity
-      this.scrollVelocity +=
-        (this.targetVelocity - this.scrollVelocity) * this.velocityLerpSpeed;
+    // Smoothly interpolate current velocity towards target velocity
+    this.scrollVelocity +=
+      (this.targetVelocity - this.scrollVelocity) * this.velocityLerpSpeed;
 
-      if (this.targetVelocity === 0 && Math.abs(this.scrollVelocity) < 55) {
-        // Fully stopped - clean up
-        this.scrollTimer = null;
-        this.scrollVelocity = 0;
-        this.lastScrollTime = null;
-        this.gridContainer.style.cursor = this.dragEvent
-          ? 'row-resize'
-          : 'auto';
-        return;
-      }
+    if (this.targetVelocity === 0 && Math.abs(this.scrollVelocity) < 55) {
+      // Fully stopped - clean up
+      this.scrollTimer = null;
+      this.scrollVelocity = 0;
+      this.lastScrollTime = null;
+      this.gridContainer.style.cursor = this.dragEvent ? 'row-resize' : 'auto';
+      return;
+    }
 
-      // Calculate distance based on current interpolated velocity
-      const distance = (this.scrollVelocity * deltaTime) / 1000;
-      const maxScroll = document.body.scrollHeight - window.innerHeight;
-      const newPosition = Math.max(
-        0,
-        Math.min(window.pageYOffset + distance, maxScroll)
-      );
+    // Calculate distance based on current interpolated velocity
+    const distance = (this.scrollVelocity * deltaTime) / 1000;
+    const maxScroll = document.body.scrollHeight - window.innerHeight;
+    const newPosition = Math.max(
+      0,
+      Math.min(window.pageYOffset + distance, maxScroll)
+    );
 
-      // Check if we should continue scrolling
-      const atTop = newPosition <= 0 && this.targetVelocity < 0;
-      const atBottom = newPosition >= maxScroll && this.targetVelocity > 0;
+    // Check if we should continue scrolling
+    const atTop = newPosition <= 0 && this.targetVelocity < 0;
+    const atBottom = newPosition >= maxScroll && this.targetVelocity > 0;
 
-      if (!atTop && !atBottom) {
-        window.scrollTo({
-          top: newPosition,
-          behavior: this.scrollBehavior,
-        });
-        this.scrollTimer = requestAnimationFrame(scrollCallback);
-      } else {
-        // Reached boundary
-        window.scrollTo({ top: newPosition, behavior: this.scrollBehavior });
-        this.scrollTimer = null;
-        this.scrollVelocity = 0;
-        this.targetVelocity = 0;
-        this.lastScrollTime = null;
-      }
-    };
-
-    this.scrollTimer = requestAnimationFrame(scrollCallback);
+    if (!atTop && !atBottom) {
+      window.scrollTo({
+        top: newPosition,
+        behavior: this.scrollBehavior,
+      });
+      this.scrollTimer = requestAnimationFrame(this.scrollCallback);
+    } else {
+      // Reached boundary
+      window.scrollTo({ top: newPosition, behavior: this.scrollBehavior });
+      this.scrollTimer = null;
+      this.scrollVelocity = 0;
+      this.targetVelocity = 0;
+      this.lastScrollTime = null;
+    }
   };
 
   handleDragEnd = event => {
@@ -243,6 +322,7 @@ export default class DragScroll {
 
   dragEndCancel = () => {
     this.gridContainer.removeEventListener('mousemove', this.handleDragMove);
+    this.gridContainer.removeEventListener('wheel', this.handleScrollMove);
     this.gridContainer.removeEventListener('mouseup', this.handleDragEnd);
     document.removeEventListener('keydown', this.handleDragEnd);
 
@@ -251,6 +331,8 @@ export default class DragScroll {
     this.dragEvent = null;
     this.scrollLevel = 0;
     this.targetVelocity = 0;
+    this.scrollWheelLastMove = 0;
+    this.scrollWheelLastMoveCount = 0;
 
     if (!this.scrollTimer) {
       this.gridContainer.style.cursor = 'auto';
@@ -268,6 +350,7 @@ export default class DragScroll {
     this.posDeadZoneWidth = this.initDeadZoneWidth / 2;
     this.negDeadZoneWidth = this.initDeadZoneWidth / 2;
     this.scrollWasActivated = false;
+    SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD = SCROLLWHEEL_MOVE_THRESHOLD;
   }
 
   // Test for detail page being current page
