@@ -78,7 +78,10 @@ class RedditFixCoordinator {
     this.appearance?.clearBackground();
   }
   addDragScroll() {
-    this.dragScroll?.addDragListener();
+    // delay for proper page detection
+    setTimeout(() => {
+      this.dragScroll?.addDragListener();
+    }, 1000);
   }
   removeDragScroll() {
     this.dragScroll?.removeDragListener();

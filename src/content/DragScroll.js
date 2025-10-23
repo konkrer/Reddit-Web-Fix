@@ -1,21 +1,30 @@
 'use strict';
 
+const DEFAULT_ACTIVE_TIERS = 3; // less tiers (slower speeds) for feed pages with virtual scroll
+const DEFAULT_TIER_WIDTH = 50; // pixels per scroll control tier for feed pages
+const DETAIL_PAGE_TIER_WIDTH = 20; // pixels per scroll control tier
+const DEAD_ZONE_WIDTH = 100;
+
 export default class DragScroll {
   constructor() {
-    const isFirefox =
-      typeof InstallTrigger !== 'undefined' ||
-      navigator.userAgent.includes('Firefox');
-
-    this.scrollIntervals = [17, 9, 6, 4, 4, 4, 4];
-    this.distanceCoef = [1, 1, 1, 1, 1.5, 3.5, 6];
-    this.scrollDistance = isFirefox ? 4 : 1;
-    this.scrollControlTierWidth = 15; // pixels per scroll control tier
+    this.dragScroll = true;
+    this.detailPage = false;
+    this.scrollWasActivated = false;
+    this.scrollControlTierWidth = DEFAULT_TIER_WIDTH; // pixels per scroll control tier
+    this.initDeadZoneWidth = 16;
+    this.posDeadZoneWidth = this.initDeadZoneWidth / 2;
+    this.negDeadZoneWidth = this.initDeadZoneWidth / 2;
+    this.velocities = [60, 200, 300, 500, 800, 1200, 1700, 2500];
+    this.activeTiers = DEFAULT_ACTIVE_TIERS;
     this.scrollBehavior = 'instant';
     this.scrollTimer = null;
+    this.lastScrollTime = null;
     this.dragEvent = null;
     this.gridContainer = null;
     this.scrollLevel = 0;
-    this.dragScroll = true;
+    this.scrollVelocity = 0; // pixels per second
+    this.targetVelocity = 0; // Target velocity we're interpolating towards
+    this.velocityLerpSpeed = 0.05 // How fast to interpolate (0-1, higher = faster transition)
 
     // check browser local storage for drag scroll setting and add drag listener
     this.loadSettings();
@@ -24,7 +33,7 @@ export default class DragScroll {
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace === 'local' && changes.backgroundSettings) {
         this.dragScroll = changes.backgroundSettings.newValue.common.dragScroll;
-        if (this.dragScroll) {
+        if (this.dragScroll === true) {
           this.addDragListener();
         } else {
           this.removeDragListener();
@@ -44,25 +53,33 @@ export default class DragScroll {
     if (settings?.backgroundSettings) {
       this.dragScroll = settings.backgroundSettings.common.dragScroll ?? true;
     }
-    this.addDragListener();
+    if (this.dragScroll === true) {
+      this.addDragListener();
+    } else {
+      this.removeDragListener();
+    }
   }
 
   addDragListener() {
     this.gridContainer = document.querySelector('.grid-container');
     if (!this.gridContainer) return;
     if (!this.dragScroll) return;
+
+    this.detailPage = this.testForDetailPage();
+    this.scrollControlTierWidth = this.detailPage
+      ? DETAIL_PAGE_TIER_WIDTH
+      : DEFAULT_TIER_WIDTH;
+    this.activeTiers = this.detailPage
+      ? this.velocities.length
+      : DEFAULT_ACTIVE_TIERS;
+
     this.gridContainer.addEventListener('dblclick', this.handleDragStart);
     this.gridContainer.addEventListener('mousedown', this.handleDragStart);
   }
 
-  stopEventPropagation = event => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-
   handleDragStart = event => {
     // make sure mouse button one is pressed
-    if (event.button !== 0) return;
+    if (event.button !== 0 || this.dragEvent) return;
     if (
       event.target.classList.contains('grid-container') ||
       event.target.classList.contains('subgrid-container') ||
@@ -73,6 +90,7 @@ export default class DragScroll {
       this.dragEvent = event;
       this.gridContainer.addEventListener('mousemove', this.handleDragMove);
       this.gridContainer.addEventListener('mouseup', this.handleDragEnd);
+      document.addEventListener('keydown', this.handleDragEnd);
       this.gridContainer.style.cursor = 'row-resize';
     }
   };
@@ -83,35 +101,56 @@ export default class DragScroll {
     if (!this.dragEvent) return;
 
     const dragDistance = event.clientY - this.dragEvent.clientY;
-    if (
-      dragDistance < this.scrollControlTierWidth &&
-      dragDistance > -this.scrollControlTierWidth
-    ) {
+    const sign = Math.sign(dragDistance);
+
+    const deadZoneEnd =
+      sign === 1 ? this.posDeadZoneWidth : this.negDeadZoneWidth;
+    // if the drag distance is in the auto-scroll deadzone, stop the auto-scroll
+    if (Math.abs(dragDistance) < deadZoneEnd) {
       this.scrollLevel = 0;
-      clearInterval(this.scrollTimer);
-      this.scrollTimer = null;
-      this.gridContainer.style.cursor = 'row-resize';
+      this.targetVelocity = 0;
       return;
     }
-    // if mouse dragged more than 50px up or down, scroll the grid container up or down
+    // make opposite dead zone wider while mouse is in the original scroll direction
+    if (!this.scrollWasActivated) {
+      if (sign === 1) this.negDeadZoneWidth = DEAD_ZONE_WIDTH - this.posDeadZoneWidth ;
+      else this.posDeadZoneWidth = DEAD_ZONE_WIDTH - this.negDeadZoneWidth;
+      this.scrollWasActivated = true;
+    }
+    // set auto-scroll state based on the drag distance
     this.setScrollState(dragDistance);
   };
 
+  // set the auto-scroll level based on the drag distance
   setScrollState = dragDistance => {
-    const sign = dragDistance > 0 ? 1 : -1;
-    const absDistance = dragDistance * sign;
+    const sign = Math.sign(dragDistance);
     const fn = sign === 1 ? this.scrollDown : this.scrollUp;
     const icons = sign === 1 ? DOWN_ICONS : UP_ICONS;
     const defaultCursor = sign === 1 ? 's-resize' : 'n-resize';
 
-    for (let i = this.scrollIntervals.length; i > 0; i--) {
-      if (absDistance > this.scrollControlTierWidth * i) {
-        if (this.scrollLevel === sign * i) return;
-        this.gridContainer.style.cursor = `url(${
-          icons[i - 1]
-        }), ${defaultCursor}`;
-        fn(i);
-        this.scrollLevel = sign * 1;
+    // iterate over the scroll tiers in reverse order to see if any lower bound is passed
+    // with early exit from loop once the highest tier's lower bound is passed
+    const deadZoneEnd =
+      sign === 1 ? this.posDeadZoneWidth : this.negDeadZoneWidth;
+    const tierAdjustment = this.scrollControlTierWidth - deadZoneEnd;
+
+    for (let i = this.activeTiers; i > 0; i--) {
+      const tierLowerBound = this.scrollControlTierWidth * i - tierAdjustment;
+      if (Math.abs(dragDistance) >= tierLowerBound) {
+        // if the lower bound is passed, set the scroll level to the current tier
+        const newScrollLevel = sign * i;
+        if (this.scrollLevel === newScrollLevel) return;
+        this.scrollLevel = newScrollLevel;
+
+        // only set cursor up or down icon coming from stop or opposite direction
+        if (this.scrollVelocity === 0) {
+          this.gridContainer.style.cursor = `url(${
+            icons[i - 1]
+          }), ${defaultCursor}`;
+          setTimeout(() => fn(i), 0); // delay auto-scroll for cursor update to avoid jank
+        } else {
+          fn(i);
+        }
         return;
       }
     }
@@ -119,63 +158,123 @@ export default class DragScroll {
 
   scrollUp = level => {
     if (window.pageYOffset === 0) return;
-    if (this.scrollTimer) clearInterval(this.scrollTimer);
-
-    const distCoef = this.distanceCoef[level - 1];
-
-    const scrollUpCallback = () => {
-      window.scrollTo({
-        top: Math.max(window.pageYOffset - this.scrollDistance * distCoef, 0),
-        behavior: this.scrollBehavior,
-      });
-    };
-    this.scrollTimer = setInterval(
-      scrollUpCallback,
-      this.scrollIntervals[level - 1]
-    );
+    const targetVelocity = -this.velocities[level - 1];
+    this.startScroll(targetVelocity);
   };
 
   scrollDown = level => {
-    if (window.pageYOffset === document.body.scrollHeight) return;
-    if (this.scrollTimer) clearInterval(this.scrollTimer);
+    const maxScroll = document.body.scrollHeight - window.innerHeight;
+    if (window.pageYOffset >= maxScroll) return;
+    const targetVelocity = this.velocities[level - 1];
+    this.startScroll(targetVelocity);
+  };
 
-    const distCoef = this.distanceCoef[level - 1];
+  // Unified scroll method
+  startScroll = targetVelocity => {
+    // Update target velocity
+    this.targetVelocity = targetVelocity;
 
-    const scrollDownCallback = () => {
-      window.scrollTo({
-        top: Math.min(
-          window.pageYOffset + this.scrollDistance * distCoef,
-          document.body.scrollHeight
-        ),
-        behavior: this.scrollBehavior,
-      });
+    // If already scrolling, just update the target and let interpolation handle it
+    if (this.scrollTimer) return;
+
+    // Starting fresh - only initialize if we're at rest
+    if (this.scrollVelocity === 0) {
+      this.scrollVelocity = targetVelocity * 0.1;
+    }
+    this.lastScrollTime = performance.now();
+
+    const scrollCallback = currentTime => {
+      if (!this.lastScrollTime) this.lastScrollTime = currentTime;
+
+      const deltaTime = currentTime - this.lastScrollTime;
+      this.lastScrollTime = currentTime;
+
+      // Smoothly interpolate current velocity towards target velocity
+      this.scrollVelocity +=
+        (this.targetVelocity - this.scrollVelocity) * this.velocityLerpSpeed;
+
+      if (this.targetVelocity === 0 && Math.abs(this.scrollVelocity) < 55) {
+        // Fully stopped - clean up
+        this.scrollTimer = null;
+        this.scrollVelocity = 0;
+        this.lastScrollTime = null;
+        this.gridContainer.style.cursor = this.dragEvent
+          ? 'row-resize'
+          : 'auto';
+        return;
+      }
+
+      // Calculate distance based on current interpolated velocity
+      const distance = (this.scrollVelocity * deltaTime) / 1000;
+      const maxScroll = document.body.scrollHeight - window.innerHeight;
+      const newPosition = Math.max(
+        0,
+        Math.min(window.pageYOffset + distance, maxScroll)
+      );
+
+      // Check if we should continue scrolling
+      const atTop = newPosition <= 0 && this.targetVelocity < 0;
+      const atBottom = newPosition >= maxScroll && this.targetVelocity > 0;
+
+      if (!atTop && !atBottom) {
+        window.scrollTo({
+          top: newPosition,
+          behavior: this.scrollBehavior,
+        });
+        this.scrollTimer = requestAnimationFrame(scrollCallback);
+      } else {
+        // Reached boundary
+        window.scrollTo({ top: newPosition, behavior: this.scrollBehavior });
+        this.scrollTimer = null;
+        this.scrollVelocity = 0;
+        this.targetVelocity = 0;
+        this.lastScrollTime = null;
+      }
     };
-    this.scrollTimer = setInterval(
-      scrollDownCallback,
-      this.scrollIntervals[level - 1]
-    );
+
+    this.scrollTimer = requestAnimationFrame(scrollCallback);
   };
 
   handleDragEnd = event => {
     event.preventDefault();
     event.stopPropagation();
-    clearInterval(this.scrollTimer);
+    this.dragEndCancel();
+  };
+
+  dragEndCancel = () => {
     this.gridContainer.removeEventListener('mousemove', this.handleDragMove);
     this.gridContainer.removeEventListener('mouseup', this.handleDragEnd);
-    this.gridContainer.style.cursor = 'auto';
-    this.scrollTimer = null;
+    document.removeEventListener('keydown', this.handleDragEnd);
+
+    this.resetDeadZone();
+
     this.dragEvent = null;
     this.scrollLevel = 0;
+    this.targetVelocity = 0;
+
+    if (!this.scrollTimer) {
+      this.gridContainer.style.cursor = 'auto';
+    }
   };
 
   removeDragListener() {
     if (!this.gridContainer) return;
     this.gridContainer.removeEventListener('dblclick', this.handleDragStart);
-    this.gridContainer.removeEventListener(
-      'mousedown',
-      this.stopEventPropagation
-    );
+    this.gridContainer.removeEventListener('mousedown', this.handleDragStart);
     this.gridContainer = null;
+  }
+
+  resetDeadZone() {
+    this.posDeadZoneWidth = this.initDeadZoneWidth / 2;
+    this.negDeadZoneWidth = this.initDeadZoneWidth / 2;
+    this.scrollWasActivated = false;
+  }
+
+  // Test for detail page being current page
+  testForDetailPage() {
+    return /^https?:\/\/(www\.)?reddit.com\/r\/.+\/comments\/.+/.test(
+      window.location.href
+    );
   }
 }
 
@@ -236,6 +335,7 @@ const DOWN_ICONS = [
   SCROLL_DOWN_ICON_YELLOW,
   SCROLL_DOWN_ICON_GOLD,
   SCROLL_DOWN_ICON_ORANGE,
+  SCROLL_DOWN_ICON_ORANGE,
   SCROLL_DOWN_ICON_RED,
 ];
 
@@ -245,6 +345,7 @@ const UP_ICONS = [
   SCROLL_UP_ICON_CHARTREUSE,
   SCROLL_UP_ICON_YELLOW,
   SCROLL_UP_ICON_GOLD,
+  SCROLL_UP_ICON_ORANGE,
   SCROLL_UP_ICON_ORANGE,
   SCROLL_UP_ICON_RED,
 ];
