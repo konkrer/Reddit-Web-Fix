@@ -526,7 +526,7 @@ if (isFirefox) {
 
     // Size of popup window to be opened
     const windowWidth = 350;
-    const windowHeight = 597;
+    const windowHeight = 590;
 
     // Get click position relative to screen
     const clickX = e.screenX;
