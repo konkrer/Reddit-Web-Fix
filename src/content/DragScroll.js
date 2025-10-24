@@ -8,6 +8,7 @@ const SCROLLWHEEL_MOVE_THRESHOLD = 2;
 const SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD_DEFAULT = 3; // default threshold for scroll move detection
 let SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD = 1; // small threshold for initial scroll move detection
 
+// Class to handle auto-scrolling of pages
 export default class DragScroll {
   constructor() {
     this.dragScroll = true;
@@ -22,7 +23,8 @@ export default class DragScroll {
     this.scrollBehavior = 'instant';
     this.scrollTimer = null;
     this.lastScrollTime = null;
-    this.dragEvent = null;
+    this.dragEventYCoord = null;
+    this.mouseYCoordLast = null;
     this.gridContainer = null;
     this.scrollLevel = 0;
     this.scrollVelocity = 0; // pixels per second
@@ -30,6 +32,12 @@ export default class DragScroll {
     this.velocityLerpSpeed = 0.05; // How fast to interpolate (0-1, higher = faster transition)
     this.scrollWheelLastMove = 0;
     this.scrollWheelLastMoveCount = 0;
+    this.isPaused = false; // Track pause state for spacebar
+    this.pausedScrollLevel = 0; // Store scroll level when paused
+    this.lastKeyPressTime = 0; // Track last keypress time for double-press detection
+    this.lastKeyPressed = null; // Track last key pressed for double-press detection
+    this.doubleKeyPressDelay = 300; // Time window for double-press detection (ms)
+    this.noMouseMove = false; // Track if mouse move has been disabled
 
     // check browser local storage for drag scroll setting and add drag listener
     this.loadSettings();
@@ -67,8 +75,8 @@ export default class DragScroll {
 
   addDragListener() {
     this.gridContainer = document.querySelector('.grid-container');
-    if (!this.gridContainer) return;
-    if (!this.dragScroll) return;
+    if (!this.gridContainer || !this.dragScroll) return;
+    this.dragEndCancel();
 
     this.detailPage = this.testForDetailPage();
     this.scrollControlTierWidth = this.detailPage
@@ -80,35 +88,79 @@ export default class DragScroll {
 
     this.gridContainer.addEventListener('dblclick', this.handleDragStart);
     this.gridContainer.addEventListener('mousedown', this.handleDragStart);
+    document.addEventListener('keydown', this.handleDoubleKeyPress);
   }
 
+  handleDoubleKeyPress = event => {
+    const key = event.key;
+    const currentTime = Date.now();
+
+    // Only track arrow up and arrow down keys
+    if (key !== 'ArrowUp' && key !== 'ArrowDown') {
+      return;
+    }
+
+    // Check if this is a double press
+    if (
+      this.lastKeyPressed === key &&
+      currentTime - this.lastKeyPressTime <= this.doubleKeyPressDelay
+    ) {
+      this.eventStop(event);
+      document.removeEventListener('keydown', this.handleDoubleKeyPress);
+      const direction = key === 'ArrowUp' ? -1 : 1;
+
+      // Create a synthetic mouse event for handleDragStart
+      const syntheticEvent = {
+        button: 0,
+        clientY: window.innerHeight / 2,
+        target: this.gridContainer,
+        type: 'keydown',
+        preventDefault: () => {},
+        stopPropagation: () => {},
+      };
+
+      this.noMouseMove = true;
+      this.handleDragStart(syntheticEvent);
+      this.bumpScrollLevel(direction, syntheticEvent);
+
+      this.lastKeyPressed = null;
+      this.lastKeyPressTime = 0;
+    } else {
+      // First press or different key - update tracking
+      this.lastKeyPressed = key;
+      this.lastKeyPressTime = currentTime;
+    }
+  };
+
   handleDragStart = event => {
-    event.preventDefault();
-    event.stopPropagation();
     // make sure mouse button one is pressed
-    if (event.button !== 0 || this.dragEvent) return;
+    if (event.button !== 0 || this.dragEventYCoord) return;
     if (
       event.target.classList.contains('grid-container') ||
       event.target.classList.contains('subgrid-container') ||
       event.target.classList.contains('main-container')
     ) {
-      event.preventDefault();
-      event.stopPropagation();
-      this.dragEvent = event.clientY;
-      this.gridContainer.addEventListener('mousemove', this.handleDragMove);
+      this.eventStop(event);
+      document.removeEventListener('keydown', this.handleDoubleKeyPress);
+
+      this.dragEventYCoord = event.clientY;
+
       this.gridContainer.addEventListener('wheel', this.handleScrollMove);
       this.gridContainer.addEventListener('mouseup', this.handleDragEnd);
-      document.addEventListener('keydown', this.handleDragEnd);
+      document.addEventListener('keydown', this.handleKeyDown);
+      if (!this.noMouseMove)
+        this.gridContainer.addEventListener('mousemove', this.handleDragMove);
+
       this.gridContainer.style.cursor = 'row-resize';
     }
   };
 
   handleDragMove = event => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!this.dragEvent) return;
+    this.eventStop(event);
+    if (!this.dragEventYCoord) return;
 
-    const dragDistance = event.clientY - this.dragEvent;
+    this.mouseYCoordLast = event.clientY;
+    const dragDistance = event.clientY - this.dragEventYCoord;
     const sign = Math.sign(dragDistance);
 
     const deadZoneEnd =
@@ -125,9 +177,8 @@ export default class DragScroll {
   };
 
   handleScrollMove = event => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!this.dragEvent) return;
+    this.eventStop(event);
+    if (!this.dragEventYCoord) return;
 
     const scrollDistance = event.deltaY;
     const sign = Math.sign(scrollDistance);
@@ -211,14 +262,30 @@ export default class DragScroll {
 
     if (newScrollLevel === 0) {
       this.targetVelocity = 0;
-      return;
+    } else {
+      this.setCursor_SetScroll(
+        Math.sign(newScrollLevel),
+        Math.abs(newScrollLevel)
+      );
     }
-    this.setCursor_SetScroll(
-      Math.sign(newScrollLevel),
-      Math.abs(newScrollLevel)
-    );
-    this.dragEvent =
-      event.clientY - this.scrollControlTierWidth * newScrollLevel;
+    // update drag event to the appropriate distance based on current mouse position
+    // so moving mouse after scroll or keydown event will find appropriate scroll tier
+    const deadZoneEnd =
+      sign === -1 ? this.posDeadZoneWidth : this.negDeadZoneWidth;
+    const tierAdjustment = this.scrollControlTierWidth - deadZoneEnd;
+
+    if (event.type === 'wheel') {
+      this.dragEventYCoord =
+        event.clientY -
+        this.scrollControlTierWidth * newScrollLevel -
+        tierAdjustment;
+    }
+    if (event.type === 'keydown') {
+      this.dragEventYCoord =
+        this.mouseYCoordLast -
+        this.scrollControlTierWidth * newScrollLevel -
+        tierAdjustment;
+    }
   };
 
   setCursor_SetScroll = (direction, level) => {
@@ -239,15 +306,23 @@ export default class DragScroll {
 
   scrollUp = level => {
     if (window.pageYOffset === 0) return;
+    this.setScrollBehavior(level);
     const targetVelocity = -this.velocities[level - 1];
     this.startScroll(targetVelocity);
+    this.isPaused = false;
   };
 
   scrollDown = level => {
     const maxScroll = document.body.scrollHeight - window.innerHeight;
     if (window.pageYOffset >= maxScroll) return;
+    this.setScrollBehavior(level);
     const targetVelocity = this.velocities[level - 1];
     this.startScroll(targetVelocity);
+    this.isPaused = false;
+  };
+
+  setScrollBehavior = level => {
+    this.scrollBehavior = level === 1 && this.detailPage ? 'smooth' : 'instant';
   };
 
   // Unified scroll method
@@ -282,7 +357,14 @@ export default class DragScroll {
       this.scrollTimer = null;
       this.scrollVelocity = 0;
       this.lastScrollTime = null;
-      this.gridContainer.style.cursor = this.dragEvent ? 'row-resize' : 'auto';
+
+      const stoppedCursor = this.isPaused
+        ? 'wait'
+        : this.noMouseMove
+        ? 'ns-resize'
+        : 'row-resize';
+      this.gridContainer.style.cursor =
+        this.dragEventYCoord !== null ? stoppedCursor : 'auto';
       return;
     }
 
@@ -314,9 +396,62 @@ export default class DragScroll {
     }
   };
 
+  // Pause: save current state and set to zero
+  pause = () => {
+    if (this.isPaused || Math.abs(this.scrollVelocity) < 55) return;
+    this.pausedScrollLevel = this.scrollLevel;
+    this.scrollLevel = 0;
+    this.targetVelocity = 0;
+    this.isPaused = true;
+  };
+
+  // Unpause: restore the saved scroll state
+  unpause = () => {
+    if (!this.isPaused) return;
+    this.scrollLevel = this.pausedScrollLevel;
+    this.targetVelocity = this.velocities[Math.abs(this.pausedScrollLevel) - 1];
+    this.isPaused = false;
+
+    // Restart scrolling if we had a non-zero target velocity
+    if (this.targetVelocity !== 0) {
+      const sign = Math.sign(this.scrollLevel);
+      const level = Math.abs(this.scrollLevel);
+      this.setCursor_SetScroll(sign, level);
+    }
+  };
+
+  handleKeyDown = event => {
+    const key = event.key.toLowerCase();
+
+    // Handle spacebar - pause/unpause auto-scroll
+    if (key === ' ') {
+      this.eventStop(event);
+      if (this.isPaused) this.unpause();
+      else this.pause();
+      return;
+    }
+
+    // Handle arrow keys and w/s keys - bump scroll level
+    if (key === 'arrowup') {
+      this.eventStop(event);
+      if (this.isPaused) this.unpause();
+      else this.bumpScrollLevel(-1, event);
+      return;
+    }
+
+    if (key === 'arrowdown') {
+      this.eventStop(event);
+      if (this.isPaused) this.unpause();
+      else this.bumpScrollLevel(1, event);
+      return;
+    }
+
+    // Any other key - end drag mode
+    this.handleDragEnd(event);
+  };
+
   handleDragEnd = event => {
-    event.preventDefault();
-    event.stopPropagation();
+    this.eventStop(event);
     this.dragEndCancel();
   };
 
@@ -324,15 +459,22 @@ export default class DragScroll {
     this.gridContainer.removeEventListener('mousemove', this.handleDragMove);
     this.gridContainer.removeEventListener('wheel', this.handleScrollMove);
     this.gridContainer.removeEventListener('mouseup', this.handleDragEnd);
-    document.removeEventListener('keydown', this.handleDragEnd);
+    document.removeEventListener('keydown', this.handleKeyDown);
 
     this.resetDeadZone();
 
-    this.dragEvent = null;
+    this.dragEventYCoord = null;
     this.scrollLevel = 0;
     this.targetVelocity = 0;
     this.scrollWheelLastMove = 0;
     this.scrollWheelLastMoveCount = 0;
+    this.isPaused = false;
+    this.pausedScrollLevel = 0;
+    this.pausedTargetVelocity = 0;
+    this.noMouseMove = false;
+
+    // Re-add the double keypress listener
+    document.addEventListener('keydown', this.handleDoubleKeyPress);
 
     if (!this.scrollTimer) {
       this.gridContainer.style.cursor = 'auto';
@@ -343,6 +485,7 @@ export default class DragScroll {
     if (!this.gridContainer) return;
     this.gridContainer.removeEventListener('dblclick', this.handleDragStart);
     this.gridContainer.removeEventListener('mousedown', this.handleDragStart);
+    document.removeEventListener('keydown', this.handleDoubleKeyPress);
     this.gridContainer = null;
   }
 
@@ -358,6 +501,11 @@ export default class DragScroll {
     return /^https?:\/\/(www\.)?reddit.com\/r\/.+\/comments\/.+/.test(
       window.location.href
     );
+  }
+
+  eventStop(event) {
+    event.preventDefault();
+    event.stopPropagation();
   }
 }
 
