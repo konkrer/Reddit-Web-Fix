@@ -95,8 +95,8 @@ export default class DragScroll {
     const key = event.key;
     const currentTime = Date.now();
 
-    // Only track arrow up and arrow down keys
-    if (key !== 'ArrowUp' && key !== 'ArrowDown') {
+    // Only track arrow keys
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
       return;
     }
 
@@ -106,30 +106,53 @@ export default class DragScroll {
       currentTime - this.lastKeyPressTime <= this.doubleKeyPressDelay
     ) {
       this.eventStop(event);
-      document.removeEventListener('keydown', this.handleDoubleKeyPress);
-      const direction = key === 'ArrowUp' ? -1 : 1;
-
-      // Create a synthetic mouse event for handleDragStart
-      const syntheticEvent = {
-        button: 0,
-        clientY: window.innerHeight / 2,
-        target: this.gridContainer,
-        type: 'keydown',
-        preventDefault: () => {},
-        stopPropagation: () => {},
-      };
-
-      this.noMouseMove = true;
-      this.handleDragStart(syntheticEvent);
-      this.bumpScrollLevel(direction, syntheticEvent);
-
-      this.lastKeyPressed = null;
-      this.lastKeyPressTime = 0;
+      this.handleBrowserNavigation(key);
+      this.handleUpDownDblclick(key);
     } else {
       // First press or different key - update tracking
       this.lastKeyPressed = key;
       this.lastKeyPressTime = currentTime;
     }
+  };
+
+  handleBrowserNavigation = key => {
+    if (key === 'ArrowLeft') {
+      window.history.back();
+      this.lastKeyPressed = null;
+      this.lastKeyPressTime = 0;
+      return;
+    }
+
+    if (key === 'ArrowRight') {
+      window.history.forward();
+      this.lastKeyPressed = null;
+      this.lastKeyPressTime = 0;
+      return;
+    }
+  };
+
+  handleUpDownDblclick = key => {
+    if (!['ArrowUp', 'ArrowDown'].includes(key)) return;
+
+    document.removeEventListener('keydown', this.handleDoubleKeyPress);
+    const direction = key === 'ArrowUp' ? -1 : 1;
+
+    // Create a synthetic mouse event for handleDragStart
+    const syntheticEvent = {
+      button: 0,
+      clientY: window.innerHeight / 2,
+      target: this.gridContainer,
+      type: 'keydown',
+      preventDefault: () => {},
+      stopPropagation: () => {},
+    };
+
+    this.noMouseMove = true;
+    this.handleDragStart(syntheticEvent);
+    this.bumpScrollLevel(direction, syntheticEvent);
+
+    this.lastKeyPressed = null;
+    this.lastKeyPressTime = 0;
   };
 
   handleDragStart = event => {
@@ -138,14 +161,16 @@ export default class DragScroll {
     if (
       event.target.classList.contains('grid-container') ||
       event.target.classList.contains('subgrid-container') ||
-      event.target.classList.contains('main-container')
+      event.target.classList.contains('main-container') ||
+      event.target.classList.contains('right-sidebar')
     ) {
-      this.eventStop(event);
+      // disable text selection to prevent selecting text while dragging
+      this.gridContainer.style.userSelect = 'none';
+
       document.removeEventListener('keydown', this.handleDoubleKeyPress);
 
       this.dragAnchorYCoord = event.clientY;
       this.mouseYCoordLast = event.clientY;
-      // console.log(`event.clientY: ${event.clientY}`);
 
       this.gridContainer.addEventListener('wheel', this.handleScrollMove);
       this.gridContainer.addEventListener('mouseup', this.handleDragEnd);
@@ -413,6 +438,8 @@ export default class DragScroll {
     this.targetVelocity = 0;
     this.scrollVelocity = 0;
     this.lastScrollTime = null;
+    this.scrollLevel = 0;
+    this.gridContainer.style.userSelect = 'text';
 
     const stoppedCursor = this.isPaused
       ? 'wait'
@@ -451,7 +478,7 @@ export default class DragScroll {
     const key = event.key.toLowerCase();
 
     // Handle spacebar - pause/unpause auto-scroll
-    if (key === ' ') {
+    if ([' ', 'arrowleft', 'arrowright'].includes(key)) {
       this.eventStop(event);
       if (this.isPaused) this.unpause();
       else this.pause();
@@ -505,6 +532,7 @@ export default class DragScroll {
 
     if (!this.scrollTimer) {
       this.gridContainer.style.cursor = 'auto';
+      this.gridContainer.style.userSelect = 'text';
     }
   };
 
