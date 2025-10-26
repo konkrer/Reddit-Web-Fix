@@ -12,13 +12,13 @@ let SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD = 1; // small threshold for initial scro
 export default class DragScroll {
   constructor() {
     this.dragScroll = true;
-    this.detailPage = false;
+    this.useAllTiers = false;
     this.scrollWasActivated = false;
     this.scrollControlTierWidth = DEFAULT_TIER_WIDTH; // pixels per scroll control tier
     this.initDeadZoneWidth = 16;
     this.posDeadZoneWidth = this.initDeadZoneWidth / 2;
     this.negDeadZoneWidth = this.initDeadZoneWidth / 2;
-    this.velocities = [60, 200, 300, 500, 800, 1200, 1700, 2500];
+    this.velocities = [48, 60, 200, 500, 800, 1200, 1700, 2500];
     this.activeTiers = DEFAULT_ACTIVE_TIERS;
     this.scrollBehavior = 'instant';
     this.scrollTimer = null;
@@ -29,7 +29,8 @@ export default class DragScroll {
     this.scrollLevel = 0;
     this.scrollVelocity = 0; // pixels per second
     this.targetVelocity = 0; // Target velocity we're interpolating towards
-    this.velocityLerpSpeed = 0.05; // How fast to interpolate (0-1, higher = faster transition)
+    this.velocityLerpSpeed = 0.03; // How fast to interpolate (0-1, higher = faster transition)
+    this.zeroVelStartCoef = 1.0; // Coefficient for starting velocity when target velocity is zero
     this.scrollWheelLastMove = 0;
     this.scrollWheelLastMoveCount = 0;
     this.isPaused = false; // Track pause state for spacebar
@@ -38,6 +39,11 @@ export default class DragScroll {
     this.lastKeyPressed = null; // Track last key pressed for double-press detection
     this.doubleKeyPressDelay = 300; // Time window for double-press detection (ms)
     this.noMouseMove = false; // Track if mouse move has been disabled
+
+    const isFirefox = navigator.userAgent.includes('Firefox');
+    if (isFirefox) {
+      this.velocities[0] = 55;
+    }
 
     // check browser local storage for drag scroll setting and add drag listener
     this.loadSettings();
@@ -78,11 +84,11 @@ export default class DragScroll {
     if (!this.gridContainer || !this.dragScroll) return;
     this.dragEndCancel();
 
-    this.detailPage = this.testForDetailPage();
-    this.scrollControlTierWidth = this.detailPage
+    this.useAllTiers = this.testForDetailPage() || this.testForSearchPage();
+    this.scrollControlTierWidth = this.useAllTiers
       ? DETAIL_PAGE_TIER_WIDTH
       : DEFAULT_TIER_WIDTH;
-    this.activeTiers = this.detailPage
+    this.activeTiers = this.useAllTiers
       ? this.velocities.length
       : DEFAULT_ACTIVE_TIERS;
 
@@ -373,7 +379,7 @@ export default class DragScroll {
   };
 
   setScrollBehavior = level => {
-    // this.scrollBehavior = level === 1 && this.detailPage ? 'smooth' : 'instant';
+    // this.scrollBehavior = level === 1 && this.useAllTiers ? 'smooth' : 'instant';
     this.scrollBehavior = level === 1 ? 'smooth' : 'instant';
   };
 
@@ -387,7 +393,7 @@ export default class DragScroll {
 
     // Starting fresh - only initialize if we're at rest
     if (this.scrollVelocity === 0) {
-      this.scrollVelocity = targetVelocity * 0.1;
+      this.scrollVelocity = targetVelocity * this.zeroVelStartCoef;
     }
 
     this.lastScrollTime = performance.now();
@@ -404,7 +410,10 @@ export default class DragScroll {
     this.scrollVelocity +=
       (this.targetVelocity - this.scrollVelocity) * this.velocityLerpSpeed;
 
-    if (this.targetVelocity === 0 && Math.abs(this.scrollVelocity) < 55) {
+    if (
+      this.targetVelocity === 0 &&
+      Math.abs(this.scrollVelocity) < this.velocities[0]
+    ) {
       this.stoppedCleanup();
       return;
     }
@@ -452,7 +461,8 @@ export default class DragScroll {
 
   // Pause: save current state and set to zero
   pause = () => {
-    if (this.isPaused || Math.abs(this.scrollVelocity) < 55) return;
+    if (this.isPaused || Math.abs(this.scrollVelocity) < this.velocities[0])
+      return;
     this.pausedScrollLevel = this.scrollLevel;
     this.scrollLevel = 0;
     this.targetVelocity = 0;
@@ -554,6 +564,13 @@ export default class DragScroll {
   // Test for detail page being current page
   testForDetailPage() {
     return /^https?:\/\/(www\.)?reddit.com\/r\/.+\/comments\/.+/.test(
+      window.location.href
+    );
+  }
+
+  // Test for search page being current page
+  testForSearchPage() {
+    return /^https?:\/\/(www\.)?reddit.com\/search\/.+/.test(
       window.location.href
     );
   }

@@ -7,6 +7,7 @@ const REDDIT_POST_HOST = 'shreddit-post'; // Update here and in VoteSync.js.
 const REDDIT_DYN_ADD_1 = 'article'; // element name for post parent
 const REDDIT_DYN_ADD_2 = 'faceplate-batch'; // alternate element name for post parent
 const REDDIT_DYN_ADD_3 = 'grid-container'; // class name for grid parent for background
+const REDDIT_DYN_ADD_4 = 'search-dynamic-id-cache-controller'; // element name for grid parent on search page
 
 // Class to manage and observe DOM changes for vote button syncing
 export class MainObserver {
@@ -39,7 +40,8 @@ export class MainObserver {
   _gridParentFilter(node) {
     return (
       node.nodeType === Node.ELEMENT_NODE &&
-      node.classList.contains(REDDIT_DYN_ADD_3)
+      (node.classList.contains(REDDIT_DYN_ADD_3) ||
+        node.tagName.toLowerCase() === REDDIT_DYN_ADD_4)
     );
   }
 
