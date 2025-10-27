@@ -499,9 +499,7 @@ chrome.storage?.local.get('backgroundSettings', loadSettings);
 // ---------------------------------------------- //
 // --- Firefox file input alternative UI ---
 // Detect Firefox
-const isFirefox =
-  typeof InstallTrigger !== 'undefined' ||
-  navigator.userAgent.includes('Firefox');
+const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
 
 // If Firefox show file input alternative UI or open new window for file upload
 if (isFirefox) {
