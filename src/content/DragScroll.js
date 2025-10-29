@@ -10,7 +10,7 @@ let SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD = 1; // small threshold for initial scro
 const VELOCITY_LERP_SPEED_DEFAULT = 0.06;
 const VELOCITY_LERP_SPEED_SLOW = 0.02;
 const VELOCITY_LERP_SPEED_DEFAULT_STOP = 0.03;
-const VELOCITY_LERP_SPEED_SLOW_STOP = 0.003;
+const VELOCITY_LERP_SPEED_SLOW_STOP = 0.0025;
 
 // Class to handle auto-scrolling of pages
 export default class DragScroll {
@@ -128,6 +128,7 @@ export default class DragScroll {
 
   handleMouseDownStart = event => {
     this.velocityLerpSpeed = VELOCITY_LERP_SPEED_DEFAULT_STOP;
+    this.scrollVelocity = 0;
     if (event.button !== 0 || this.dragAnchorYCoord) return;
     // if mouse down start is null, set it to true
     if (this.mouseDownStart === null) this.mouseDownStart = true;
@@ -399,13 +400,17 @@ export default class DragScroll {
   };
 
   setCursor_SetScroll = (direction, level) => {
-    if (this.atPageBoundary(direction)) return;
+    if (this.atPageBoundary(direction)){
+      // set coords equal allowing for quick drag turnaround
+      this.dragAnchorYCoord = this.mouseYCoordLast;
+      return;
+    }
 
     const fn = direction === 1 ? this.scrollDown : this.scrollUp;
     const icons = direction === 1 ? DOWN_ICONS : UP_ICONS;
     const defaultCursor = direction === 1 ? 's-resize' : 'n-resize';
 
-    // only set cursor up or down icon coming from stop
+    // only set cursor to up or down icon coming from stop to avoid stutter
     if (this.scrollVelocity === 0) {
       // if mouse down start is false or null, set cursor to up or down icon
       if (!this.mouseDownStart) {
@@ -424,7 +429,6 @@ export default class DragScroll {
   };
 
   scrollUp = level => {
-    if (this.atPageBoundary(-1)) return;
     this.setScrollBehavior(level);
     const targetVelocity = -this.velocities[level - 1];
     this.startScroll(targetVelocity);
@@ -435,7 +439,6 @@ export default class DragScroll {
   };
 
   scrollDown = level => {
-    if (this.atPageBoundary(1)) return;
     this.setScrollBehavior(level);
     const targetVelocity = this.velocities[level - 1];
     this.startScroll(targetVelocity);
@@ -498,13 +501,13 @@ export default class DragScroll {
       Math.ceil(newPositionRaw) >= maxScroll && this.targetVelocity > 0;
 
     if (atTop || atBottom) {
-      this.stoppedCleanup();
+      this.stoppedCleanup(true);
     } else {
       this.scrollTimer = requestAnimationFrame(this.scrollCallback);
     }
   };
 
-  stoppedCleanup = () => {
+  stoppedCleanup = (atBoundary = false) => {
     this.scrollTimer = null;
     this.targetVelocity = 0;
     this.scrollVelocity = 0;
@@ -515,6 +518,8 @@ export default class DragScroll {
       ? 'wait'
       : this.noMouseMove
       ? 'ns-resize'
+      : atBoundary
+      ? 'not-allowed'
       : 'row-resize';
     this.gridContainer.style.cursor = stoppedCursor;
 
