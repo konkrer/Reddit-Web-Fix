@@ -12,10 +12,18 @@ const VELOCITY_LERP_SPEED_SLOW = 0.02;
 const VELOCITY_LERP_SPEED_DEFAULT_STOP = 0.03;
 const VELOCITY_LERP_SPEED_SLOW_STOP = 0.0025;
 
-// Class to handle auto-scrolling of pages
-export default class DragScroll {
-  constructor() {
-    this.dragScrollEnabled = true;
+/**
+ * Class to handle auto-scrolling of pages with drag, keyboard, and scroll wheel controls
+ * @class AutoScroll
+ */
+export default class AutoScroll {
+  /**
+   * Initialize the AutoScroll instance with default settings
+   * @param {Object} coordinator - RedditFixCoordinator instance
+   */
+  constructor(coordinator) {
+    this.coordinator = coordinator;
+    this.autoScrollEnabled = true;
     this.useAllTiers = false;
     this.scrollWasActivated = false;
     this.scrollControlTierWidth = DEFAULT_TIER_WIDTH; // pixels per scroll control tier
@@ -34,7 +42,7 @@ export default class DragScroll {
     this.scrollVelocity = 0; // pixels per second
     this.targetVelocity = 0; // Target velocity we're interpolating towards
     this.velocityLerpSpeed = VELOCITY_LERP_SPEED_DEFAULT; // How fast to interpolate (0-1, higher = faster transition)
-    this.zeroVelStartCoef = 0.3; // Coefficient for starting velocity when target velocity is zero
+    this.zeroVelStartCoef = 0.5; // Coefficient for starting velocity when target velocity is zero
     this.scrollWheelLastMove = 0;
     this.scrollWheelLastMoveCount = 0;
     this.isPaused = false; // Track pause state for spacebar
@@ -45,26 +53,33 @@ export default class DragScroll {
     this.noMouseMove = false; // Track if mouse move has been disabled
     this.mouseDownStart = null; // Track if mouse down has been started or double click initiated auto-scroll
 
-    DragScroll.injectCursorOverrideStyles(); // to disable cursor hover effects while auto-scrolling
+    AutoScroll.injectCursorOverrideStyles(); // to disable cursor hover effects while auto-scrolling
     this.loadSettings();
     this.watchForSettingsChange();
   }
 
+  /**
+   * Watch for settings changes in chrome.storage and update drag scroll state
+   */
   watchForSettingsChange() {
     // Listen for background settings changes and update drag scroll enabled state
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace === 'local' && changes.backgroundSettings) {
-        this.dragScrollEnabled =
-          changes.backgroundSettings.newValue.common.dragScroll;
-        if (this.dragScrollEnabled === true) {
-          this.addDragListener();
+        this.autoScrollEnabled =
+          changes.backgroundSettings.newValue.common.autoScroll;
+        if (this.autoScrollEnabled === true) {
+          this.addAutoScrollListener();
         } else {
-          this.removeDragListener();
+          this.removeAutoScrollListeners();
         }
       }
     });
   }
 
+  /**
+   * Inject CSS styles to override cursor hover effects during scrolling
+   * @static
+   */
   static injectCursorOverrideStyles() {
     if (!document.getElementById('drag-scroll-cursor-override')) {
       const style = document.createElement('style');
@@ -79,31 +94,40 @@ export default class DragScroll {
     }
   }
 
-  // Load settings from chrome.storage.local
+  /**
+   * Load settings from chrome.storage.local
+   * @async
+   * @returns {Promise<void>}
+   */
   async loadSettings() {
     let settings;
     try {
       settings = await browser.storage.local.get('backgroundSettings');
     } catch (err) {
-      console.error('DragScroll.js: browser-storage access fail', err);
+      console.error('AutoScroll.js: browser-storage access fail', err);
     }
     if (settings?.backgroundSettings) {
-      this.dragScrollEnabled =
-        settings.backgroundSettings.common.dragScroll ?? true;
+      this.autoScrollEnabled =
+        settings.backgroundSettings.common.autoScroll ?? true;
     }
-    if (this.dragScrollEnabled === true) {
-      this.addDragListener();
+    if (this.autoScrollEnabled === true) {
+      this.addAutoScrollListener();
     } else {
-      this.removeDragListener();
+      this.removeAutoScrollListeners();
     }
   }
 
-  addDragListener() {
+  /**
+   * Add auto-scroll event listeners to the grid container
+   */
+  addAutoScrollListener() {
     this.gridContainer = document.querySelector('.grid-container');
-    if (!this.gridContainer || !this.dragScrollEnabled) return;
-    this.dragEndCancel();
+    if (!this.gridContainer || !this.autoScrollEnabled) return;
+    this.autoScrollEndCancel();
 
-    this.useAllTiers = this.testForDetailPage() || this.testForSearchPage();
+    this.useAllTiers =
+      this.coordinator.testForDetailPage() ||
+      this.coordinator.testForSearchPage();
     this.scrollControlTierWidth = this.useAllTiers
       ? DETAIL_PAGE_TIER_WIDTH
       : DEFAULT_TIER_WIDTH;
@@ -111,30 +135,30 @@ export default class DragScroll {
       ? this.velocities.length
       : DEFAULT_ACTIVE_TIERS;
 
+    this.gridContainer.addEventListener('mousedown', this.handleMouseDownStart);
+    document.addEventListener('keydown', this.handleDoubleKeyPress);
     this.gridContainer.addEventListener(
       'dblclick',
       this.handleDoubleClickStart
     );
-    this.gridContainer.addEventListener('mousedown', this.handleMouseDownStart);
-    document.addEventListener('keydown', this.handleDoubleKeyPress);
   }
 
-  handleDoubleClickStart = event => {
-    if (event.button !== 0 || this.dragAnchorYCoord) return;
-    // set mouse down start to false to indicate double click initiated auto-scroll
-    this.mouseDownStart = false;
-    this.handleDragStart(event);
-  };
-
+  /**
+   * Handle mouse down to prepare for drag scroll
+   * @param {MouseEvent} event - Mouse event
+   */
   handleMouseDownStart = event => {
-    this.velocityLerpSpeed = VELOCITY_LERP_SPEED_DEFAULT_STOP;
     this.scrollVelocity = 0;
     if (event.button !== 0 || this.dragAnchorYCoord) return;
     // if mouse down start is null, set it to true
     if (this.mouseDownStart === null) this.mouseDownStart = true;
-    this.handleDragStart(event);
+    this.handleAutoScrollStart(event);
   };
 
+  /**
+   * Handle double key press for navigation and auto-scroll activation
+   * @param {KeyboardEvent} event - Keyboard event
+   */
   handleDoubleKeyPress = event => {
     const key = event.key;
     const currentTime = Date.now();
@@ -159,6 +183,10 @@ export default class DragScroll {
     }
   };
 
+  /**
+   * Handle browser navigation with arrow keys (back/forward)
+   * @param {string} key - Key pressed
+   */
   handleBrowserNavigation = key => {
     if (key === 'ArrowLeft') {
       window.history.back();
@@ -175,12 +203,16 @@ export default class DragScroll {
     }
   };
 
+  /**
+   * Handle double-press of up/down arrow keys to initiate auto-scroll
+   * @param {string} key - Key pressed (ArrowUp or ArrowDown)
+   */
   handleUpDownDblclick = key => {
     if (!['ArrowUp', 'ArrowDown'].includes(key)) return;
 
     const direction = key === 'ArrowUp' ? -1 : 1;
 
-    // Create a synthetic mouse event for handleDragStart
+    // Create a synthetic mouse event for handleAutoScrollStart
     const syntheticEvent = {
       button: 0,
       clientY: window.innerHeight / 2,
@@ -192,14 +224,29 @@ export default class DragScroll {
 
     this.noMouseMove = true;
     this.mouseDownStart = false;
-    this.handleDragStart(syntheticEvent);
+    this.handleAutoScrollStart(syntheticEvent);
     this.bumpScrollLevel(direction, syntheticEvent);
 
     this.lastKeyPressed = null;
     this.lastKeyPressTime = 0;
   };
 
-  handleDragStart = event => {
+  /**
+   * Handle double-click to start auto-scroll
+   * @param {MouseEvent} event - Mouse event
+   */
+  handleDoubleClickStart = event => {
+    if (event.button !== 0 || this.dragAnchorYCoord) return;
+    // set mouse down start to false to indicate double click initiated auto-scroll
+    this.mouseDownStart = false;
+    this.handleAutoScrollStart(event);
+  };
+
+  /**
+   * Handle the start of an auto-scroll session
+   * @param {MouseEvent|Object} event - Mouse or synthetic event
+   */
+  handleAutoScrollStart = event => {
     if (this.dragAnchorYCoord) return;
     // make sure mouse button one is pressed
     if (
@@ -230,14 +277,18 @@ export default class DragScroll {
       this.gridContainer.classList.add('disable-cursor-hover');
 
       // add event listeners
-      this.gridContainer.addEventListener('wheel', this.handleScrollMove);
-      this.gridContainer.addEventListener('mouseup', this.handleDragEnd);
-      document.addEventListener('keydown', this.handleKeyDown);
       if (!this.noMouseMove)
         this.gridContainer.addEventListener('mousemove', this.handleDragMove);
+      this.gridContainer.addEventListener('wheel', this.handleScrollMove);
+      document.addEventListener('keydown', this.handleKeyDown);
+      this.gridContainer.addEventListener('mouseup', this.handleAutoScrollEnd);
     }
   };
 
+  /**
+   * Handle mouse movement during drag scroll (drag or double click initiated auto-scroll)
+   * @param {MouseEvent} event - Mouse event
+   */
   handleDragMove = event => {
     this.eventStop(event);
     if (this.dragAnchorYCoord === null) return;
@@ -264,56 +315,10 @@ export default class DragScroll {
     this.setScrollStateFromDragDistance(dragDistance);
   };
 
-  handleScrollMove = event => {
-    this.eventStop(event);
-    if (this.dragAnchorYCoord === null) return;
-
-    const scrollDistance = event.deltaY;
-    const sign = Math.sign(scrollDistance);
-    const isMove = this.determineScrollWheelMove(sign);
-
-    if (isMove === false) {
-      return;
-    }
-    this.checkForFirstScrollMove(sign);
-    this.bumpScrollLevel(sign, event);
-    SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD =
-      SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD_DEFAULT;
-  };
-
-  // make opposite dead zone wider while mouse is in the original scroll direction
-  checkForFirstScrollMove = sign => {
-    if (!this.scrollWasActivated) {
-      if (sign === 1)
-        this.negDeadZoneWidth = DEAD_ZONE_WIDTH - this.posDeadZoneWidth;
-      else this.posDeadZoneWidth = DEAD_ZONE_WIDTH - this.negDeadZoneWidth;
-      this.scrollWasActivated = true;
-    }
-  };
-
-  determineScrollWheelMove = sign => {
-    if (this.scrollWheelLastMove === sign) {
-      this.scrollWheelLastMoveCount++;
-    } else {
-      this.scrollWheelLastMove = sign;
-      this.scrollWheelLastMoveCount = 0;
-    }
-    // larger threshold for deadzone to make easier to find
-    const threshold =
-      this.scrollLevel === 0
-        ? SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD
-        : SCROLLWHEEL_MOVE_THRESHOLD;
-
-    if (this.scrollWheelLastMoveCount >= threshold) {
-      this.scrollWheelLastMoveCount = 0;
-      SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD =
-        SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD_DEFAULT;
-      return true;
-    }
-    return false;
-  };
-
-  // set the auto-scroll level based on the drag distance
+  /**
+   * Set the auto-scroll level based on the drag distance (drag or double click initiated auto-scroll)
+   * @param {number} dragDistance - Distance dragged from anchor point
+   */
   setScrollStateFromDragDistance = dragDistance => {
     const sign = Math.sign(dragDistance);
 
@@ -337,6 +342,146 @@ export default class DragScroll {
     }
   };
 
+  /**
+   * Handle scroll wheel movement during auto-scroll
+   * @param {WheelEvent} event - Wheel event
+   */
+  handleScrollMove = event => {
+    this.eventStop(event);
+    if (this.dragAnchorYCoord === null) return;
+
+    const scrollDistance = event.deltaY;
+    const sign = Math.sign(scrollDistance);
+    const isMove = this.determineScrollWheelMove(sign);
+
+    if (isMove === false) {
+      return;
+    }
+    this.checkForFirstScrollMove(sign);
+    this.bumpScrollLevel(sign, event);
+    SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD =
+      SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD_DEFAULT;
+  };
+
+  /**
+   * Determine if scroll wheel movement threshold is reached for auto-scroll.
+   * Prevents too high of sensitivity for auto-scroll.
+   * @param {number} sign - Direction sign (1 or -1)
+   * @returns {boolean} True if threshold reached
+   */
+  determineScrollWheelMove = sign => {
+    if (this.scrollWheelLastMove === sign) {
+      this.scrollWheelLastMoveCount++;
+    } else {
+      this.scrollWheelLastMove = sign;
+      this.scrollWheelLastMoveCount = 0;
+    }
+    // larger threshold for deadzone to make easier to find
+    const threshold =
+      this.scrollLevel === 0
+        ? SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD
+        : SCROLLWHEEL_MOVE_THRESHOLD;
+
+    if (this.scrollWheelLastMoveCount >= threshold) {
+      this.scrollWheelLastMoveCount = 0;
+      SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD =
+        SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD_DEFAULT;
+      return true;
+    }
+    return false;
+  };
+
+  /**
+   * Make opposite dead zone wider while mouse is in the original auto-scroll direction.
+   * Allows for quick drag start but then wider dead zone to prevent accidental scrolling.
+   * @param {number} sign - Direction sign (1 or -1)
+   */
+  checkForFirstScrollMove = sign => {
+    if (!this.scrollWasActivated) {
+      if (sign === 1)
+        this.negDeadZoneWidth = DEAD_ZONE_WIDTH - this.posDeadZoneWidth;
+      else this.posDeadZoneWidth = DEAD_ZONE_WIDTH - this.negDeadZoneWidth;
+      this.scrollWasActivated = true;
+    }
+  };
+
+  /**
+   * Handle key down events during drag scroll (spacebar for pause, arrows for speed control)
+   * @param {KeyboardEvent} event - Keyboard event
+   */
+  handleKeyDown = event => {
+    const key = event.key.toLowerCase();
+
+    // Handle spacebar - pause/unpause auto-scroll
+    if ([' ', 'arrowleft', 'arrowright'].includes(key)) {
+      this.eventStop(event);
+      if (this.isPaused) this.unpause();
+      else this.pause();
+      return;
+    }
+
+    // Handle arrow keys and w/s keys - bump scroll level
+    if (key === 'arrowup') {
+      this.eventStop(event);
+      if (this.isPaused) this.unpause();
+      else this.bumpScrollLevel(-1, event);
+      return;
+    }
+
+    if (key === 'arrowdown') {
+      this.eventStop(event);
+      if (this.isPaused) this.unpause();
+      else this.bumpScrollLevel(1, event);
+      return;
+    }
+
+    // Any other key - end drag mode
+    this.handleAutoScrollEnd(event);
+  };
+
+  /**
+   * Pause auto-scroll (save current state and set velocity to zero)
+   */
+  pause = () => {
+    const velocityThreshold = this.velocities[0] - 5;
+    if (this.isPaused || Math.abs(this.scrollVelocity) < velocityThreshold)
+      return;
+    this.isPaused = true;
+    this.pausedScrollLevel = this.scrollLevel;
+    this.scrollLevel = 0;
+    this.targetVelocity = 0;
+    if (this.useAllTiers)
+      this.velocityLerpSpeed = VELOCITY_LERP_SPEED_DEFAULT_STOP;
+    else if (this.mouseDownStart)
+      this.velocityLerpSpeed = VELOCITY_LERP_SPEED_SLOW_STOP;
+    else this.velocityLerpSpeed = VELOCITY_LERP_SPEED_DEFAULT_STOP;
+  };
+
+  /**
+   * Unpause auto-scroll (restore the saved scroll state)
+   */
+  unpause = () => {
+    if (!this.isPaused) return;
+    this.isPaused = false;
+    this.scrollLevel = this.pausedScrollLevel;
+    this.targetVelocity = this.velocities[Math.abs(this.pausedScrollLevel) - 1];
+    this.velocityLerpSpeed = this.useAllTiers
+      ? VELOCITY_LERP_SPEED_SLOW
+      : VELOCITY_LERP_SPEED_DEFAULT;
+
+    // Restart scrolling if we had a non-zero target velocity
+    if (this.targetVelocity !== 0) {
+      const sign = Math.sign(this.scrollLevel);
+      const level = Math.abs(this.scrollLevel);
+      this.setCursor_SetScroll(sign, level);
+    }
+  };
+
+  /**
+   * Bump auto-scroll level up or down by one level.
+   * @param {number} sign - Direction to bump (1 or -1)
+   * @param {Event} event - Event that triggered the bump
+   */
   bumpScrollLevel = (sign, event) => {
     let newScrollLevel = sign + this.scrollLevel;
     // clamp the pos/neg scroll level to the active tiers
@@ -359,8 +504,13 @@ export default class DragScroll {
     this.adjustAnchorPoint(sign, newScrollLevel, event);
   };
 
-  // update drag anchor y coordinate to the appropriate distance based on current mouse position
-  // so moving mouse after scroll or up.down keypress event will find appropriate scroll tier
+  /**
+   * Update drag anchor y coordinate based on current mouse position
+   * So moving mouse after scroll or arrow key press will find appropriate auto-scroll tier (level).
+   * @param {number} sign - Direction sign (1 or -1)
+   * @param {number} newScrollLevel - New auto-scroll level
+   * @param {Event} event - Event that triggered the adjustment
+   */
   adjustAnchorPoint = (sign, newScrollLevel, event) => {
     // if not yet scrolling use the sign of the scroll level to determine the direction
     if (this.dragAnchorYCoord === this.mouseYCoordLast) {
@@ -390,17 +540,13 @@ export default class DragScroll {
     }
   };
 
-  atPageBoundary = direction => {
-    return (
-      (direction === -1 && window.pageYOffset === 0) ||
-      (direction === 1 &&
-        Math.ceil(window.pageYOffset) >=
-          document.body.scrollHeight - window.innerHeight)
-    );
-  };
-
+  /**
+   * Set cursor and initiate scrolling at the specified level
+   * @param {number} direction - Direction to scroll (1 for down, -1 for up)
+   * @param {number} level - Scroll tier level (1-8)
+   */
   setCursor_SetScroll = (direction, level) => {
-    if (this.atPageBoundary(direction)){
+    if (this.atPageBoundary(direction)) {
       // set coords equal allowing for quick drag turnaround
       this.dragAnchorYCoord = this.mouseYCoordLast;
       return;
@@ -428,6 +574,24 @@ export default class DragScroll {
     }
   };
 
+  /**
+   * Check if we're at the page boundary (top or bottom)
+   * @param {number} direction - Direction to check (1 or -1)
+   * @returns {boolean} True if at boundary
+   */
+  atPageBoundary = direction => {
+    return (
+      (direction === -1 && window.pageYOffset === 0) ||
+      (direction === 1 &&
+        Math.ceil(window.pageYOffset) >=
+          document.body.scrollHeight - window.innerHeight)
+    );
+  };
+
+  /**
+   * Start scrolling up at the specified level
+   * @param {number} level - Scroll tier level (1-8)
+   */
   scrollUp = level => {
     this.setScrollBehavior(level);
     const targetVelocity = -this.velocities[level - 1];
@@ -438,6 +602,10 @@ export default class DragScroll {
       : VELOCITY_LERP_SPEED_DEFAULT;
   };
 
+  /**
+   * Start scrolling down at the specified level
+   * @param {number} level - Scroll tier level (1-8)
+   */
   scrollDown = level => {
     this.setScrollBehavior(level);
     const targetVelocity = this.velocities[level - 1];
@@ -448,11 +616,18 @@ export default class DragScroll {
       : VELOCITY_LERP_SPEED_DEFAULT;
   };
 
+  /**
+   * Set scroll behavior based on level (smooth for level 1, instant for others)
+   * @param {number} level - Scroll tier level
+   */
   setScrollBehavior = level => {
     this.scrollBehavior = level === 1 ? 'smooth' : 'instant';
   };
 
-  // Unified scroll method
+  /**
+   * Start or update scrolling with the specified target velocity
+   * @param {number} targetVelocity - Target velocity in pixels per second
+   */
   startScroll = targetVelocity => {
     // Update target velocity
     this.targetVelocity = targetVelocity;
@@ -462,13 +637,20 @@ export default class DragScroll {
 
     // Starting fresh - only initialize if we're at rest
     if (this.scrollVelocity === 0) {
-      this.scrollVelocity = targetVelocity * this.zeroVelStartCoef;
+      // no need for zeroVelStartCoef < 1 if target velocity is at the lowest speeds
+      const zeroVelStartCoef =
+        Math.abs(this.scrollLevel) <= 3 ? 1 : this.zeroVelStartCoef;
+      this.scrollVelocity = targetVelocity * zeroVelStartCoef;
     }
 
     this.lastScrollTime = performance.now();
     this.scrollTimer = requestAnimationFrame(this.scrollCallback);
   };
 
+  /**
+   * Animation frame callback for smooth scrolling
+   * @param {number} currentTime - Current timestamp from requestAnimationFrame
+   */
   scrollCallback = currentTime => {
     if (!this.lastScrollTime) this.lastScrollTime = currentTime;
 
@@ -507,6 +689,10 @@ export default class DragScroll {
     }
   };
 
+  /**
+   * Cleanup when scrolling stops
+   * @param {boolean} [atBoundary=false] - Whether we stopped at a page boundary
+   */
   stoppedCleanup = (atBoundary = false) => {
     this.scrollTimer = null;
     this.targetVelocity = 0;
@@ -514,13 +700,16 @@ export default class DragScroll {
     this.lastScrollTime = null;
     this.scrollLevel = 0;
 
-    const stoppedCursor = this.isPaused
-      ? 'wait'
-      : this.noMouseMove
-      ? 'ns-resize'
-      : atBoundary
-      ? 'not-allowed'
-      : 'row-resize';
+    let stoppedCursor;
+    if (this.isPaused) {
+      stoppedCursor = 'wait';
+    } else if (this.noMouseMove) {
+      stoppedCursor = 'ns-resize';
+    } else if (atBoundary) {
+      stoppedCursor = 'not-allowed';
+    } else {
+      stoppedCursor = 'row-resize';
+    }
     this.gridContainer.style.cursor = stoppedCursor;
 
     // Is this the end of an auto-scroll session?
@@ -531,79 +720,22 @@ export default class DragScroll {
     }
   };
 
-  // Pause: save current state and set to zero
-  pause = () => {
-    const velocityThreshold = this.velocities[0] - 5;
-    if (this.isPaused || Math.abs(this.scrollVelocity) < velocityThreshold)
-      return;
-    this.isPaused = true;
-    this.pausedScrollLevel = this.scrollLevel;
-    this.scrollLevel = 0;
-    this.targetVelocity = 0;
-    if (this.useAllTiers)
-      this.velocityLerpSpeed = VELOCITY_LERP_SPEED_DEFAULT_STOP;
-    else if (this.mouseDownStart)
-      this.velocityLerpSpeed = VELOCITY_LERP_SPEED_SLOW_STOP;
-    else this.velocityLerpSpeed = VELOCITY_LERP_SPEED_DEFAULT_STOP;
-  };
-
-  // Unpause: restore the saved scroll state
-  unpause = () => {
-    if (!this.isPaused) return;
-    this.isPaused = false;
-    this.scrollLevel = this.pausedScrollLevel;
-    this.targetVelocity = this.velocities[Math.abs(this.pausedScrollLevel) - 1];
-    this.velocityLerpSpeed = this.useAllTiers
-      ? VELOCITY_LERP_SPEED_SLOW
-      : VELOCITY_LERP_SPEED_DEFAULT;
-
-    // Restart scrolling if we had a non-zero target velocity
-    if (this.targetVelocity !== 0) {
-      const sign = Math.sign(this.scrollLevel);
-      const level = Math.abs(this.scrollLevel);
-      this.setCursor_SetScroll(sign, level);
-    }
-  };
-
-  handleKeyDown = event => {
-    const key = event.key.toLowerCase();
-
-    // Handle spacebar - pause/unpause auto-scroll
-    if ([' ', 'arrowleft', 'arrowright'].includes(key)) {
-      this.eventStop(event);
-      if (this.isPaused) this.unpause();
-      else this.pause();
-      return;
-    }
-
-    // Handle arrow keys and w/s keys - bump scroll level
-    if (key === 'arrowup') {
-      this.eventStop(event);
-      if (this.isPaused) this.unpause();
-      else this.bumpScrollLevel(-1, event);
-      return;
-    }
-
-    if (key === 'arrowdown') {
-      this.eventStop(event);
-      if (this.isPaused) this.unpause();
-      else this.bumpScrollLevel(1, event);
-      return;
-    }
-
-    // Any other key - end drag mode
-    this.handleDragEnd(event);
-  };
-
-  handleDragEnd = event => {
+  /**
+   * Handle drag end event
+   * @param {Event} event - Event that triggered drag end
+   */
+  handleAutoScrollEnd = event => {
     this.eventStop(event);
-    this.dragEndCancel();
+    this.autoScrollEndCancel();
   };
 
-  dragEndCancel = () => {
+  /**
+   * Cancel auto-scroll and cleanup event listeners
+   */
+  autoScrollEndCancel = () => {
     this.gridContainer.removeEventListener('mousemove', this.handleDragMove);
     this.gridContainer.removeEventListener('wheel', this.handleScrollMove);
-    this.gridContainer.removeEventListener('mouseup', this.handleDragEnd);
+    this.gridContainer.removeEventListener('mouseup', this.handleAutoScrollEnd);
     document.removeEventListener('keydown', this.handleKeyDown);
 
     this.resetDeadZone();
@@ -639,7 +771,10 @@ export default class DragScroll {
     }
   };
 
-  removeDragListener() {
+  /**
+   * Remove all auto-scroll event listeners
+   */
+  removeAutoScrollListeners() {
     if (!this.gridContainer) return;
     document.removeEventListener('keydown', this.handleDoubleKeyPress);
     this.gridContainer.removeEventListener(
@@ -653,6 +788,9 @@ export default class DragScroll {
     this.gridContainer = null;
   }
 
+  /**
+   * Reset dead zone widths to initial values
+   */
   resetDeadZone() {
     this.posDeadZoneWidth = this.initDeadZoneWidth / 2;
     this.negDeadZoneWidth = this.initDeadZoneWidth / 2;
@@ -660,20 +798,10 @@ export default class DragScroll {
     SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD = SCROLLWHEEL_MOVE_THRESHOLD;
   }
 
-  // Test for detail page being current page
-  testForDetailPage() {
-    return /^https?:\/\/(www\.)?reddit.com\/r\/.+\/comments\/.+/.test(
-      window.location.href
-    );
-  }
-
-  // Test for search page being current page
-  testForSearchPage() {
-    return /^https?:\/\/(www\.)?reddit.com\/search\/.+/.test(
-      window.location.href
-    );
-  }
-
+  /**
+   * Stop event propagation and prevent default behavior
+   * @param {Event} event - Event to stop
+   */
   eventStop(event) {
     event.preventDefault();
     event.stopPropagation();

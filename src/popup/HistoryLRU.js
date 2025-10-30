@@ -1,8 +1,14 @@
 'use strict';
 
-// Class to manage a Least Recently Used (LRU) history of items with markers
-
+/**
+ * Class to manage a Least Recently Used (LRU) history of image URLs with visual markers
+ * @class HistoryLRU
+ */
 export default class HistoryLRU {
+  /**
+   * Initialize the LRU history manager
+   * @param {number} [maxSize=8] - Maximum number of items to store in history
+   */
   constructor(maxSize = 8) {
     this.maxSize = maxSize;
     this.history = [];
@@ -23,12 +29,19 @@ export default class HistoryLRU {
     });
   }
 
-  // Return marker for a given URL
+  /**
+   * Get the visual marker (emoji) for a given URL
+   * @param {string} url - URL to get marker for
+   * @returns {string} Emoji marker for the URL
+   */
   getMarker(url) {
     return this.markers[this.urlToMarker[url]];
   }
 
-  // Add an item to the history cache
+  /**
+   * Add an item to the history cache (most recent first)
+   * @param {string} item - URL to add to history
+   */
   add(item) {
     // Remove item if it already exists
     if (this.history.includes(item)) {
@@ -57,12 +70,18 @@ export default class HistoryLRU {
     console.log('History LRU updated:', this.history);
   }
 
-  // Get the history cache
+  /**
+   * Get the complete history array
+   * @returns {string[]} Array of URLs in history (most recent first)
+   */
   getHistory() {
     return this.history;
   }
 
-  // Remove an item from the history cache
+  /**
+   * Remove an item from the history cache
+   * @param {string} item - URL to remove from history
+   */
   remove(item) {
     this.history.splice(this.history.indexOf(item), 1);
     this.markerPool.unshift(this.urlToMarker[item]);
@@ -70,14 +89,18 @@ export default class HistoryLRU {
     this.save();
   }
 
-  // Save to chrome.storage.local
+  /**
+   * Save history and marker mappings to chrome.storage.local
+   */
   save() {
     chrome.storage.local.set({
       historyLRU: { history: this.history, urlToMarker: this.urlToMarker },
     });
   }
 
-  // Clear the history cache
+  /**
+   * Clear all history and reset marker pool
+   */
   clear() {
     // Clear history
     this.history = [];
@@ -93,7 +116,10 @@ export default class HistoryLRU {
     console.log('History LRU cleared:', this.history);
   }
 
-  // Get the current size of the history cache
+  /**
+   * Get the current size of the history cache
+   * @returns {number} Number of items in history
+   */
   size() {
     return this.history.length;
   }

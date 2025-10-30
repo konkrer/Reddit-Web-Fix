@@ -6,27 +6,39 @@
 const BLOCKED_PREFIXES = ['/settings', '/drafts', '/premium', '/reddit-pro'];
 
 // placeholders for imports and instances
-let VoteSync, MainObserver, HrefObserver, Appearance, DragScroll; // class imports
+let VoteSync, MainObserver, HrefObserver, Appearance, AutoScroll; // class imports
 let CO; // instances
 let VERBOSE = false;
 
-// Coordinator Class to manage the overall functionality for the Reddit Web Fix extension
+/**
+ * Coordinator class to manage the overall functionality for the Reddit Web Fix extension
+ * @class RedditFixCoordinator
+ */
 class RedditFixCoordinator {
+  /**
+   * Initialize the coordinator with all extension modules
+   * @param {boolean} verbose - Enable verbose logging
+   */
   constructor(verbose) {
     this.hrefObserver = new HrefObserver(this);
     this.voteSync = null;
     this.mainObserver = null;
-    this.dragScroll = null;
+    this.autoScroll = null;
     this.verbose = verbose;
     this.guardedStart();
   }
 
-  // Check if the current path is blocked
+  /**
+   * Check if the current URL path is in the blocked list
+   * @returns {boolean} True if current path should be blocked
+   */
   isBlockedPath() {
     return BLOCKED_PREFIXES.some(p => location.pathname.startsWith(p));
   }
 
-  // Start the extension based on the current path
+  /**
+   * Start the extension based on the current path (blocked or active)
+   */
   guardedStart() {
     if (this.isBlockedPath()) {
       this.startHrefPoller(500);
@@ -35,58 +47,124 @@ class RedditFixCoordinator {
     }
   }
 
-  // Start the extension
+  /**
+   * Initialize and start all extension modules
+   */
   startup() {
     this.appearance = new Appearance(this);
     this.voteSync = new VoteSync(this);
     this.mainObserver = new MainObserver(this);
-    this.dragScroll = new DragScroll();
+    this.autoScroll = new AutoScroll(this);
     this.mainObserver.startMainObserver();
   }
 
-  // Clean up the extension
+  /**
+   * Clean up and shut down all extension modules
+   */
   cleanUp() {
     if (this.mainObserver) this.mainObserver.stopMainObserver();
     if (this.hrefObserver) this.hrefObserver.stopHrefPoller();
     if (this.voteSync) this.voteSync.removeHandlersFromPosts();
-    if (this.dragScroll) this.dragScroll.removeDragListener();
+    if (this.autoScroll) this.autoScroll.removeDragListener();
     this.log('Reddit Web Fix: shut down.');
   }
 
+  /**
+   * Test if current page is a Reddit detail/comments page
+   * @returns {boolean} True if on a detail/comments page
+   */
+  testForDetailPage() {
+    return /^https?:\/\/(www\.)?reddit.com\/r\/.+\/comments\/.+/.test(
+      window.location.href
+    );
+  }
+
+  /**
+   * Test if current page is a Reddit search page
+   * @returns {boolean} True if on a search page
+   */
+  testForSearchPage() {
+    return /^https?:\/\/(www\.)?reddit.com\/search\/.+/.test(
+      window.location.href
+    );
+  }
+
   // Proxy methods that other classes need
+  /**
+   * Test if page has changed and update vote sync state
+   * @param {number} [addDelay=0] - Additional delay in milliseconds
+   */
   testForPageChange(addDelay = 0) {
     this.voteSync?.testForPageChange(addDelay);
   }
+
+  /**
+   * Add a post element to vote sync tracking
+   * @param {HTMLElement} post - Post element to sync
+   */
   addSyncPost(post) {
     this.voteSync?.addSyncPost(post);
   }
+
+  /**
+   * Start the main DOM mutation observer
+   */
   startMainObserver() {
     this.mainObserver?.startMainObserver();
   }
+
+  /**
+   * Stop the main DOM mutation observer
+   */
   stopMainObserver() {
     this.mainObserver?.stopMainObserver();
   }
+
+  /**
+   * Start the URL change polling observer
+   */
   startHrefPoller() {
     this.hrefObserver?.startHrefPoller();
   }
+
+  /**
+   * Apply background styling to the page
+   */
   applyBackground() {
     setTimeout(() => {
       this.appearance?.applyBackground();
     }, 0);
   }
+
+  /**
+   * Remove background styling from the page
+   */
   clearBackground() {
     this.appearance?.clearBackground();
   }
-  addDragScroll() {
+
+  /**
+   * Enable drag scroll functionality
+   */
+  addAutoScroll() {
     // delay for proper page detection
     setTimeout(() => {
-      this.dragScroll?.addDragListener();
+      this.autoScroll?.addAutoScrollListener();
     }, 500);
   }
-  removeDragScroll() {
-    this.dragScroll?.removeDragListener();
+
+  /**
+   * Disable drag scroll functionality
+   */
+  removeAutoScroll() {
+    this.autoScroll?.removeAutoScrollListeners();
   }
 
+  /**
+   * Log message if verbose mode is enabled
+   * @param {string} message - Message to log
+   * @param {*} [data=''] - Optional data to log
+   */
   log(message, data = '') {
     if (this.verbose) {
       console.debug(message, data);
@@ -94,6 +172,12 @@ class RedditFixCoordinator {
   }
 }
 
+/**
+ * Handle messages received from background script via port
+ * @param {Object} msg - Message object
+ * @param {string} msg.type - Message type
+ * @param {*} [msg.value] - Message value
+ */
 function handlePortMessage(msg) {
   if (msg.type === 'SET_VERBOSE') {
     VERBOSE = msg.value;
@@ -111,6 +195,10 @@ function handlePortMessage(msg) {
   }
 }
 
+/**
+ * Handle port disconnection (extension reload or uninstall)
+ * @param {Function} initPort - Function to reinitialize the port
+ */
 function handlePortDisconnect(initPort) {
   setTimeout(() => {
     if (!chrome.runtime?.id) {
@@ -174,6 +262,12 @@ function handlePortDisconnect(initPort) {
   }
 })();
 
+/**
+ * Dynamically import all required extension modules
+ * @async
+ * @returns {Promise<void>}
+ * @throws {Error} If modules fail to load
+ */
 async function loadModules() {
   const voteSyncProm = import(chrome.runtime.getURL('src/content/VoteSync.js'));
   const observerProm = import(
@@ -182,21 +276,21 @@ async function loadModules() {
   const appearanceProm = import(
     chrome.runtime.getURL('src/content/Appearance.js')
   );
-  const dragScrollProm = import(
-    chrome.runtime.getURL('src/content/DragScroll.js')
+  const autoScrollProm = import(
+    chrome.runtime.getURL('src/content/AutoScroll.js')
   );
-  const [observerMod, voteSyncMod, appearanceMod, dragScrollMod] =
+  const [observerMod, voteSyncMod, appearanceMod, autoScrollMod] =
     await Promise.all([
       observerProm,
       voteSyncProm,
       appearanceProm,
-      dragScrollProm,
+      autoScrollProm,
     ]);
-  if (voteSyncMod && observerMod && appearanceMod) {
+  if (voteSyncMod && observerMod && appearanceMod && autoScrollMod) {
     VoteSync = voteSyncMod.default;
     ({ MainObserver, HrefObserver } = observerMod);
     Appearance = appearanceMod.default;
-    DragScroll = dragScrollMod.default;
+    AutoScroll = autoScrollMod.default;
   } else {
     throw new Error('Failed to load modules.');
   }

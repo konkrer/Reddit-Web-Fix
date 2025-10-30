@@ -1,7 +1,16 @@
 'use strict';
 
-// Creates and runs a brief animation on the given button element
+/**
+ * Animation utilities for vote sync feedback
+ * @file animation.js
+ */
 
+/**
+ * Create and run a brief sync animation on a button element.
+ * Shows a rotating golden sync icon to indicate Reddit catching up to the shown state.
+ * Next time the button is clicked normal behavior resumes.
+ * @param {HTMLElement} btnElem - Button element to animate
+ */
 export function clickIgnoredAnimation(btnElem) {
   if (!btnElem) return;
   if (btnElem.querySelector('img[data-sync-anim]')) return;

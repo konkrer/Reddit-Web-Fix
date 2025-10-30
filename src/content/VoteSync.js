@@ -97,8 +97,15 @@ const countAdjustments = {
 
 /* -----------------------------------------------------------*/
 
-// VoteSync class to handle vote state tracking and syncing
+/**
+ * VoteSync class to handle vote state tracking and syncing across Reddit pages
+ * @class VoteSync
+ */
 export default class VoteSync {
+  /**
+   * Initialize VoteSync with coordinator and storage
+   * @param {Object} coordinator - RedditFixCoordinator instance
+   */
   constructor(coordinator) {
     this.coordinator = coordinator;
     this.sessionStorage = {};
@@ -114,6 +121,11 @@ export default class VoteSync {
     this.coordinator.log('VoteSync initialized.');
   }
 
+  /**
+   * Test if the page URL has changed and handle accordingly
+   * @param {number} [addDelay=0] - Additional delay in milliseconds before processing
+   * @returns {boolean} True if page change detected to allowed page, false otherwise
+   */
   testForPageChange(addDelay = 0) {
     // return true if page change detected to allowed page, false otherwise
     if (this.currentPage !== window.location.href) {
@@ -123,6 +135,12 @@ export default class VoteSync {
     return false;
   }
 
+  /**
+   * Handle new page detection
+   * @param {number} addDelay - Delay before processing
+   * @returns {boolean} True if allowed page, false if blocked
+   * @private
+   */
   _newPageDetected(addDelay) {
     // test for blocked page and allowed page
     this.currentPage = window.location.href;
@@ -134,24 +152,35 @@ export default class VoteSync {
     return true;
   }
 
+  /**
+   * Handle navigation to a blocked page
+   * @private
+   */
   _newBlockedPageDetected() {
     // stop main observer and start href poller
-    this.coordinator.log('Blocked page.');
     this.coordinator.stopMainObserver();
     this.coordinator.startHrefPoller();
-    setTimeout(() => {
-      this.coordinator.clearBackground();
-    }, 0);
+    this.coordinator.clearBackground();
+    this.coordinator.removeAutoScroll();
+    this.coordinator.log('Blocked page.');
   }
 
+  /**
+   * Handle navigation to an allowed page
+   * @param {number} addDelay - Delay before syncing
+   * @private
+   */
   _newAllowedPageDetected(addDelay) {
     // test for detail page and clear state copied set
     // add copy sync with delay
-    this.testForDetailPage();
+    this.detail = this.coordinator.testForDetailPage();
     this.stateCopied.clear();
     setTimeout(this.addCopySync, addDelay);
   }
 
+  /**
+   * Add event handlers to posts and sync button states
+   */
   addCopySync = () => {
     // add handlers to posts and sync button state
     this.addHandlersToPosts();
@@ -160,6 +189,10 @@ export default class VoteSync {
     this.coordinator.log('Added handlers, Copied State, Synced Button State');
   };
 
+  /**
+   * Add handlers to a single post and sync its vote state
+   * @param {HTMLElement} post - Post element to sync
+   */
   addSyncPost = post => {
     // add handlers to post and sync vote state
     this.addHandlersToPosts([post]);
@@ -168,6 +201,10 @@ export default class VoteSync {
     }
   };
 
+  /**
+   * Add click event handlers to posts
+   * @param {HTMLElement[]} [postsIn] - Optional array of posts, defaults to all posts
+   */
   addHandlersToPosts(postsIn) {
     // add handlers to posts
     const posts = postsIn || this.getPosts();
@@ -177,6 +214,9 @@ export default class VoteSync {
     });
   }
 
+  /**
+   * Remove click event handlers from all posts
+   */
   removeHandlersFromPosts() {
     // remove handlers from posts
     const posts = this.getPosts();
@@ -185,6 +225,10 @@ export default class VoteSync {
     });
   }
 
+  /**
+   * Copy vote state from a post's UI to session storage
+   * @param {HTMLElement} post - Post element
+   */
   copyPostVoteState(post) {
     // copy post vote state
     const btnSpan = this.getButtonSpan(post);
@@ -196,6 +240,12 @@ export default class VoteSync {
     this._setPostSeen(post);
   }
 
+  /**
+   * Copy vote state from UI to session storage
+   * @param {HTMLElement} post - Post element
+   * @param {HTMLElement} btnSpan - Button container element
+   * @private
+   */
   _copyVoteState(post, btnSpan) {
     // copy vote state to session storage
     const count = this.getCountFromUI(post);
@@ -227,7 +277,10 @@ export default class VoteSync {
   /* -----------------------------------------------------------*/
   /* Handle Vote State Changes and sub-methods */
 
-  // Handle vote state changes
+  /**
+   * Handle vote button click events
+   * @param {Event} e - Click event
+   */
   handleVotes = e => {
     const post = e.target;
     const targetId = post.id;
@@ -262,7 +315,12 @@ export default class VoteSync {
     this.setCountInUI(post);
   };
 
-  // Find if event was a vote button click event
+  /**
+   * Find if event was triggered by a vote button click
+   * @param {Event} e - Click event
+   * @returns {Array} [isVoteClick, voteType, buttonElement]
+   * @private
+   */
   _findVoteButtonClickEvent(e) {
     // find if event was a vote button click event
     // Check clicked element and three elements above
@@ -276,7 +334,12 @@ export default class VoteSync {
     return foundClick;
   }
 
-  // Find if path element is a vote button
+  /**
+   * Find if path element is a vote button
+   * @param {Element} pathElem - Element from event path
+   * @returns {Array|boolean} [true, voteType, element] or false
+   * @private
+   */
   _findVoteButton(pathElem) {
     // if element does not have hasAttribute method, return false
     if (!pathElem?.hasAttribute) return false;
@@ -285,7 +348,12 @@ export default class VoteSync {
     );
   }
 
-  // Find if path element is an upvote button
+  /**
+   * Find if path element is an upvote button
+   * @param {Element} pathElem - Element to check
+   * @returns {Array|boolean} [true, 'upvote', element] or false
+   * @private
+   */
   _findUpvoteButton(pathElem) {
     if (pathElem.hasAttribute(BTN_UPVOTE_INDICATOR)) {
       return [true, BTN_UPVOTE_INDICATOR, pathElem];
@@ -293,7 +361,12 @@ export default class VoteSync {
     return false;
   }
 
-  // Find if path element is a downvote button
+  /**
+   * Find if path element is a downvote button
+   * @param {Element} pathElem - Element to check
+   * @returns {Array|boolean} [true, 'downvote', element] or false
+   * @private
+   */
   _findDownvoteButton(pathElem) {
     if (pathElem.hasAttribute(BTN_DOWNVOTE_INDICATOR)) {
       return [true, BTN_DOWNVOTE_INDICATOR, pathElem];
@@ -301,7 +374,12 @@ export default class VoteSync {
     return false;
   }
 
-  // Handle click that should be ignored
+  /**
+   * Handle click that should be ignored (already synced)
+   * @param {HTMLElement} post - Post element
+   * @param {HTMLElement} btnElem - Button element
+   * @private
+   */
   _handleIgnoreClick(post, btnElem) {
     // Set count in UI and show sync animation
     this.setCountInUI(post);
@@ -310,7 +388,14 @@ export default class VoteSync {
     }
   }
 
-  // Handle click that should clear vote
+  /**
+   * Handle click that should clear the vote
+   * @param {HTMLElement} post - Post element
+   * @param {string} recVoteState - Recorded vote state
+   * @param {number} currCount - Current vote count
+   * @param {string} btnRestoredState - Button restored state
+   * @private
+   */
   _handleClearVote(post, recVoteState, currCount, btnRestoredState) {
     // Set vote state to clear and count to calculated count
     // if btnRestoredState is undefined, watch for vote not cleared
@@ -323,7 +408,15 @@ export default class VoteSync {
     }
   }
 
-  // Handle click that should set vote
+  /**
+   * Handle click that should set a vote (upvote or downvote)
+   * @param {HTMLElement} post - Post element
+   * @param {string} voteType - Type of vote ('upvote' or 'downvote')
+   * @param {string} recVoteState - Recorded vote state
+   * @param {number} currCount - Current vote count
+   * @param {string} btnRestoredState - Button restored state
+   * @private
+   */
   _handleSetVote(post, voteType, recVoteState, currCount, btnRestoredState) {
     // Set vote state to voteType and count to calculated count
     // if btnRestoredState is restored up to down or down to up, sync vote appearance
@@ -344,7 +437,16 @@ export default class VoteSync {
     }
   }
 
-  // Handle vote logic for ignoring click, clearing vote, or setting vote
+  /**
+   * Handle vote logic - determine if click should be ignored, clear vote, or set vote
+   * @param {HTMLElement} post - Post element
+   * @param {string} voteType - Type of vote button clicked
+   * @param {string} recVoteState - Recorded vote state
+   * @param {number} currCount - Current vote count
+   * @param {string} btnRestoredState - Button restored state
+   * @param {HTMLElement} btnElem - Button element clicked
+   * @private
+   */
   _handleVoteLogic(
     post,
     voteType,
@@ -381,7 +483,13 @@ export default class VoteSync {
     }
   }
 
-  // Watch for case when action that should clear vote does not clear the UI state.
+  /**
+   * Watch for case when action that should clear vote does not clear the UI state
+   * @param {HTMLElement} post - Post element
+   * @param {string} prevVoteState - Previous vote state
+   * @param {number} prevCount - Previous vote count
+   * @private
+   */
   _watchForVoteNotCleared(post, prevVoteState, prevCount) {
     const btnSpan = this.getButtonSpan(post);
     if (!btnSpan) return;
@@ -399,7 +507,13 @@ export default class VoteSync {
     }
   }
 
-  // Calculate count based on vote type, recorded vote state, and current count
+  /**
+   * Calculate adjusted vote count based on vote type and state changes
+   * @param {string} voteType - Type of vote ('upvote', 'downvote', or 'clear')
+   * @param {string} recVoteState - Recorded vote state
+   * @param {number} count - Current count
+   * @returns {number} Adjusted count
+   */
   calcCount(voteType, recVoteState, count) {
     if (recVoteState === undefined) {
       return +count;
@@ -411,13 +525,20 @@ export default class VoteSync {
   /* -----------------------------------------------------------*/
   /* Sync Vote State */
 
-  // Sync UI vote state with recorded vote state
+  /**
+   * Sync UI vote state with recorded vote state
+   * @param {string} [postId] - Optional post ID, syncs all if not provided
+   */
   syncLikes(postId = undefined) {
     if (postId) this._updateAppearance(postId);
     else Object.keys(this.sessionStorage).forEach(this._updateAppearance);
   }
 
-  // Update appearance of vote state to recorded vote state for a post
+  /**
+   * Update appearance of vote state to match recorded vote state for a post
+   * @param {string} postId - Post ID
+   * @private
+   */
   _updateAppearance = postId => {
     const post = document.getElementById(postId);
     if (post === null || this.stateCopied.has(postId)) {
@@ -434,7 +555,14 @@ export default class VoteSync {
     this.setCountInUI(post);
   };
 
-  // Sync logic for updating vote appearance to recorded vote state
+  /**
+   * Sync logic for updating vote appearance to match recorded vote state
+   * @param {string} recVoteState - Recorded vote state
+   * @param {string} UiState - Current UI state
+   * @param {string} postId - Post ID
+   * @param {HTMLElement} btnSpan - Button container element
+   * @private
+   */
   _syncLogic = (recVoteState, UiState, postId, btnSpan) => {
     const expectedIndicator =
       recVoteState === voteRecord[BTN_UPVOTE_INDICATOR]
@@ -458,18 +586,29 @@ export default class VoteSync {
   /* -----------------------------------------------------------*/
   /* Utility Methods */
 
-  // Get all reddit posts
+  /**
+   * Get all Reddit posts on the page
+   * @returns {NodeList} List of post elements
+   */
   getPosts() {
     const posts = document.querySelectorAll(REDDIT_POST_HOST);
     return posts;
   }
 
-  // Get button span which contains vote buttons
+  /**
+   * Get button container element from post's shadow DOM
+   * @param {HTMLElement} post - Post element
+   * @returns {HTMLElement} Button container element
+   */
   getButtonSpan(post) {
     return post?.shadowRoot?.querySelector(REDDIT_BTN_CONTAINER);
   }
 
-  // Get vote state from UI
+  /**
+   * Get vote state from UI classes
+   * @param {HTMLElement} btnSpan - Button container element
+   * @returns {string} Vote state indicator ('upvote', 'downvote', or 'clear')
+   */
   getVoteStateFromUI(btnSpan) {
     return btnSpan.classList.contains(UPVOTE_INDICATOR_CLASS)
       ? BTN_UPVOTE_INDICATOR
@@ -478,21 +617,31 @@ export default class VoteSync {
       : CLEAR_VOTE_INDICATOR;
   }
 
-  // Get count from UI
+  /**
+   * Get vote count from post UI
+   * @param {HTMLElement} post - Post element
+   * @returns {number} Vote count
+   */
   getCountFromUI(post) {
     return +post.shadowRoot
       ?.querySelector(REDDIT_COUNT_EL)
       ?.getAttribute('number');
   }
 
-  // Set count in UI
+  /**
+   * Set vote count in post UI
+   * @param {HTMLElement} post - Post element
+   */
   setCountInUI = post => {
     post.shadowRoot
       ?.querySelector(REDDIT_COUNT_EL)
       .setAttribute('number', this.sessionStorage[post.id].count.toString());
   };
 
-  // Add post to seenButNotTracked with size management
+  /**
+   * Add post to seenButNotTracked set with size management
+   * @param {HTMLElement} post - Post element
+   */
   addPostToSeenButNotTracked(post) {
     // Check size limit before adding and evict oldest entries if needed
     if (this.seenButNotTracked.size >= SEEN_BUT_NOT_TRACKED_LIMIT) {
@@ -501,7 +650,10 @@ export default class VoteSync {
     this.seenButNotTracked.add(post.id);
   }
 
-  // Evict oldest seenButNotTracked entries
+  /**
+   * Evict oldest seenButNotTracked entries (40% of total)
+   * @private
+   */
   _evictSeenButNotTracked() {
     // Evict oldest 40% of entries
     const removeCount = Math.floor(this.seenButNotTracked.size * 0.4);
@@ -517,7 +669,13 @@ export default class VoteSync {
     );
   }
 
-  // Add to Session Storage with size management
+  /**
+   * Add vote data to session storage with size management
+   * @param {string} postId - Post ID
+   * @param {Object} voteData - Vote data object
+   * @param {string} voteData.vote - Vote state
+   * @param {number} voteData.count - Vote count
+   */
   addToSessionStorage(postId, voteData) {
     // Check if we need to evict oldest entries if needed
     const keys = Object.keys(this.sessionStorage);
@@ -527,7 +685,11 @@ export default class VoteSync {
     this.sessionStorage[postId] = voteData;
   }
 
-  // Evict old session data
+  /**
+   * Evict oldest session data entries (40% of total)
+   * @param {string[]} keys - Array of session storage keys
+   * @private
+   */
   _evictOldSessionData(keys) {
     // Evict oldest 40% of entries
     const removeCount = Math.floor(keys.length * 0.4);
@@ -542,28 +704,34 @@ export default class VoteSync {
     );
   }
 
-  // Check if post previously marked as seen
+  /**
+   * Check if post has been marked as seen
+   * @param {HTMLElement} post - Post element
+   * @returns {boolean} True if post has been seen
+   * @private
+   */
   _getPostSeen(post) {
     return post.hasAttribute('post-seen');
   }
 
-  // Set post-seen attribute
+  /**
+   * Mark post as seen
+   * @param {HTMLElement} post - Post element
+   * @private
+   */
   _setPostSeen(post) {
     post.setAttribute('post-seen', 'true');
-  }
-
-  // Test for detail page being current page
-  testForDetailPage() {
-    this.detail = /^https?:\/\/(www\.)?reddit.com\/r\/.+\/comments\/.+/.test(
-      window.location.href
-    );
   }
 } /* End of VoteSync class */
 
 /* -----------------------------------------------------------*/
 /* UI VOTE STATE MANIPULATION FUNCTIONS */
 
-// Get buttons and svg paths
+/**
+ * Get vote buttons and their SVG path elements
+ * @param {HTMLElement} btnSpan - Button container element
+ * @returns {Array} [buttonUp, buttonDn, pathUp, pathDn]
+ */
 function getButtonsSvgPaths(btnSpan) {
   const buttonUp = btnSpan.querySelector(`[${BTN_UPVOTE_INDICATOR}]`);
   const buttonDn = btnSpan.querySelector(`[${BTN_DOWNVOTE_INDICATOR}]`);
@@ -573,7 +741,11 @@ function getButtonsSvgPaths(btnSpan) {
   return [buttonUp, buttonDn, pathUp, pathDn];
 }
 
-// Sync vote appearance
+/**
+ * Synchronize vote button appearance to match vote state
+ * @param {HTMLElement} btnSpan - Button container element
+ * @param {string} voteState - Vote state ('upvote', 'downvote', or 'clear')
+ */
 function syncVoteAppearance(btnSpan, voteState) {
   if (!btnSpan || SPN_CLS_UP === undefined) return;
   const [buttonUp, buttonDn, pathUp, pathDn] = getButtonsSvgPaths(btnSpan);

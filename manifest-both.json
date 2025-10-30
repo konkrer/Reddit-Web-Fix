@@ -22,7 +22,7 @@
         "src/content/VoteSync.js",
         "src/content/observers.js",
         "src/content/Appearance.js",
-        "src/content/DragScroll.js",
+        "src/content/AutoScroll.js",
         "icons/goldenSyncIcon.png"
       ],
       "matches": ["https://www.reddit.com/*"]

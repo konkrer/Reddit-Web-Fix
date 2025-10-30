@@ -14,31 +14,29 @@ const IMG_FLOW_DURATION = 300; // ms
 const IMG_FLOW_OPACITY_COEF = 1.25; // opacity duration coefficient for images
 const IMG_FLOW_OPACITY_DELAY_OFFSET = 50; // ms to offset opacity transition from background transition
 
-// Class to manage page appearance customizations, like background
+/**
+ * Class to manage page appearance customizations (background, gradients, images)
+ * @class Appearance
+ */
 export default class Appearance {
+  /**
+   * Initialize Appearance manager with coordinator
+   * @param {Object} coordinator - RedditFixCoordinator instance
+   */
   constructor(coordinator) {
     this.coordinator = coordinator;
     this.settings = null;
     this.imageDataUrl = null;
     this.initialLoad = true;
     this.loadSettings();
-
-    // Listen for background settings changes and update background
-    chrome.storage.onChanged.addListener((changes, namespace) => {
-      if (namespace === 'local' && changes.backgroundSettings) {
-        this.coordinator.log('Background settings changed, reloading.');
-        this.settings = changes.backgroundSettings.newValue.common;
-        if (this.settings.imageFileName) {
-          this.imageDataUrl = changes.backgroundSettings.newValue.imageDataUrl;
-        } else {
-          this.imageDataUrl = null;
-        }
-        this.applyBackground();
-      }
-    });
+    this.watchForSettingsChange();
   }
 
-  // Load settings from chrome.storage.local
+  /**
+   * Load appearance settings from chrome.storage.local
+   * @async
+   * @returns {Promise<void>}
+   */
   async loadSettings() {
     let settings;
     try {
@@ -54,7 +52,28 @@ export default class Appearance {
     }
   }
 
-  // Clear the background called externally
+  /**
+   * Watch for settings changes and update background
+   */
+  watchForSettingsChange() {
+    // Listen for background settings changes and update background
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === 'local' && changes.backgroundSettings) {
+        this.coordinator.log('Background settings changed, reloading.');
+        this.settings = changes.backgroundSettings.newValue.common;
+        if (this.settings.imageFileName) {
+          this.imageDataUrl = changes.backgroundSettings.newValue.imageDataUrl;
+        } else {
+          this.imageDataUrl = null;
+        }
+        this.applyBackground();
+      }
+    });
+  }
+
+  /**
+   * Clear the background from the grid container
+   */
   clearBackground = () => {
     const gridContainer = document.querySelector('.grid-container');
     if (!gridContainer) {
@@ -69,7 +88,9 @@ export default class Appearance {
     this._clearBackground(bgUnderlay);
   };
 
-  // Apply the background style to the target element, called externally
+  /**
+   * Apply background styling to the grid container based on settings
+   */
   applyBackground = () => {
     if (!this.settings) {
       return;
@@ -86,7 +107,11 @@ export default class Appearance {
     this._applyBackground(gridContainer, bgUnderlay);
   };
 
-  // Set transition delays and curves for the grid container
+  /**
+   * Set transition delays and curves for the grid container
+   * @param {HTMLElement} gridContainer - Grid container element
+   * @private
+   */
   _setGridContainerTransition = gridContainer => {
     if (this.settings.sidebarFlow) {
       this._applyGridContainerTransition(gridContainer);
@@ -95,7 +120,11 @@ export default class Appearance {
     }
   };
 
-  // Apply grid transition settings (controls sidebar open/close animation)
+  /**
+   * Apply grid transition settings (controls sidebar open/close animation)
+   * @param {HTMLElement} gridContainer - Grid container element
+   * @private
+   */
   _applyGridContainerTransition = gridContainer => {
     gridContainer.style.setProperty(
       '--expand-duration',
@@ -109,7 +138,11 @@ export default class Appearance {
     gridContainer.style.setProperty('--collapse-curve', SIDEBAR_COLLAPSE_CURVE);
   };
 
-  // Remove grid transition settings
+  /**
+   * Remove grid transition settings
+   * @param {HTMLElement} gridContainer - Grid container element
+   * @private
+   */
   _removeGridContainerTransition = gridContainer => {
     gridContainer.style.removeProperty('--expand-duration');
     gridContainer.style.removeProperty('--collapse-duration');
@@ -117,39 +150,11 @@ export default class Appearance {
     gridContainer.style.removeProperty('--collapse-curve');
   };
 
-  _getImageFlowCondition = () => {
-    return this.settings.type === 'image' && this.settings.imageFlow;
-  };
-
-  // Combined flow condition.
-  _getFlowCondition = () => {
-    return this._getImageFlowCondition();
-  };
-
-  _getColorFadeCondition = () => {
-    return this.settings.type === 'color' && this.settings.colorFade;
-  };
-  _getGradientFadeCondition = () => {
-    return (
-      this.settings.type === 'gradient' &&
-      ((this.settings.gradientType === 'linear' &&
-        this.settings.gradientFadeL) ||
-        (this.settings.gradientType === 'radial' &&
-          this.settings.gradientFadeR))
-    );
-  };
-  _getImageFadeCondition = () => {
-    return this.settings.type === 'image' && this.settings.imageFade;
-  };
-
-  _getFadeCondition = () => {
-    const colorFade = this._getColorFadeCondition();
-    const gradientFade = this._getGradientFadeCondition();
-    const imageFade = this._getImageFadeCondition();
-    return imageFade || colorFade || gradientFade;
-  };
-
-  // Set the background transition on or off (controls image resizing and fade-in on new page load)
+  /**
+   * Set background transition properties (controls image resizing and fade-in on page load)
+   * @param {HTMLElement} bgUnderlay - Background underlay element
+   * @private
+   */
   _setBgUnderlayTransition = bgUnderlay => {
     // should flow transitions be set on the bg underlay?
     if (this._getFlowCondition() || this._getFadeCondition()) {
@@ -193,14 +198,86 @@ export default class Appearance {
     this.initialLoad = false;
   };
 
-  // Helper to add multiple transition properties
+  /**
+   * Check if image flow is enabled
+   * @returns {boolean} True if image flow enabled
+   * @private
+   */
+  _getImageFlowCondition = () => {
+    return this.settings.type === 'image' && this.settings.imageFlow;
+  };
+
+  /**
+   * Check if any flow condition is met
+   * @returns {boolean} True if flow enabled
+   * @private
+   */
+  _getFlowCondition = () => {
+    return this._getImageFlowCondition();
+  };
+
+  /**
+   * Check if color fade is enabled
+   * @returns {boolean} True if color fade enabled
+   * @private
+   */
+  _getColorFadeCondition = () => {
+    return this.settings.type === 'color' && this.settings.colorFade;
+  };
+
+  /**
+   * Check if gradient fade is enabled
+   * @returns {boolean} True if gradient fade enabled
+   * @private
+   */
+  _getGradientFadeCondition = () => {
+    return (
+      this.settings.type === 'gradient' &&
+      ((this.settings.gradientType === 'linear' &&
+        this.settings.gradientFadeL) ||
+        (this.settings.gradientType === 'radial' &&
+          this.settings.gradientFadeR))
+    );
+  };
+  /**
+   * Check if image fade is enabled
+   * @returns {boolean} True if image fade enabled
+   * @private
+   */
+  _getImageFadeCondition = () => {
+    return this.settings.type === 'image' && this.settings.imageFade;
+  };
+
+  /**
+   * Check if any fade condition is met
+   * @returns {boolean} True if any fade enabled
+   * @private
+   */
+  _getFadeCondition = () => {
+    const colorFade = this._getColorFadeCondition();
+    const gradientFade = this._getGradientFadeCondition();
+    const imageFade = this._getImageFadeCondition();
+    return imageFade || colorFade || gradientFade;
+  };
+
+  /**
+   * Helper to add multiple transition properties to an element
+   * @param {HTMLElement} element - Element to add transitions to
+   * @param {...string} args - Transition property strings
+   * @private
+   */
   _addTransitionProperties(element, ...args) {
     // Force reflow to ensure transitions are seen
     window.getComputedStyle(element).transition;
     element.style.transition = args.join(', ');
   }
 
-  // Apply the background based on settings
+  /**
+   * Apply the appropriate background type based on settings
+   * @param {HTMLElement} gridContainer - Grid container element
+   * @param {HTMLElement} bgUnderlay - Background underlay element
+   * @private
+   */
   _applyBackground = (gridContainer, bgUnderlay) => {
     gridContainer.style.background = 'none';
     gridContainer.style.position = 'relative';
@@ -224,20 +301,32 @@ export default class Appearance {
     }
   };
 
-  // Clear the background and reset the transition
+  /**
+   * Clear the background and reset transitions
+   * @param {HTMLElement} targetEl - Target element
+   * @private
+   */
   _clearBackground = targetEl => {
     targetEl.style.background = 'none';
     targetEl.style.transition = 'none';
     targetEl.style.willChange = 'none';
   };
 
-  // Apply the color background to the target element
+  /**
+   * Apply solid color background
+   * @param {HTMLElement} bgUnderlay - Background underlay element
+   * @private
+   */
   _applyColorBackground = bgUnderlay => {
     bgUnderlay.style.background = this.settings.color;
     bgUnderlay.style.opacity = '1';
   };
 
-  // Apply the gradient background to the target element
+  /**
+   * Apply gradient background with dimmer overlay
+   * @param {HTMLElement} bgUnderlay - Background underlay element
+   * @private
+   */
   _applyGradientBackground = bgUnderlay => {
     if (
       (this.settings.gradientType == 'linear' &&
@@ -258,7 +347,11 @@ export default class Appearance {
     bgUnderlay.style.opacity = '1';
   };
 
-  // Apply the image background to the target element
+  /**
+   * Apply image background with dimmer overlay
+   * @param {HTMLElement} bgUnderlay - Background underlay element
+   * @private
+   */
   _applyImageBackground = bgUnderlay => {
     if (this.settings.imageScroll) {
       bgUnderlay.style.position = 'absolute';
@@ -277,13 +370,22 @@ export default class Appearance {
     bgUnderlay.style.opacity = '1';
   };
 
-  // Create the dimmer gradient
+  /**
+   * Create dimmer gradient overlay
+   * @param {number} [dimmerValue=0] - Dimmer value (0-100)
+   * @returns {string} CSS linear-gradient string
+   * @private
+   */
   _createDimmerGradient = (dimmerValue = 0) => {
     const alpha = dimmerValue / 100; // Convert 0-100 to 0-1
     return `linear-gradient(rgba(0, 0, 0, ${alpha}), rgba(0, 0, 0, ${alpha}))`;
   };
 
-  // Create the gradient css
+  /**
+   * Create gradient CSS string based on settings
+   * @returns {string} CSS gradient string
+   * @private
+   */
   _createGradientCss = () => {
     const gradientType = this.settings.gradientType;
     if (gradientType === 'linear') {
@@ -304,7 +406,11 @@ export default class Appearance {
     }
   };
 
-  // Create the image url
+  /**
+   * Create image URL string for CSS
+   * @returns {string} CSS url() string
+   * @private
+   */
   _createImageUrlString() {
     let imageUrlString = '';
     if (this.settings.imageFileName) {
@@ -315,7 +421,11 @@ export default class Appearance {
     return imageUrlString;
   }
 
-  // Add the child underlay to the node descendants if not present
+  /**
+   * Add background underlay element to node if not present
+   * @param {HTMLElement} node - Parent node
+   * @returns {HTMLElement} Background underlay element
+   */
   addChildUnderlay(node) {
     if (node.firstChild?.id === 'bg-underlay') {
       return node.firstChild;
@@ -333,12 +443,19 @@ export default class Appearance {
     return child;
   }
 
-  // Get the child underlay from the node descendants
+  /**
+   * Get background underlay element from node
+   * @param {HTMLElement} node - Parent node
+   * @returns {HTMLElement|null} Background underlay element or null
+   */
   getChildUnderlay(node) {
     return node.querySelector('#bg-underlay');
   }
 
-  // Remove the child underlay from the node descendants
+  /**
+   * Remove all background underlay elements from node
+   * @param {HTMLElement} node - Parent node
+   */
   removeChildUnderlay(node) {
     const children = node.querySelectorAll('#bg-underlay');
     if (children) {

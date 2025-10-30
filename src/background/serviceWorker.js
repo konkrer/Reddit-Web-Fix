@@ -1,11 +1,19 @@
 'use strict';
 
-// Service Worker script to manage communication between options and content scripts
+/**
+ * Service Worker script to manage communication between options and content scripts
+ * @file serviceWorker.js
+ */
 
-// Maintain a map: tabId -> Port
+/**
+ * Map of tab IDs to their corresponding ports
+ * @type {Map<number, chrome.runtime.Port>}
+ */
 const portsByTab = new Map();
 
-// Listen for connection from content script
+/**
+ * Listen for connections from content scripts and manage port lifecycle
+ */
 chrome.runtime.onConnect.addListener(port => {
   if (port.name !== 'content') return;
 
@@ -25,7 +33,39 @@ chrome.runtime.onConnect.addListener(port => {
   });
 });
 
-// Send message to a particular tab
+/**
+ * Listen for messages from options pages and route them appropriately
+ */
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg?.type === 'SET_VERBOSE') {
+    try {
+      handleSetVerbose(msg);
+      sendResponse({ ok: true });
+    } catch (err) {
+      sendResponse({ ok: false, error: err });
+    }
+  }
+});
+
+/**
+ * Handle SET_VERBOSE message by sending to specific tab or broadcasting
+ * @param {Object} msg - Message object
+ * @param {number} [msg.tabId] - Optional tab ID to target specific tab
+ */
+function handleSetVerbose(msg) {
+  if (typeof msg.tabId === 'number') {
+    sendToTab(msg.tabId, msg);
+  } else {
+    broadcast(msg);
+  }
+}
+
+/**
+ * Send message to a specific tab via its port
+ * @param {number} tabId - Tab ID to send message to
+ * @param {Object} message - Message object to send
+ * @returns {boolean} True if message was sent successfully
+ */
 function sendToTab(tabId, message) {
   const port = portsByTab.get(tabId);
   if (port) {
@@ -40,7 +80,10 @@ function sendToTab(tabId, message) {
   return false;
 }
 
-// Send message to all ports (all tabs running extension)
+/**
+ * Broadcast message to all connected tabs
+ * @param {Object} message - Message object to broadcast
+ */
 function broadcast(message) {
   for (const [tabId, port] of portsByTab.entries()) {
     try {
@@ -50,23 +93,3 @@ function broadcast(message) {
     }
   }
 }
-
-function handleSetVerbose(msg) {
-  if (typeof msg.tabId === 'number') {
-    sendToTab(msg.tabId, msg);
-  } else {
-    broadcast(msg);
-  }
-}
-
-// Listen for messages from options pages
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg?.type === 'SET_VERBOSE') {
-    try {
-      handleSetVerbose(msg);
-      sendResponse({ ok: true });
-    } catch (err) {
-      sendResponse({ ok: false, error: err });
-    }
-  }
-});

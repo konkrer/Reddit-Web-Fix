@@ -64,11 +64,16 @@ const bgDimmer = document.getElementById('bg-dimmer');
 const bgDimmerValue = document.getElementById('bg-dimmer-value');
 // Common
 const sidebarFlow = document.getElementById('sidebar-flow');
-const dragScroll = document.getElementById('drag-scroll');
+const autoScroll = document.getElementById('drag-scroll');
 
 // --- Misc Functions ---
 
-// Update blank panel message based on action
+/**
+ * Update blank panel message based on user action
+ * @param {Object} [options] - Options object
+ * @param {boolean} [options.initial=false] - Whether this is initial load
+ * @param {boolean} [options.save=false] - Whether settings were just saved
+ */
 function blankPanelMessageUpdate({ initial = false, save = false } = {}) {
   if (bgType.value !== 'none') return;
 
@@ -89,21 +94,29 @@ function blankPanelMessageUpdate({ initial = false, save = false } = {}) {
 //  --- Event Handler Functions and Helpers --- //
 
 // --- Gradient Type Functions --- //
-// Get gradient type from gradient type buttons
+/**
+ * Get currently selected gradient type from radio buttons
+ * @returns {string|undefined} Gradient type value ('linear' or 'radial')
+ */
 function getGradientType() {
   for (let btn of gradientType) {
     if (btn.checked) return btn.value;
   }
 }
 
-// Set gradient type button checked based on type
+/**
+ * Set gradient type radio button to checked state
+ * @param {string} type - Gradient type ('linear' or 'radial')
+ */
 function setGradientType(type) {
   for (let btn of gradientType) {
     if (btn.value === type) btn.checked = true;
   }
 }
 
-// Show/hide gradient controls based on gradient type
+/**
+ * Show or hide gradient controls based on selected gradient type
+ */
 function showHideGradientControls() {
   const currGradientType = getGradientType();
   if (currGradientType === 'linear') {
@@ -117,7 +130,10 @@ function showHideGradientControls() {
 
 // --- Load Settings From Storage Functions --- //
 
-// Set values to elements based on settings
+/**
+ * Set UI element values from settings object
+ * @param {Object} settings - Settings object containing all configuration
+ */
 function setValuesToElements(settings) {
   bgType.value = settings.common.type || 'none';
   bgColorFade.checked = settings.common.colorFade ?? true;
@@ -149,7 +165,7 @@ function setValuesToElements(settings) {
   setImageFileName(settings.common.imageFileName);
   // Common
   sidebarFlow.checked = settings.common.sidebarFlow ?? true;
-  dragScroll.checked = settings.common.dragScroll ?? true;
+  autoScroll.checked = settings.common.autoScroll ?? true;
   // Set color picker values
   setColorPickerValues(settings);
 
@@ -163,13 +179,19 @@ function setValuesToElements(settings) {
   });
 }
 
-// Get default color settings from CSS variables
+/**
+ * Get default color value from CSS custom property
+ * @param {string} name - CSS variable name (e.g., '--solid-bg-default')
+ * @returns {string} Color value from CSS variable
+ */
 function getDefaultCssColor(name) {
   return document.documentElement.style.getPropertyValue(name);
 }
 
-// Set color picker button values based on settings
-// or default CSS variable values
+/**
+ * Set color picker button values from settings or default CSS variables
+ * @param {Object} settings - Settings object containing color values
+ */
 function setColorPickerValues(settings) {
   ColorPickerModal.updateColorButton(
     'bg-color',
@@ -207,7 +229,10 @@ function setColorPickerValues(settings) {
   );
 }
 
-// Load settings from chrome.storage.local
+/**
+ * Load settings from chrome.storage.local and populate UI
+ * @param {Object} data - Data object from chrome.storage.local.get
+ */
 function loadSettings(data) {
   const settings = data.backgroundSettings;
   if (settings) setValuesToElements(settings);
@@ -215,7 +240,9 @@ function loadSettings(data) {
 }
 
 // --- Show/Hide Panels Functions ---  //
-// Clear (hide) all settings panels
+/**
+ * Clear (hide) all settings panels
+ */
 function clearPanels() {
   blankSettings.style.display = 'none';
   blankSettings.firstElementChild.style.opacity = '0';
@@ -227,14 +254,20 @@ function clearPanels() {
   imageSettings.firstElementChild.style.opacity = '0';
 }
 
-// Delayed opacity set for settings-panel inner for fade-in effect
+/**
+ * Set opacity of panel inner element with delay for fade-in effect
+ * @param {HTMLElement} element - Panel element
+ */
 function delayedOpacitySetPanelInner(element) {
   setTimeout(() => {
     element.firstElementChild.style.opacity = '1';
   }, 0);
 }
 
-// Show/hide panels based on background type selection
+/**
+ * Show or hide settings panels based on background type selection
+ * @param {boolean} [initial=false] - Whether this is initial load
+ */
 function showHidePanels(initial = false) {
   clearPanels();
 
@@ -261,7 +294,10 @@ function showHidePanels(initial = false) {
 }
 
 // --- Save Settings Functions ---  //
-// Set image file name based on settings
+/**
+ * Set image file name display
+ * @param {string} fileName - Image file name to display
+ */
 function setImageFileName(fileName) {
   if (fileName) {
     bgImageFileName.textContent = fileName;
@@ -272,7 +308,11 @@ function setImageFileName(fileName) {
   }
 }
 
-// Upload image file and common settings to chrome.storage.local
+/**
+ * Upload image file and settings to chrome.storage.local
+ * @param {File} file - Image file object
+ * @param {Object} settings - Settings object
+ */
 function uploadSettingsImageFile(file, settings) {
   const reader = new FileReader();
   reader.onload = e => {
@@ -294,7 +334,10 @@ function uploadSettingsImageFile(file, settings) {
   reader.readAsDataURL(file);
 }
 
-// Upload common settings to chrome.storage.local and pass image data url if needed
+/**
+ * Upload common settings to chrome.storage.local (handles image data URL if needed)
+ * @param {Object} settings - Settings object
+ */
 function uploadSettingsCommon(settings) {
   const setSettings = dataUrl =>
     chrome.storage.local.set(
@@ -323,7 +366,10 @@ function uploadSettingsCommon(settings) {
   blankPanelMessageUpdate({ save: true });
 }
 
-// Create settings object from input values
+/**
+ * Create settings object from current UI input values
+ * @returns {Object} Settings object with all configuration values
+ */
 function makeSettingsObjectFromInputs() {
   return {
     type: bgType.value,
@@ -361,11 +407,13 @@ function makeSettingsObjectFromInputs() {
     imageFileName: bgImageFileName.textContent,
     // Common
     sidebarFlow: sidebarFlow.checked,
-    dragScroll: dragScroll.checked,
+    autoScroll: autoScroll.checked,
   };
 }
 
-// Save settings to chrome.storage.local
+/**
+ * Save current settings to chrome.storage.local
+ */
 function saveSettings() {
   const settings = makeSettingsObjectFromInputs();
 
@@ -380,7 +428,12 @@ function saveSettings() {
 }
 
 // --- Dimmer Event Handlers ---  //
-// Update dimmer value on wheel event
+/**
+ * Update dimmer value on mouse wheel event
+ * @param {WheelEvent} e - Wheel event
+ * @param {HTMLInputElement} dimmerEl - Dimmer input element
+ * @param {HTMLElement} dimmerValueDisplay - Element to display dimmer value
+ */
 function wheelUpdateDimmerValue(e, dimmerEl, dimmerValueDisplay) {
   e.preventDefault();
   if (e.deltaY < 0) {
@@ -391,34 +444,56 @@ function wheelUpdateDimmerValue(e, dimmerEl, dimmerValueDisplay) {
   dimmerValueDisplay.textContent = dimmerEl.value;
 }
 
-// Update image dimmer value on wheel event
+/**
+ * Update image dimmer value on wheel event
+ * @param {WheelEvent} e - Wheel event
+ */
 function wheelImageDimmerUpdate(e) {
   wheelUpdateDimmerValue(e, bgDimmer, bgDimmerValue);
 }
-// Update gradient dimmer value on wheel event - Linear
+
+/**
+ * Update linear gradient dimmer value on wheel event
+ * @param {WheelEvent} e - Wheel event
+ */
 function wheelGradientDimmerUpdateL(e) {
   wheelUpdateDimmerValue(e, bgGradientDimmerL, bgGradientDimmerValueL);
 }
-// Update gradient dimmer value on wheel event - Radial
+
+/**
+ * Update radial gradient dimmer value on wheel event
+ * @param {WheelEvent} e - Wheel event
+ */
 function wheelGradientDimmerUpdateR(e) {
   wheelUpdateDimmerValue(e, bgGradientDimmerR, bgGradientDimmerValueR);
 }
 
-// Update image dimmer value on input event
+/**
+ * Update image dimmer value display on input event
+ */
 function inputUpdateDimmerValue() {
   bgDimmerValue.textContent = bgDimmer.value;
 }
-// Update gradient dimmer value on input event - Linear
+
+/**
+ * Update linear gradient dimmer value display on input event
+ */
 function inputUpdateGradientDimmerValueL() {
   bgGradientDimmerValueL.textContent = bgGradientDimmerL.value;
 }
-// Update gradient dimmer value on input event - Radial
+
+/**
+ * Update radial gradient dimmer value display on input event
+ */
 function inputUpdateGradientDimmerValueR() {
   bgGradientDimmerValueR.textContent = bgGradientDimmerR.value;
 }
 
 // --- History Popup Functions --- //
-// Show history popup
+/**
+ * Show or toggle history popup with image URL history
+ * @param {Event} e - Click event
+ */
 function showHistory(e) {
   e.stopPropagation();
   const historyPopup = document.querySelector('#history-popup');
@@ -434,13 +509,19 @@ function showHistory(e) {
   historyPopup.style.display = 'block';
 }
 
-// Hide history popup
+/**
+ * Hide history popup
+ */
 function hideHistory() {
   const historyPopup = document.querySelector('#history-popup');
   historyPopup.style.display = 'none';
 }
 
-// Create a history item
+/**
+ * Create and append a history item to the history list
+ * @param {string} url - Image URL
+ * @param {HTMLElement} historyList - History list container element
+ */
 function createHistoryItem(url, historyList) {
   const li = document.createElement('div');
   const iconSpan = document.createElement('span');
@@ -466,7 +547,9 @@ function createHistoryItem(url, historyList) {
   historyList.appendChild(li);
 }
 
-// Clear image URL input (Clear button)
+/**
+ * Clear image URL input field
+ */
 function clearImageUrlInput() {
   bgImageUrl.value = '';
 }
