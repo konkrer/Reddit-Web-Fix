@@ -141,6 +141,7 @@ export default class AutoScroll {
       'dblclick',
       this.handleDoubleClickStart
     );
+    this.gridContainer.addEventListener('mouseup', this.handleAutoScrollEnd);
   }
 
   /**
@@ -281,7 +282,7 @@ export default class AutoScroll {
         this.gridContainer.addEventListener('mousemove', this.handleDragMove);
       this.gridContainer.addEventListener('wheel', this.handleScrollMove);
       document.addEventListener('keydown', this.handleKeyDown);
-      this.gridContainer.addEventListener('mouseup', this.handleAutoScrollEnd);
+      // this.gridContainer.addEventListener('mouseup', this.handleAutoScrollEnd);
     }
   };
 
@@ -410,11 +411,11 @@ export default class AutoScroll {
    * @param {KeyboardEvent} event - Keyboard event
    */
   handleKeyDown = event => {
+    this.eventStop(event);
     const key = event.key.toLowerCase();
 
     // Handle spacebar - pause/unpause auto-scroll
     if ([' ', 'arrowleft', 'arrowright'].includes(key)) {
-      this.eventStop(event);
       if (this.isPaused) this.unpause();
       else this.pause();
       return;
@@ -422,14 +423,12 @@ export default class AutoScroll {
 
     // Handle arrow keys and w/s keys - bump scroll level
     if (key === 'arrowup') {
-      this.eventStop(event);
       if (this.isPaused) this.unpause();
       else this.bumpScrollLevel(-1, event);
       return;
     }
 
     if (key === 'arrowdown') {
-      this.eventStop(event);
       if (this.isPaused) this.unpause();
       else this.bumpScrollLevel(1, event);
       return;
@@ -725,7 +724,8 @@ export default class AutoScroll {
    * @param {Event} event - Event that triggered drag end
    */
   handleAutoScrollEnd = event => {
-    this.eventStop(event);
+    // this.eventStop(event);
+    if (this.dragAnchorYCoord === null) return;
     this.autoScrollEndCancel();
   };
 
@@ -735,7 +735,7 @@ export default class AutoScroll {
   autoScrollEndCancel = () => {
     this.gridContainer.removeEventListener('mousemove', this.handleDragMove);
     this.gridContainer.removeEventListener('wheel', this.handleScrollMove);
-    this.gridContainer.removeEventListener('mouseup', this.handleAutoScrollEnd);
+    // this.gridContainer.removeEventListener('mouseup', this.handleAutoScrollEnd);
     document.removeEventListener('keydown', this.handleKeyDown);
 
     this.resetDeadZone();
