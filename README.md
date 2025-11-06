@@ -38,23 +38,22 @@ background section for Chrome/Edge or leave as is for Firefox.
 - After installing vote syncing happens automatically.
 - For page customizations and auto-scroll pin the extension to the browser toolbar and click the extension icon to reveal the controls.
 
-### Auto-Scroll Use
+### Auto-Scroll
 #### EZ-mode: 
-1. Double click the up or down arrow buttons to enable auto-scroll in that direction.
-2. Press up or down arrow buttons to increase or decrease through the scroll levels available on page.
-3. Press left or right arrow buttons or the spacebar to pause auto-scroll.
+1. Double click the up or down arrow keys to activate auto-scroll in that direction.
+2. Press up or down arrow keys to increase or decrease through the scroll levels available on page.
+3. Press left or right arrow keys or the spacebar to pause auto-scroll.
 4. Press any other key or a mouse button to exit auto-scroll mode.
 
 #### Drag-scroll mode:
-1. Press the main mouse button down and drag up or down to scroll in that direction.
+1. Press the main mouse button down and drag up or down to activate auto-scroll in that direction.
 2. Release the mouse button to end drag scroll.
-3. Different levels of auto-scroll are enabled depending on how far you drag. 
+3. Different levels of auto-scroll are activated depending on how far you drag. 
 - NOTE: On feed pages drag scroll stops more slowly. This allows a short drag and release to scroll a decent amount of content without the user having to hold down the mouse button for too long.
 
-
 #### Double-click mode:
-1. Double click the main mouse button to enable auto-scroll.
-2. Different levels of auto-scroll are enabled depending on how far you move the mouse from the point you double clicked.
+1. Double click the main mouse button to activate auto-scroll.
+2. Different levels of auto-scroll are activated depending on how far you move the mouse from the point you double clicked.
 3. Press any mouse button or key (besides arrow keys, spacebar) to exit auto-scroll.
 
 #### All Modes:
@@ -62,6 +61,9 @@ background section for Chrome/Edge or leave as is for Firefox.
 - Spacebar or left/right arrow pause/unpause auto-scroll.
 - Moving mouse pointer to click origin (if applicable) or setting auto-scroll level to zero by arrow keys or scroll wheel stops the auto-scroll.
 - Different number of levels of auto-scroll are available on different pages. Feed pages have 3 levels available while others have 8 levels available.
+
+#### Navigation Bonus:
+- When auto-scroll feature is enabled but no auto-scroll mode is activated - double clicking left or right arrow keys navigates backwards and forwards in the browser history!
 
 ## Files of interest
 

@@ -42,7 +42,7 @@ export default class Appearance {
     try {
       settings = await browser.storage.local.get('backgroundSettings');
     } catch (err) {
-      console.error('Appearance.js: browser-storage access fail', err);
+      console.error('Appearance.js: browser-storage access fail:', err.message);
     }
     if (settings?.backgroundSettings) {
       this.settings = settings.backgroundSettings.common;

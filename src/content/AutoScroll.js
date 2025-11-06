@@ -2,14 +2,14 @@
 
 const DEFAULT_ACTIVE_TIERS = 3; // less tiers (slower speeds) for feed pages with virtual scroll
 const DEFAULT_TIER_WIDTH = 50; // pixels per scroll control tier for feed pages
-const DETAIL_PAGE_TIER_WIDTH = 20; // pixels per scroll control tier
+const DETAIL_PAGE_TIER_WIDTH = 25; // pixels per scroll control tier
 const DEAD_ZONE_WIDTH = 100;
 const SCROLLWHEEL_MOVE_THRESHOLD = 2;
 const SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD_DEFAULT = 3; // default threshold for scroll move detection
 let SCROLLWHEEL_DEADZONE_MOVE_THRESHOLD = 1; // small threshold for initial scroll move detection
 const VELOCITY_LERP_SPEED_DEFAULT = 0.06;
 const VELOCITY_LERP_SPEED_SLOW = 0.02;
-const VELOCITY_LERP_SPEED_DEFAULT_STOP = 0.03;
+const VELOCITY_LERP_SPEED_DEFAULT_STOP = 0.05;
 const VELOCITY_LERP_SPEED_SLOW_STOP = 0.0025;
 
 /**
@@ -30,7 +30,7 @@ export default class AutoScroll {
     this.initDeadZoneWidth = 16;
     this.posDeadZoneWidth = this.initDeadZoneWidth / 2;
     this.negDeadZoneWidth = this.initDeadZoneWidth / 2;
-    this.velocities = [76, 76, 218, 500, 800, 1200, 1700, 2500];
+    this.velocities = [76, 76, 218, 450, 800, 1200, 1700, 2500];
     this.activeTiers = DEFAULT_ACTIVE_TIERS;
     this.scrollBehavior = 'instant';
     this.scrollTimer = null;
@@ -104,7 +104,7 @@ export default class AutoScroll {
     try {
       settings = await browser.storage.local.get('backgroundSettings');
     } catch (err) {
-      console.error('AutoScroll.js: browser-storage access fail', err);
+      console.error('AutoScroll.js: browser-storage access fail:', err.message);
     }
     if (settings?.backgroundSettings) {
       this.autoScrollEnabled =
@@ -135,13 +135,13 @@ export default class AutoScroll {
       ? this.velocities.length
       : DEFAULT_ACTIVE_TIERS;
 
-    this.gridContainer.addEventListener('mousedown', this.handleMouseDownStart);
     document.addEventListener('keydown', this.handleDoubleKeyPress);
+    this.gridContainer.addEventListener('mousedown', this.handleMouseDownStart);
+    this.gridContainer.addEventListener('mouseup', this.handleAutoScrollEnd);
     this.gridContainer.addEventListener(
       'dblclick',
       this.handleDoubleClickStart
     );
-    this.gridContainer.addEventListener('mouseup', this.handleAutoScrollEnd);
   }
 
   /**
@@ -282,7 +282,6 @@ export default class AutoScroll {
         this.gridContainer.addEventListener('mousemove', this.handleDragMove);
       this.gridContainer.addEventListener('wheel', this.handleScrollMove);
       document.addEventListener('keydown', this.handleKeyDown);
-      // this.gridContainer.addEventListener('mouseup', this.handleAutoScrollEnd);
     }
   };
 
@@ -735,7 +734,6 @@ export default class AutoScroll {
   autoScrollEndCancel = () => {
     this.gridContainer.removeEventListener('mousemove', this.handleDragMove);
     this.gridContainer.removeEventListener('wheel', this.handleScrollMove);
-    // this.gridContainer.removeEventListener('mouseup', this.handleAutoScrollEnd);
     document.removeEventListener('keydown', this.handleKeyDown);
 
     this.resetDeadZone();
@@ -777,6 +775,7 @@ export default class AutoScroll {
   removeAutoScrollListeners() {
     if (!this.gridContainer) return;
     document.removeEventListener('keydown', this.handleDoubleKeyPress);
+    this.gridContainer.removeEventListener('mouseup', this.handleAutoScrollEnd);
     this.gridContainer.removeEventListener(
       'mousedown',
       this.handleMouseDownStart
