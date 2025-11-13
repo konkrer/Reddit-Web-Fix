@@ -95,7 +95,7 @@ class RedditFixCoordinator {
    * @param {number} [addDelay=0] - Additional delay in milliseconds
    */
   testForPageChange(addDelay = 0) {
-    this.voteSync?.testForPageChange(addDelay);
+    return this.voteSync?.testForPageChange(addDelay);
   }
 
   /**
@@ -147,7 +147,11 @@ class RedditFixCoordinator {
    * Enable drag scroll functionality
    */
   addAutoScroll() {
-    // delay for proper page detection
+    // ideal shorter delay to allow for proper page detection
+    setTimeout(() => {
+      this.autoScroll?.addAutoScrollListener();
+    }, 100);
+    // fallback longer delay to allow for proper page detection
     setTimeout(() => {
       this.autoScroll?.addAutoScrollListener();
     }, 500);

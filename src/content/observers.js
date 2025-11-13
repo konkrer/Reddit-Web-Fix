@@ -62,7 +62,7 @@ export class MainObserver {
    * @private
    */
   _processMutationList = mutationList => {
-    this.coordinator.testForPageChange();
+    if (this.coordinator.testForPageChange()) this.coordinator.addAutoScroll();
     for (const mutation of mutationList) {
       if (mutation.type === 'childList') {
         this._processNodes(mutation.addedNodes);
@@ -131,7 +131,6 @@ export class MainObserver {
   _processGridParentNode(node) {
     if (!this.coordinator.isBlockedPath()) {
       this.coordinator.applyBackground();
-      this.coordinator.addAutoScroll();
       this.coordinator.log('Grid container processed.');
     }
   }

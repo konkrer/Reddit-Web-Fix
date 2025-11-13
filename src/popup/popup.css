@@ -12,7 +12,7 @@ body {
   margin: 0;
   background: linear-gradient(#530404, 80%, #3b0000f5);
   color: rgb(219, 209, 209);
-  box-shadow: inset black 0px 28px 55px;
+  box-shadow: inset rgba(0, 0, 0, 0.541) 0px 15px 20px;
   font-size: 100%;
 }
 
